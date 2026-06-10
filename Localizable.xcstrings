@@ -1,0 +1,954 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "-%lld" : {
+
+    },
+    ".*" : {
+
+    },
+    ".%@" : {
+
+    },
+    "·" : {
+
+    },
+    "· %lld linhas" : {
+
+    },
+    "(%lld)" : {
+
+    },
+    "%@ ▋" : {
+
+    },
+    "%@!" : {
+
+    },
+    "%lld" : {
+
+    },
+    "%lld conversas" : {
+
+    },
+    "%lld conversas · criado %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld conversas · criado %2$@"
+          }
+        }
+      }
+    },
+    "%lld de %lld concluídas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld de %2$lld concluídas"
+          }
+        }
+      }
+    },
+    "%lld mensagens · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld mensagens · %2$@"
+          }
+        }
+      }
+    },
+    "%lld modelos carregados do servidor." : {
+
+    },
+    "%lld modelos disponíveis" : {
+
+    },
+    "%lld resultado%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld resultado%2$@"
+          }
+        }
+      }
+    },
+    "%lld steps · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld steps · %2$@"
+          }
+        }
+      }
+    },
+    "%lld tok/s · %lld tokens" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld tok/s · %2$lld tokens"
+          }
+        }
+      }
+    },
+    "%lld." : {
+
+    },
+    "%lld%%" : {
+
+    },
+    "%lldk" : {
+
+    },
+    "•" : {
+
+    },
+    "↑%lld staged" : {
+
+    },
+    "+ %lld arquivos" : {
+
+    },
+    "+%lld" : {
+
+    },
+    "~/Lume/%@" : {
+
+    },
+    "~%lld modified" : {
+
+    },
+    "~%lld tokens" : {
+
+    },
+    "~%lldt" : {
+
+    },
+    "▋" : {
+
+    },
+    "8k" : {
+
+    },
+    "12k" : {
+
+    },
+    "32k" : {
+
+    },
+    "100k" : {
+
+    },
+    "A conversa será reiniciada a partir desta mensagem." : {
+
+    },
+    "Aa" : {
+
+    },
+    "Abrir" : {
+
+    },
+    "Abrir Configurações" : {
+
+    },
+    "Abrir no Finder" : {
+
+    },
+    "Abrir pasta do projeto" : {
+
+    },
+    "Abrir Preferências" : {
+
+    },
+    "Adicionadas ao final do system prompt em todas as conversas." : {
+
+    },
+    "Adicionar" : {
+
+    },
+    "Adicionar ao Knowledge Base" : {
+
+    },
+    "Adicionar ao projeto" : {
+
+    },
+    "Adicionar Conector" : {
+
+    },
+    "Adicionar nota" : {
+
+    },
+    "Adicionar Novo Provider" : {
+
+    },
+    "Adicionar Provider" : {
+
+    },
+    "Adicione arquivos para contextualizar a conversa." : {
+
+    },
+    "Adicione tom, formatação ou regras para orientar como o assistente funciona." : {
+
+    },
+    "Adicione um provider para começar" : {
+
+    },
+    "Agente de Código" : {
+
+    },
+    "AIzaSy..." : {
+
+    },
+    "Anthropic" : {
+
+    },
+    "Apaga conversas, projetos, tarefas e workflows. As configurações são preservadas." : {
+
+    },
+    "Apagar" : {
+
+    },
+    "Apagar \"%@\"?" : {
+
+    },
+    "Apagar projeto" : {
+
+    },
+    "Apagar Projeto" : {
+
+    },
+    "API Key" : {
+
+    },
+    "API Key (opcional para alguns servidores)" : {
+
+    },
+    "Arquivar" : {
+
+    },
+    "Artifacts" : {
+
+    },
+    "Assistente de configuração" : {
+
+    },
+    "Ativo" : {
+
+    },
+    "Atualização disponível" : {
+
+    },
+    "Atualizar lista" : {
+
+    },
+    "Autenticação de Administrador" : {
+
+    },
+    "Autenticar" : {
+
+    },
+    "Auto" : {
+
+    },
+    "Baixar" : {
+
+    },
+    "Base URL" : {
+
+    },
+    "Base URL (ex: https://api.example.com/v1)" : {
+
+    },
+    "Bem-vindo ao Lume" : {
+
+    },
+    "Bloquear comandos shell perigosos" : {
+
+    },
+    "Busca Inteligente" : {
+
+    },
+    "Busca na Web" : {
+
+    },
+    "Busca no Código" : {
+
+    },
+    "Buscando…" : {
+
+    },
+    "Buscar" : {
+
+    },
+    "Buscar no código…" : {
+
+    },
+    "Cache semântico" : {
+
+    },
+    "Cancelar" : {
+
+    },
+    "Cancelar (⌘.)" : {
+
+    },
+    "Carregando git…" : {
+
+    },
+    "Carregando log…" : {
+
+    },
+    "Carregando status…" : {
+
+    },
+    "clean" : {
+
+    },
+    "Código" : {
+
+    },
+    "Cole sua API Key aqui" : {
+
+    },
+    "Comando" : {
+
+    },
+    "Começar a usar o Lume" : {
+
+    },
+    "Começar do zero" : {
+
+    },
+    "Commit" : {
+
+    },
+    "Como configurar →" : {
+
+    },
+    "Como obter as chaves →" : {
+
+    },
+    "Como posso ajudar hoje?" : {
+
+    },
+    "Concluído" : {
+
+    },
+    "Conectar um Provider de IA" : {
+
+    },
+    "Conecte o agente a ferramentas externas" : {
+
+    },
+    "Configurações" : {
+
+    },
+    "Configurações…" : {
+
+    },
+    "Configure conectores MCP em Configurações → MCP." : {
+
+    },
+    "Configure tarefas recorrentes para este projeto." : {
+
+    },
+    "Copiado" : {
+
+    },
+    "Copiar" : {
+
+    },
+    "Copiar código" : {
+
+    },
+    "Cowork" : {
+
+    },
+    "Criar perfil padrão" : {
+
+    },
+    "Criar primeiro projeto" : {
+
+    },
+    "Criar projeto" : {
+
+    },
+    "Criar Projeto" : {
+
+    },
+    "Criar um novo projeto" : {
+
+    },
+    "Criativo" : {
+
+    },
+    "Crie um projeto para organizar conversas e manter contexto persistente." : {
+
+    },
+    "Custom (OpenAI)" : {
+
+    },
+    "Deletar Conversa" : {
+
+    },
+    "Depois" : {
+
+    },
+    "Desafixar" : {
+
+    },
+    "Desarquivar" : {
+
+    },
+    "Diferenciar maiúsculas/minúsculas" : {
+
+    },
+    "Digite sua senha para executar comandos com privilégios elevados." : {
+
+    },
+    "DuckDuckGo ativo por padrão" : {
+
+    },
+    "Editar" : {
+
+    },
+    "Editar mensagem" : {
+
+    },
+    "Editor de workflows em breve" : {
+
+    },
+    "Enviar (↩)" : {
+
+    },
+    "Erro no Ditado" : {
+
+    },
+    "Escolha onde o Lume vai buscar inteligência." : {
+
+    },
+    "Escolha uma pasta onde os ícones\nserão salvos." : {
+
+    },
+    "Escolher pasta e gerar" : {
+
+    },
+    "Escreva abaixo para começar a trabalhar neste projeto." : {
+
+    },
+    "Escreva, revise, debug e refatore com a IA como co-piloto.\nPara começar, selecione a pasta do seu projeto." : {
+
+    },
+    "Esta ação apagará todas as conversas, projetos, tarefas e workflows, mas manterá suas configurações de providers, segurança e preferências.\n\nEsta ação não pode ser desfeita." : {
+
+    },
+    "Esta ação não pode ser desfeita. Todas as conversas do projeto serão apagadas." : {
+
+    },
+    "Estas instruções são enviadas ao assistente no início de cada conversa neste projeto. Use-as para definir tom, formato ou regras de comportamento." : {
+
+    },
+    "Este texto será adicionado automaticamente ao system prompt:" : {
+
+    },
+    "Executando…" : {
+
+    },
+    "Exigir workspace para operações de arquivo" : {
+
+    },
+    "Exportar como Markdown" : {
+
+    },
+    "Falhou" : {
+
+    },
+    "Fechar" : {
+
+    },
+    "Ferramentas" : {
+
+    },
+    "Filtros" : {
+
+    },
+    "Fixar" : {
+
+    },
+    "Framework detectado:" : {
+
+    },
+    "Gerador de Ícones" : {
+
+    },
+    "Git" : {
+
+    },
+    "Google configurado" : {
+
+    },
+    "Google configurado!" : {
+
+    },
+    "Google Custom Search (opcional)" : {
+
+    },
+    "Gravando…" : {
+
+    },
+    "http://localhost:11434/v1" : {
+
+    },
+    "HTTP/SSE" : {
+
+    },
+    "https://api.example.com/v1" : {
+
+    },
+    "Ícone" : {
+
+    },
+    "Ícones gerados com sucesso!" : {
+
+    },
+    "Idioma da Interface" : {
+
+    },
+    "Importar" : {
+
+    },
+    "Importar um projeto" : {
+
+    },
+    "Iniciar uma sessão" : {
+
+    },
+    "Input" : {
+
+    },
+    "INPUT" : {
+
+    },
+    "Inspector" : {
+
+    },
+    "Instruções do Assistente" : {
+
+    },
+    "Instruções do projeto" : {
+
+    },
+    "Instruções do Projeto" : {
+
+    },
+    "Instruções para o assistente" : {
+
+    },
+    "Limpar Cache" : {
+
+    },
+    "Limpar dados do app" : {
+
+    },
+    "Limpar Histórico" : {
+
+    },
+    "Lint" : {
+
+    },
+    "llama3, mistral, phi3…" : {
+
+    },
+    "Log" : {
+
+    },
+    "Lume" : {
+
+    },
+    "Lume %@" : {
+
+    },
+    "Lume Terminal" : {
+
+    },
+    "M:%lld" : {
+
+    },
+    "Mais opções" : {
+
+    },
+    "Máx. iterações do agente" : {
+
+    },
+    "MCP Conectores" : {
+
+    },
+    "Memória" : {
+
+    },
+    "Mensagem do commit" : {
+
+    },
+    "Meu Projeto" : {
+
+    },
+    "Modelo padrão" : {
+
+    },
+    "Modelos" : {
+
+    },
+    "Mover para projeto" : {
+
+    },
+    "Mudar o nome" : {
+
+    },
+    "Nenhum conector configurado" : {
+
+    },
+    "Nenhum conector MCP" : {
+
+    },
+    "Nenhum perfil de estilo" : {
+
+    },
+    "Nenhum projeto" : {
+
+    },
+    "Nenhum projeto ainda" : {
+
+    },
+    "Nenhum resultado para \"%@\"" : {
+
+    },
+    "Nenhum workflow" : {
+
+    },
+    "Nenhum workspace aberto" : {
+
+    },
+    "Nenhuma alteração pendente." : {
+
+    },
+    "Nenhuma conversa" : {
+
+    },
+    "Nenhuma conversa ainda" : {
+
+    },
+    "Nenhuma conversa disponível" : {
+
+    },
+    "Nenhuma sessão ainda" : {
+
+    },
+    "Nenhuma tarefa agendada" : {
+
+    },
+    "No que você gostaria de trabalhar neste projeto?" : {
+
+    },
+    "No seu computador" : {
+
+    },
+    "Nome" : {
+
+    },
+    "Nome (ex: Meu ChatGPT, Llama Local)" : {
+
+    },
+    "Nome da conversa" : {
+
+    },
+    "Nome do projeto" : {
+
+    },
+    "Nome do Projeto" : {
+
+    },
+    "Nome do Provider" : {
+
+    },
+    "Nova conversa" : {
+
+    },
+    "Nova Conversa" : {
+
+    },
+    "Nova tarefa" : {
+
+    },
+    "Novo Conector MCP" : {
+
+    },
+    "Novo Projeto" : {
+
+    },
+    "O acesso é restrito à pasta selecionada.\nNenhum outro arquivo do seu computador é acessado." : {
+
+    },
+    "O idioma do Lume segue as preferências do sistema macOS." : {
+
+    },
+    "O Lume está configurado e pronto para usar.\nVeja o que você pode fazer agora:" : {
+
+    },
+    "O progresso das tarefas aparecerá aqui\nautomaticamente conforme a IA avança." : {
+
+    },
+    "O que o agente pode fazer:" : {
+
+    },
+    "O que você pode fazer aqui:" : {
+
+    },
+    "O que você quer fazer hoje?" : {
+
+    },
+    "Obter chave →" : {
+
+    },
+    "Ocultar novidades" : {
+
+    },
+    "OK" : {
+
+    },
+    "OpenAI" : {
+
+    },
+    "Organize seu trabalho com projetos, contexto persistente\ne acompanhamento de progresso." : {
+
+    },
+    "Output" : {
+
+    },
+    "OUTPUT" : {
+
+    },
+    "Passou" : {
+
+    },
+    "Pensando…" : {
+
+    },
+    "Pesquisar" : {
+
+    },
+    "Preciso" : {
+
+    },
+    "Preview" : {
+
+    },
+    "Processando…" : {
+
+    },
+    "Projetos" : {
+
+    },
+    "Projetos, tarefas e progresso" : {
+
+    },
+    "Prompt Caching (Anthropic)" : {
+
+    },
+    "Provider Ativo" : {
+
+    },
+    "Provider salvo com sucesso!" : {
+
+    },
+    "Próximo" : {
+
+    },
+    "Pular" : {
+
+    },
+    "Pular configuração" : {
+
+    },
+    "Pull" : {
+
+    },
+    "Push" : {
+
+    },
+    "Raciocínio interno" : {
+
+    },
+    "RAG em documentos" : {
+
+    },
+    "Recarregar" : {
+
+    },
+    "Recentes" : {
+
+    },
+    "Reconectar pasta..." : {
+
+    },
+    "Reconfigure providers, busca na web e veja dicas do app." : {
+
+    },
+    "Reenviar" : {
+
+    },
+    "Remover workspace" : {
+
+    },
+    "Resetar" : {
+
+    },
+    "Resetar aplicação?" : {
+
+    },
+    "Revelar" : {
+
+    },
+    "Rodar Testes" : {
+
+    },
+    "Roteamento automático de modelos" : {
+
+    },
+    "S:%lld" : {
+
+    },
+    "Saídas" : {
+
+    },
+    "Salvar" : {
+
+    },
+    "Salve a API Key e clique em Atualizar para carregar os modelos." : {
+
+    },
+    "Salvo!" : {
+
+    },
+    "Search Engine ID (cx)" : {
+
+    },
+    "Selecionar Conversa" : {
+
+    },
+    "Selecionar pasta do projeto" : {
+
+    },
+    "Selecione uma conversa para importar como projeto. O histórico será salvo em **~/Lume/%@**." : {
+
+    },
+    "Selecione uma pasta em Code para buscar." : {
+
+    },
+    "Sem configuração, sem chave — configurado por padrão." : {
+
+    },
+    "Sem configuração, usa DuckDuckGo gratuitamente.\nPara usar o Google, obtenha as chaves em developers.google.com/custom-search" : {
+
+    },
+    "Sem projeto" : {
+
+    },
+    "Sem título" : {
+
+    },
+    "Senha" : {
+
+    },
+    "Sessões Recentes" : {
+
+    },
+    "Seu cliente nativo de IA para macOS.\nChat inteligente, projetos, código e agentes — tudo em um só lugar." : {
+
+    },
+    "Sobre MCP →" : {
+
+    },
+    "Stage All" : {
+
+    },
+    "Status" : {
+
+    },
+    "stdio" : {
+
+    },
+    "Tente termos diferentes ou ajuste os filtros." : {
+
+    },
+    "Terminal" : {
+
+    },
+    "Test Runner" : {
+
+    },
+    "Tipo de Provider" : {
+
+    },
+    "Tipos:" : {
+
+    },
+    "Tokens máximos de contexto" : {
+
+    },
+    "Transporte" : {
+
+    },
+    "Trocar" : {
+
+    },
+    "Tudo pronto! 🎉" : {
+
+    },
+    "Um lugar dedicado para trabalho contínuo, onde o contexto se acumula ao longo do tempo. Arquivos e instruções ficam em uma pasta no seu computador." : {
+
+    },
+    "Um perfil padrão será criado automaticamente." : {
+
+    },
+    "Uma pasta **~/Lume/%@** será criada no seu computador." : {
+
+    },
+    "URL" : {
+
+    },
+    "Usando DuckDuckGo" : {
+
+    },
+    "Usar expressão regular" : {
+
+    },
+    "Validando…" : {
+
+    },
+    "Validar e Salvar" : {
+
+    },
+    "Ver novidades" : {
+
+    },
+    "Voltar" : {
+
+    },
+    "Working tree clean" : {
+
+    },
+    "xxxxxxxxxxxxxxx" : {
+
+    }
+  },
+  "version" : "1.2"
+}
