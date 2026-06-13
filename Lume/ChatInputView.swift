@@ -18,10 +18,14 @@ struct ChatInputView: View {
     let onStop: () -> Void
     let onAttach: () -> Void
     let onVoice: () -> Void
+    var onQueue: () -> Void = {}
     let isDictating: Bool
     let modelName: String
     let availableModels: [String]
     let onModelChange: (String) -> Void
+    /// Seleção dentro do submenu de um provider: troca o modelo E ativa o provider
+    /// correspondente (evita ficar com o modelo de um provider e o backend de outro).
+    var onProviderModelSelect: (AIProviderConfig, String) -> Void = { _, _ in }
 
     @Binding var attachedImages: [NSImage]
 
@@ -29,9 +33,9 @@ struct ChatInputView: View {
     private var activeProviders: [AIProviderConfig]
 
     @FocusState private var isFocused: Bool
-    @State private var animateGradient = false
-    @State private var gradientAngle: Double = 0
     @State private var isDropTargeted = false
+    @State private var approvalMode: ApprovalMode = LumeConfig.load().approvalMode
+    @AppStorage(ThemeKeys.accent) private var accentRaw = AccentChoice.clay.rawValue
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,69 +45,33 @@ struct ChatInputView: View {
                 imagePreviewBar
             }
 
-            HStack(alignment: .bottom, spacing: 10) {
-                pillContent
-                    .background { pillBackground }
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(
-                                isDropTargeted
-                                    ? Color.accentColor.opacity(0.6)
-                                    : Color.white.opacity(0.15),
-                                lineWidth: isDropTargeted ? 2 : 1
-                            )
-                    }
-                    .shadow(
-                        color: isLoading
-                            ? Color.accentColor.opacity(0.25)
-                            : Color.black.opacity(0.08),
-                        radius: isLoading ? 12 : 4,
-                        y: 2
-                    )
-                    .onDrop(of: [.image, .fileURL], isTargeted: $isDropTargeted) { providers in
-                        handleImageDrop(providers: providers)
-                    }
-
-                if isLoading {
-                    Button(action: onStop) {
-                        Image(systemName: "stop.fill")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 36, height: 36)
-                            .background(Color(.controlBackgroundColor), in: Circle())
-                            .overlay(Circle().strokeBorder(Color.primary.opacity(0.1), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                    .help("Cancelar (⌘.)")
-                    .keyboardShortcut(".", modifiers: .command)
-                    .transition(.scale.combined(with: .opacity))
-                } else {
-                    Button(action: onSend) {
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(canSend ? .white : Color(.tertiaryLabelColor))
-                            .frame(width: 36, height: 36)
-                            .background(
-                                canSend ? Color.accentColor : Color(.controlBackgroundColor),
-                                in: Circle()
-                            )
-                            .overlay(Circle().strokeBorder(Color.primary.opacity(canSend ? 0 : 0.1), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!canSend)
-                    .help("Enviar (↩)")
-                    .animation(.easeInOut(duration: 0.2), value: canSend)
+            pillContent
+                .background { pillBackground }
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(
+                            isDropTargeted
+                                ? Color.accentColor.opacity(0.6)
+                                : Color.white.opacity(0.15),
+                            lineWidth: isDropTargeted ? 2 : 1
+                        )
                 }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+                .shadow(
+                    color: isLoading
+                        ? Color.accentColor.opacity(0.25)
+                        : Color.black.opacity(0.08),
+                    radius: isLoading ? 12 : 4,
+                    y: 2
+                )
+                .onDrop(of: [.image, .fileURL], isTargeted: $isDropTargeted) { providers in
+                    handleImageDrop(providers: providers)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
         }
         .background(.ultraThinMaterial)
-        .onAppear {
-            isFocused = true
-            startGradientAnimation()
-        }
+        .onAppear { isFocused = true }
     }
 
     // MARK: - Image Preview Bar
@@ -156,7 +124,7 @@ struct ChatInputView: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .focused($isFocused)
-                    .foregroundStyle(isLoading ? Color.white : Color.primary)
+                    .foregroundStyle(composerVibrant ? Color.white : Color.primary)
                     .onKeyPress(.return) {
                         let flags = NSApp.currentEvent?.modifierFlags ?? []
                         if flags.contains(.shift) { return .ignored }
@@ -179,16 +147,18 @@ struct ChatInputView: View {
                     Text(isLoading ? "Gerando resposta…" : placeholder)
                         .font(.system(size: 14))
                         .foregroundStyle(
-                            isLoading ? Color.white.opacity(0.7) : Color(.placeholderTextColor)
+                            composerVibrant ? Color.white.opacity(0.85) : Color(.placeholderTextColor)
                         )
-                        .padding(.top, 5)
+                        // Alinhado com o início do texto/cursor do TextEditor.
+                        // (Se precisar de ajuste fino, este é o número a mexer.)
+                        .padding(.top, 1)
                         .padding(.leading, 5)
                         .allowsHitTesting(false)
                 }
 
                 if isDictating {
                     DictatingWaveView()
-                        .padding(.top, 5)
+                        .padding(.top, 1)
                         .padding(.leading, 5)
                         .allowsHitTesting(false)
                 }
@@ -197,52 +167,16 @@ struct ChatInputView: View {
             .padding(.top, 12)
             .padding(.bottom, 4)
 
-            // Bottom toolbar
+            // Bottom toolbar — estilo Claude: ações à esquerda, modelo + enviar à direita
             HStack(spacing: 6) {
-                Menu {
-                    if !activeProviders.isEmpty {
-                        ForEach(activeProviders) { provider in
-                            let models = modelsFor(provider)
-                            if !models.isEmpty {
-                                Menu(provider.name) {
-                                    ForEach(models, id: \.self) { model in
-                                        Button { onModelChange(model) } label: {
-                                            if model == modelName {
-                                                Label(model, systemImage: "checkmark")
-                                            } else {
-                                                Text(model)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        ForEach(availableModels, id: \.self) { model in
-                            Button { onModelChange(model) } label: {
-                                if model == modelName {
-                                    Label(model, systemImage: "checkmark")
-                                } else { Text(model) }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 9, weight: .semibold))
-                        Text("Modelos")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundStyle(isLoading ? Color.white.opacity(0.8) : Color.secondary)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(isLoading ? Color.white.opacity(0.15) : Color.primary.opacity(0.05))
-                    )
-                }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
+                pillActionBtn(
+                    icon: "plus",
+                    help: "Anexar arquivo",
+                    tint: composerVibrant ? Color.white.opacity(0.7) : nil,
+                    action: onAttach
+                )
+
+                approvalMenu
 
                 Spacer()
 
@@ -256,24 +190,195 @@ struct ChatInputView: View {
                     .background(Color.accentColor.opacity(0.1), in: Capsule())
                 }
 
-                pillActionBtn(
-                    icon: "paperclip",
-                    help: "Anexar arquivo",
-                    tint: isLoading ? Color.white.opacity(0.7) : nil,
-                    action: onAttach
-                )
+                modelMenu
 
-                pillActionBtn(
-                    icon: isDictating ? "waveform" : "mic",
-                    help: isDictating ? "Parar gravação" : "Ditado",
-                    tint: isDictating ? .red : (isLoading ? Color.white.opacity(0.7) : nil),
-                    action: onVoice
-                )
+                rightActionButton
             }
             .padding(.horizontal, 12)
             .padding(.top, 4)
             .padding(.bottom, 10)
+            .animation(.easeInOut(duration: 0.18), value: hasContent)
+            .animation(.easeInOut(duration: 0.18), value: isLoading)
         }
+    }
+
+    // MARK: - Model menu (texto discreto, à direita — estilo Claude)
+
+    private var modelMenu: some View {
+        Menu {
+            if !activeProviders.isEmpty {
+                ForEach(activeProviders) { provider in
+                    let models = modelsFor(provider)
+                    if !models.isEmpty {
+                        Menu(provider.name) {
+                            ForEach(models, id: \.self) { model in
+                                Button { onProviderModelSelect(provider, model) } label: {
+                                    if model == modelName {
+                                        Label(model, systemImage: "checkmark")
+                                    } else {
+                                        Text(model)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                ForEach(Self.dedup(availableModels), id: \.self) { model in
+                    Button { onModelChange(model) } label: {
+                        if model == modelName {
+                            Label(model, systemImage: "checkmark")
+                        } else { Text(model) }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Text(shortModelName(modelName))
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .semibold))
+            }
+            .foregroundStyle(composerVibrant ? Color.white : Color.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(composerVibrant ? Color.black.opacity(0.22) : Color.clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .tint(composerVibrant ? Color.white : Color(.secondaryLabelColor))
+        .fixedSize()
+    }
+
+    // MARK: - Approval menu (Perguntar antes de agir / Agir sem perguntar)
+
+    private var approvalMenu: some View {
+        Menu {
+            Button { setApprovalMode(.strict) } label: {
+                if approvalMode != .autonomous {
+                    Label("Perguntar antes de agir", systemImage: "checkmark")
+                } else {
+                    Text("Perguntar antes de agir")
+                }
+            }
+            Button { setApprovalMode(.autonomous) } label: {
+                if approvalMode == .autonomous {
+                    Label("Agir sem perguntar", systemImage: "checkmark")
+                } else {
+                    Text("Agir sem perguntar")
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: approvalMode == .autonomous ? "forward.fill" : "hand.raised")
+                    .font(.system(size: 11, weight: .medium))
+                Text(approvalMode == .autonomous ? "Agir" : "Perguntar")
+                    .font(.system(size: 12, weight: .medium))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .semibold))
+            }
+            .foregroundStyle(composerVibrant ? Color.white : Color.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(composerVibrant ? Color.black.opacity(0.22) : Color.primary.opacity(0.05))
+            )
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .tint(composerVibrant ? Color.white : Color(.secondaryLabelColor))
+        .fixedSize()
+        .help(approvalMode == .autonomous
+              ? "Lume executa ações sem pedir aprovação"
+              : "Lume pausa para você aprovar cada ação")
+    }
+
+    private func setApprovalMode(_ mode: ApprovalMode) {
+        approvalMode = mode
+        var cfg = LumeConfig.load()
+        cfg.approvalMode = mode
+        cfg.save()
+    }
+
+    // MARK: - Right action button (mic → enviar → parar/fila — estilo Claude)
+
+    @ViewBuilder
+    private var rightActionButton: some View {
+        if isLoading {
+            HStack(spacing: 8) {
+                // Parar a geração atual
+                Button(action: onStop) {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 30, height: 30)
+                        .background(
+                            Color(.controlBackgroundColor),
+                            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .help("Parar (⌘.)")
+                .keyboardShortcut(".", modifiers: .command)
+
+                // Enfileirar: envia a mensagem digitada quando a resposta atual terminar
+                if hasContent {
+                    Button(action: onQueue) {
+                        HStack(spacing: 5) {
+                            Image(systemName: "return")
+                                .font(.system(size: 11, weight: .bold))
+                            Text("Fila")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .frame(height: 30)
+                        .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Enfileirar — envia ao terminar a resposta")
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
+        } else if canSend {
+            Button(action: onSend) {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(Color.accentColor, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .help("Enviar (↩)")
+            .transition(.scale.combined(with: .opacity))
+        } else {
+            // Campo vazio: microfone (ditado)
+            Button(action: onVoice) {
+                Image(systemName: isDictating ? "waveform" : "mic")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(isDictating ? .red : Color(.secondaryLabelColor))
+                    .frame(width: 30, height: 30)
+            }
+            .buttonStyle(.plain)
+            .help(isDictating ? "Parar gravação" : "Ditado")
+            .transition(.scale.combined(with: .opacity))
+        }
+    }
+
+    /// Há conteúdo para enviar/enfileirar (texto ou imagens), independente do estado de carregamento.
+    private var hasContent: Bool {
+        !text.trimmingCharacters(in: .whitespaces).isEmpty || !attachedImages.isEmpty
     }
 
     // MARK: - Liquid Glass background
@@ -283,31 +388,25 @@ struct ChatInputView: View {
             Color(.windowBackgroundColor).opacity(0.01)
 
             if isLoading {
-                AngularGradient(
-                    colors: [
-                        Color(red: 1.0, green: 0.6, blue: 0.2).opacity(0.85),
-                        Color(red: 1.0, green: 0.3, blue: 0.5).opacity(0.85),
-                        Color(red: 0.7, green: 0.3, blue: 1.0).opacity(0.85),
-                        Color(red: 0.3, green: 0.6, blue: 1.0).opacity(0.85),
-                        Color(red: 1.0, green: 0.6, blue: 0.2).opacity(0.85),
-                    ],
-                    center: .center,
-                    angle: .degrees(gradientAngle)
+                // Estado de processamento — ESTÁTICO (sem animação) para não pesar a CPU.
+                LinearGradient(
+                    colors: accentGradientColors,
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
-                .blur(radius: 12)
-                .scaleEffect(1.4)
-                .transition(.opacity)
+                .opacity(isTyping ? 0.16 : 0.6)
 
                 Rectangle()
                     .fill(.ultraThinMaterial)
-                    .opacity(0.45)
+                    .opacity(isTyping ? 0.86 : 0.45)
             } else {
+                // Visual estático de hoje (sem animação fora do processamento).
                 Rectangle().fill(.ultraThinMaterial)
 
                 LinearGradient(
                     colors: [
-                        Color.accentColor.opacity(isFocused ? 0.06 : 0.02),
-                        Color.purple.opacity(isFocused ? 0.04 : 0.01),
+                        themeAccent.opacity(isFocused ? 0.06 : 0.02),
+                        themeAccent.opacity(isFocused ? 0.03 : 0.01),
                         Color.clear
                     ],
                     startPoint: .topLeading,
@@ -316,14 +415,35 @@ struct ChatInputView: View {
             }
         }
         .animation(.easeInOut(duration: 0.5), value: isLoading)
+        .animation(.easeInOut(duration: 0.35), value: isTyping)
     }
 
-    // MARK: - Gradient animation
+    // MARK: - Estado visual da caixa
 
-    private func startGradientAnimation() {
-        withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
-            gradientAngle = 360
-        }
+    /// Usuário está digitando (há texto) — usado para clarear a animação.
+    private var isTyping: Bool {
+        !text.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    /// Estado "vibrante" (fundo animado intenso): processando E sem texto.
+    /// Quando o usuário digita, a caixa clareia e o texto volta a ser legível.
+    private var composerVibrant: Bool { isLoading && !isTyping }
+
+    /// Cor de acento do tema atual (concreta — base da animação).
+    private var themeAccent: Color { (AccentChoice(rawValue: accentRaw) ?? .clay).color }
+
+    /// Variações dentro da mesma paleta (mesmo matiz, brilho/saturação variando)
+    /// para uma animação fluida e on-brand durante o processamento.
+    private var accentGradientColors: [Color] {
+        // Tons quentes vibrantes da marca (laranja → coral → rosa → âmbar),
+        // visíveis e on-palette para a animação de processamento.
+        [
+            Color(red: 0.97, green: 0.55, blue: 0.30),
+            Color(red: 0.95, green: 0.45, blue: 0.45),
+            Color(red: 0.93, green: 0.42, blue: 0.60),
+            Color(red: 0.98, green: 0.64, blue: 0.35),
+            Color(red: 0.97, green: 0.55, blue: 0.30),
+        ]
     }
 
     // MARK: - Drag & Drop
@@ -359,12 +479,37 @@ struct ChatInputView: View {
     }
 
     private func modelsFor(_ provider: AIProviderConfig) -> [String] {
-        if !provider.cachedModels.isEmpty { return provider.cachedModels }
+        // Prioriza modelos buscados da API do provider
+        if !provider.cachedModels.isEmpty { return Self.dedup(provider.cachedModels) }
+        // Fallback estático apenas para providers diretos sem cache ainda
         switch provider.providerType {
-        case "openai":    return ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-        case "anthropic": return ["claude-opus-4-5", "claude-sonnet-4-5", "claude-3-5-haiku-20241022"]
-        default:          return provider.defaultModel.isEmpty ? [] : [provider.defaultModel]
+        case "openai":    return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"]
+        case "anthropic": return ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+        default:
+            // Para gateways (litellm, custom, etc): sem cache ainda, mostra só o modelo atual
+            return provider.defaultModel.isEmpty ? [] : [provider.defaultModel]
         }
+    }
+
+    /// Remove duplicatas preservando a ordem. Listas de gateways frequentemente
+    /// trazem o mesmo modelo repetido, o que gera IDs repetidos no ForEach e
+    /// corrompe a seleção (você clica num modelo e outro é selecionado).
+    static func dedup(_ models: [String]) -> [String] {
+        var seen = Set<String>()
+        return models.filter { seen.insert($0).inserted }
+    }
+
+    /// Exibe o nome do modelo de forma legível no botão — remove prefixos de provider
+    /// Ex: "anthropic/claude-opus-4-8" → "claude-opus-4-8"
+    ///     "vertex_ai/gemini-2.5-flash" → "gemini-2.5-flash"
+    private func shortModelName(_ model: String) -> String {
+        if model.isEmpty { return "Modelo" }
+        // Remove prefixo provider/ se presente
+        if let slash = model.firstIndex(of: "/") {
+            let name = String(model[model.index(after: slash)...])
+            return name.isEmpty ? model : name
+        }
+        return model
     }
 
     private func pillActionBtn(

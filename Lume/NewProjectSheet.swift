@@ -203,7 +203,7 @@ struct FromScratchView: View {
         isCreating = true
         Task {
             do {
-                let url = try await ProjectManager.shared.createProjectFolder(name: name)
+                let url = try ProjectManager.shared.createProjectFolder(name: name)
                 let project = Project(name: name, icon: icon, systemPrompt: systemPrompt, localPath: url.path)
                 modelContext.insert(project)
                 try modelContext.save()
@@ -310,7 +310,7 @@ struct ImportConversationView: View {
         isImporting = true
         Task {
             do {
-                let url = try await ProjectManager.shared.importFromConversation(
+                let url = try ProjectManager.shared.importFromConversation(
                     name: projectName, messages: conv.messages)
                 let project = Project(name: projectName, icon: "tray.and.arrow.down",
                                       systemPrompt: conv.systemPrompt, localPath: url.path)

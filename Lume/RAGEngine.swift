@@ -20,6 +20,24 @@ struct RAGChunk: Sendable {
     let totalChunks: Int
 }
 
+// MARK: - Source / Retrieval
+
+/// Fonte usada para responder — exibida como citação clicável na mensagem.
+struct RAGSource: Codable, Equatable, Identifiable {
+    var id: String = UUID().uuidString
+    var document: String
+    var chunkIndex: Int
+    var totalChunks: Int
+    var snippet: String
+    var score: Double
+}
+
+/// Resultado da recuperação: contexto para o modelo + fontes para a UI.
+struct RAGRetrieval {
+    let context: String
+    let sources: [RAGSource]
+}
+
 // MARK: - RAGEngine
 
 actor RAGEngine {
@@ -63,32 +81,45 @@ actor RAGEngine {
 
     // MARK: - Retrieve
 
+    /// Compatibilidade: retorna apenas o texto de contexto.
     func buildContext(for query: String) async -> String? {
+        await buildRetrieval(for: query)?.context
+    }
+
+    /// Recuperação híbrida (vetorial + lexical) com fontes para citação.
+    func buildRetrieval(for query: String) async -> RAGRetrieval? {
         guard !chunks.isEmpty else { return nil }
 
         let queryEmbedding = await embedder.embed(text: query)
+        let queryTerms = Self.tokenize(query)
 
+        // Documentos mais relevantes pela similaridade do resumo (semântica).
         let rankedDocs = documentSummaries
             .map { (name, summary) -> (String, String, Float) in
                 let summaryEmbedding = self.embedder.embedSync(text: summary)
-                let score = cosineSimilarity(queryEmbedding, summaryEmbedding)
-                return (name, summary, score)
+                return (name, summary, cosineSimilarity(queryEmbedding, summaryEmbedding))
             }
             .sorted { $0.2 > $1.2 }
             .prefix(summaryTopK)
 
         let relevantDocNames = Set(rankedDocs.map { $0.0 })
         let candidateChunks = chunks.filter { relevantDocNames.contains($0.documentName) }
+        guard !candidateChunks.isEmpty else { return nil }
 
-        let rankedChunks = candidateChunks
-            .map { chunk -> (RAGChunk, Float) in
-                let score = cosineSimilarity(queryEmbedding, chunk.embedding)
-                return (chunk, score)
+        // Pontuação por chunk: cosine (semântica) + lexical (BM25-lite), normalizada.
+        let cosineScores = candidateChunks.map { cosineSimilarity(queryEmbedding, $0.embedding) }
+        let lexicalRaw = candidateChunks.map { Self.lexicalScore(queryTerms: queryTerms, text: $0.content) }
+        let lexNorm = Self.normalize(lexicalRaw)
+
+        let ranked = zip(candidateChunks.indices, candidateChunks)
+            .map { (i, chunk) -> (RAGChunk, Float) in
+                let hybrid = 0.65 * cosineScores[i] + 0.35 * lexNorm[i]
+                return (chunk, hybrid)
             }
             .sorted { $0.1 > $1.1 }
             .prefix(topK)
 
-        guard !rankedChunks.isEmpty else { return nil }
+        guard !ranked.isEmpty else { return nil }
 
         var context = "## Contexto Relevante\n\n"
         context += "### Visão Geral dos Documentos\n"
@@ -96,11 +127,21 @@ actor RAGEngine {
             context += "**\(name):** \(summary)\n\n"
         }
         context += "### Trechos Detalhados\n"
-        for (chunk, score) in rankedChunks {
-            context += "[\(chunk.documentName) — trecho \(chunk.chunkIndex + 1)/\(chunk.totalChunks), relevância: \(String(format: "%.2f", score))]\n"
+        context += "Use estes trechos para responder e cite a origem como [documento — trecho N].\n\n"
+        var sources: [RAGSource] = []
+        for (chunk, score) in ranked {
+            let cite = "\(chunk.documentName) — trecho \(chunk.chunkIndex + 1)/\(chunk.totalChunks)"
+            context += "[\(cite), relevância: \(String(format: "%.2f", score))]\n"
             context += chunk.content + "\n\n"
+            sources.append(RAGSource(
+                document: chunk.documentName,
+                chunkIndex: chunk.chunkIndex,
+                totalChunks: chunk.totalChunks,
+                snippet: String(chunk.content.prefix(280)),
+                score: Double(score)
+            ))
         }
-        return context
+        return RAGRetrieval(context: context, sources: sources)
     }
 
     // MARK: - Remove
@@ -152,6 +193,40 @@ actor RAGEngine {
         let normB = sqrt(b.map { $0 * $0 }.reduce(0, +))
         guard normA > 0, normB > 0 else { return 0 }
         return dot / (normA * normB)
+    }
+
+    // MARK: - Lexical (BM25-lite) helpers
+
+    /// Tokeniza em termos minúsculos com 3+ caracteres.
+    static func tokenize(_ text: String) -> [String] {
+        text.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { $0.count >= 3 }
+    }
+
+    /// Frequência (normalizada pelo tamanho) dos termos da query no texto.
+    static func lexicalScore(queryTerms: [String], text: String) -> Float {
+        guard !queryTerms.isEmpty else { return 0 }
+        let terms = tokenize(text)
+        guard !terms.isEmpty else { return 0 }
+        var tf: [String: Int] = [:]
+        for t in terms { tf[t, default: 0] += 1 }
+        var score: Float = 0
+        for q in Set(queryTerms) {
+            if let count = tf[q] {
+                // saturação estilo BM25: ganho decrescente por repetição
+                score += Float(count) / (Float(count) + 1.0)
+            }
+        }
+        return score / sqrt(Float(terms.count))
+    }
+
+    /// Normaliza um vetor de scores para [0, 1] (min-max).
+    static func normalize(_ values: [Float]) -> [Float] {
+        guard let mn = values.min(), let mx = values.max(), mx > mn else {
+            return values.map { _ in 0 }
+        }
+        return values.map { ($0 - mn) / (mx - mn) }
     }
 }
 

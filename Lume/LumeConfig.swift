@@ -17,6 +17,7 @@ struct LumeConfig: Codable {
     var enableSemanticCache: Bool = true
     var enableRAG: Bool = true
     var enablePromptCaching: Bool = true  // Anthropic only
+    var enableMemory: Bool = true         // memória persistente entre conversas
 
     // MARK: - Context
     var maxContextTokens: Int = 12_000

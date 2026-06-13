@@ -37,10 +37,10 @@ struct PlaceholderTextEditor: View {
                     .font(font)
                     .foregroundStyle(placeholderColor)
                     .allowsHitTesting(false)
-                    // NSTextView no macOS tem textContainerInset padrão de
-                    // width=5, height=0 — mas o SwiftUI wrapper adiciona
-                    // padding extra de ~5pt top. Medido empiricamente: top=5, leading=5
-                    .padding(.top, 5)
+                    // Alinhado com o início do texto/cursor do TextEditor.
+                    // O texto real começa no topo do NSTextView; top=1 evita
+                    // que o placeholder fique mais baixo que o cursor.
+                    .padding(.top, 1)
                     .padding(.leading, 5)
             }
         }

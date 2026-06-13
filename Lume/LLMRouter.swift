@@ -55,35 +55,39 @@ enum LLMRouter {
 
     private static let cheapModels: [String: String] = [
         "openai":    "gpt-4o-mini",
-        "anthropic": "claude-3-5-haiku-20241022"
+        "anthropic": "claude-haiku-4-5-20251001"
     ]
 
     private static let powerfulModels: [String: String] = [
         "openai":    "gpt-4o",
-        "anthropic": "claude-opus-4-5"
+        "anthropic": "claude-opus-4-8"
     ]
 
     private static let codeModels: [String: String] = [
         "openai":    "gpt-4o",
-        "anthropic": "claude-sonnet-4-5"
+        "anthropic": "claude-sonnet-4-6"
     ]
 
     private static let longContextModels: [String: String] = [
         "openai":    "gpt-4o",
-        "anthropic": "claude-opus-4-5"
+        "anthropic": "claude-opus-4-8"
     ]
 
     // MARK: - Context window sizes (tokens)
 
     private static let contextWindows: [String: Int] = [
-        "gpt-4o":                        128_000,
-        "gpt-4o-mini":                   128_000,
-        "gpt-4-turbo":                   128_000,
-        "gpt-4":                           8_192,
-        "gpt-3.5-turbo":                  16_385,
-        "claude-opus-4-5":               200_000,
-        "claude-sonnet-4-5":             200_000,
-        "claude-3-5-haiku-20241022":     200_000,
+        "gpt-4o":                         128_000,
+        "gpt-4o-mini":                    128_000,
+        "gpt-4-turbo":                    128_000,
+        "gpt-4":                            8_192,
+        "gpt-3.5-turbo":                   16_385,
+        "claude-opus-4-8":                200_000,
+        "claude-sonnet-4-6":              200_000,
+        "claude-haiku-4-5-20251001":      200_000,
+        // aliases para compatibilidade retroativa
+        "claude-opus-4-5":                200_000,
+        "claude-sonnet-4-5":              200_000,
+        "claude-3-5-haiku-20241022":      200_000,
     ]
 
     // MARK: - Route
@@ -97,38 +101,55 @@ enum LLMRouter {
         forceMode: RoutingMode = .auto
     ) -> RoutingDecision {
 
-        if forceMode == .preferred || !preferredModel.isEmpty {
+        // Detecta o provider real a partir do modelo (suporta gateways com prefixo)
+        let effectiveProvider = preferredModel.contains("/")
+            ? inferProvider(from: preferredModel)
+            : provider
+
+        // Modo preferido: sempre usa o modelo definido na conversa, sem override
+        if forceMode == .preferred {
             return RoutingDecision(
                 model: preferredModel,
-                providerType: provider,
+                providerType: effectiveProvider,
                 reason: .preferredModel,
                 estimatedCost: costTier(for: preferredModel),
                 confidence: 1.0
             )
         }
 
+        // Se não tiver modelo preferido definido, usa preferredModel como âncora
+        if preferredModel.isEmpty {
+            return RoutingDecision(
+                model: preferredModel,
+                providerType: effectiveProvider,
+                reason: .preferredModel,
+                estimatedCost: .medium,
+                confidence: 1.0
+            )
+        }
+
         if hasImages {
-            let model = multimodalModel(for: provider) ?? preferredModel
-            return RoutingDecision(model: model, providerType: provider,
+            let model = multimodalModel(for: effectiveProvider) ?? preferredModel
+            return RoutingDecision(model: model, providerType: effectiveProvider,
                                    reason: .multimodal, estimatedCost: .expensive, confidence: 0.95)
         }
 
         let totalTokens = estimateTokens(prompt)
                         + history.map { estimateTokens($0.content) }.reduce(0, +)
         if totalTokens > 60_000 {
-            let model = longContextModels[provider] ?? preferredModel
-            return RoutingDecision(model: model, providerType: provider,
+            let model = longContextModels[effectiveProvider] ?? preferredModel
+            return RoutingDecision(model: model, providerType: effectiveProvider,
                                    reason: .longContext, estimatedCost: .expensive, confidence: 0.9)
         }
 
         switch forceMode {
         case .cheap:
-            let model = cheapModels[provider] ?? preferredModel
-            return RoutingDecision(model: model, providerType: provider,
+            let model = cheapModels[effectiveProvider] ?? preferredModel
+            return RoutingDecision(model: model, providerType: effectiveProvider,
                                    reason: .costOptimized, estimatedCost: .cheap, confidence: 0.85)
         case .powerful:
-            let model = powerfulModels[provider] ?? preferredModel
-            return RoutingDecision(model: model, providerType: provider,
+            let model = powerfulModels[effectiveProvider] ?? preferredModel
+            return RoutingDecision(model: model, providerType: effectiveProvider,
                                    reason: .complexReasoning, estimatedCost: .expensive, confidence: 0.9)
         default:
             break
@@ -138,20 +159,21 @@ enum LLMRouter {
 
         switch complexity {
         case .low:
-            let model = cheapModels[provider] ?? preferredModel
-            return RoutingDecision(model: model, providerType: provider,
+            // Para gateways: mantém o modelo preferido em vez de tentar trocar por um "barato" desconhecido
+            let model = cheapModels[effectiveProvider] ?? preferredModel
+            return RoutingDecision(model: model, providerType: effectiveProvider,
                                    reason: .simpleQuery, estimatedCost: .cheap, confidence: 0.8)
         case .medium:
-            let model = codeModels[provider] ?? preferredModel
+            let model = codeModels[effectiveProvider] ?? preferredModel
             let isCode = isCodeRelated(prompt)
             return RoutingDecision(
-                model: model, providerType: provider,
+                model: model, providerType: effectiveProvider,
                 reason: isCode ? .codeGeneration : .complexReasoning,
                 estimatedCost: .medium, confidence: 0.75
             )
         case .high:
-            let model = powerfulModels[provider] ?? preferredModel
-            return RoutingDecision(model: model, providerType: provider,
+            let model = powerfulModels[effectiveProvider] ?? preferredModel
+            return RoutingDecision(model: model, providerType: effectiveProvider,
                                    reason: .complexReasoning, estimatedCost: .expensive, confidence: 0.85)
         }
     }
@@ -208,24 +230,77 @@ enum LLMRouter {
 
     static func estimateTokens(_ text: String) -> Int { max(1, text.count / 4) }
 
+    // MARK: - Provider prefix detection
+    // Suporta modelos com prefixo: "anthropic/claude-opus-4-8", "vertex_ai/gemini-2.5-flash", etc.
+
+    /// Extrai o nome curto do modelo removendo o prefixo do provider gateway
+    /// "anthropic/claude-opus-4-8" → "claude-opus-4-8"
+    /// "vertex_ai/gemini-2.5-flash" → "gemini-2.5-flash"
+    /// "claude-opus-4-8" → "claude-opus-4-8" (sem mudança)
+    static func bareModelName(_ model: String) -> String {
+        guard let slash = model.firstIndex(of: "/") else { return model }
+        let name = String(model[model.index(after: slash)...])
+        return name.isEmpty ? model : name
+    }
+
+    /// Detecta o provider base a partir do prefixo do modelo
+    /// "anthropic/..." → "anthropic"; "openai/..." → "openai"; "vertex_ai/gemini..." → "google"
+    static func inferProvider(from model: String) -> String {
+        let lower = model.lowercased()
+        if lower.hasPrefix("anthropic/") || lower.hasPrefix("awsbedrock/us.anthropic") ||
+           lower.hasPrefix("awsbedrock/global.anthropic") { return "anthropic" }
+        if lower.hasPrefix("openai/") || lower.hasPrefix("awsbedrock/openai") { return "openai" }
+        if lower.hasPrefix("vertex_ai/gemini") || lower.hasPrefix("google/") { return "google" }
+        if lower.hasPrefix("vertex_ai/") { return "google" }
+        if lower.hasPrefix("awsbedrock/meta") || lower.contains("llama") { return "meta" }
+        if lower.hasPrefix("awsbedrock/") { return "aws" }
+        if lower.contains("gemini") { return "google" }
+        if lower.contains("gpt") || lower.contains("o1") || lower.contains("o3") ||
+           lower.contains("o4") { return "openai" }
+        if lower.contains("claude") { return "anthropic" }
+        if lower.contains("mistral") || lower.contains("mixtral") { return "mistral" }
+        if lower.contains("llama") || lower.contains("glm") { return "meta" }
+        if lower.contains("deepseek") { return "deepseek" }
+        return "unknown"
+    }
+
     static func costTier(for model: String) -> RoutingDecision.CostTier {
-        let cheap = ["gpt-4o-mini", "claude-3-5-haiku-20241022", "gpt-3.5-turbo"]
-        let expensive = ["gpt-4", "claude-opus-4-5", "gpt-4-turbo"]
-        if cheap.contains(model) { return .cheap }
-        if expensive.contains(model) { return .expensive }
+        let bare = bareModelName(model).lowercased()
+        // Padrões de modelos econômicos (por substring no nome curto)
+        let cheapPatterns = ["mini", "haiku", "nano", "flash", "lite", "micro",
+                             "3.5-turbo", "gpt-3", "nova-lite", "nova-micro",
+                             "llama3-2-1b", "llama3-2-3b", "llama3-1-8b",
+                             "small", "phi-3", "gemma"]
+        // Padrões de modelos premium
+        let expensivePatterns = ["opus", "gpt-4", "gpt-5", "o1", "o3", "o4",
+                                 "nova-premier", "nova-pro", "llama3-1-405b",
+                                 "gemini-3-pro", "gemini-2.5-pro", "405b",
+                                 "ultra", "pro-preview", "sonnet"]
+        if cheapPatterns.contains(where: { bare.contains($0) }) { return .cheap }
+        if expensivePatterns.contains(where: { bare.contains($0) }) { return .expensive }
         return .medium
     }
 
     static func multimodalModel(for provider: String) -> String? {
         switch provider {
         case "openai":    return "gpt-4o"
-        case "anthropic": return "claude-opus-4-5"
+        case "anthropic": return "claude-opus-4-8"
+        case "google":    return "vertex_ai/gemini-2.5-flash"
         default:          return nil
         }
     }
 
     static func maxContextWindow(for model: String) -> Int {
-        contextWindows[model] ?? 4_096
+        // Verifica pelo nome completo primeiro, depois pelo nome curto
+        if let exact = contextWindows[model] { return exact }
+        let bare = bareModelName(model)
+        if let bareLookup = contextWindows[bare] { return bareLookup }
+        // Inferência por padrão de nome para modelos não catalogados
+        let lower = bare.lowercased()
+        if lower.contains("gemini") || lower.contains("claude") { return 200_000 }
+        if lower.contains("gpt-4") || lower.contains("gpt-5") { return 128_000 }
+        if lower.contains("llama") { return 128_000 }
+        return 32_000 // conservador para modelos desconhecidos
     }
 }
 

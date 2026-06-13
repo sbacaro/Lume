@@ -531,9 +531,11 @@ struct ProjectDetailView: View {
     }
 
     private func createConversation() {
+        let provider = providerManager.activeProvider
         let conv = Conversation(
             title: "Nova Conversa",
-            providerType: providerManager.activeProvider.map { _ in "openai" } ?? "openai",
+            providerType: provider?.name == "Anthropic" ? "anthropic" : (providerManager.activeConfig?.providerType ?? "openai"),
+            modelName: provider?.defaultModel ?? "gpt-4o",
             systemPrompt: project.systemPrompt
         )
         conv.project = project
@@ -545,9 +547,11 @@ struct ProjectDetailView: View {
     private func sendMessage() {
         let text = messageText.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
+        let provider = providerManager.activeProvider
         let conv = Conversation(
             title: String(text.prefix(40)),
-            providerType: "openai",
+            providerType: provider?.name == "Anthropic" ? "anthropic" : (providerManager.activeConfig?.providerType ?? "openai"),
+            modelName: provider?.defaultModel ?? "gpt-4o",
             systemPrompt: project.systemPrompt
         )
         conv.project = project
@@ -557,7 +561,7 @@ struct ProjectDetailView: View {
         do { try modelContext.save() } catch { }
         messageText = ""
 
-        let provider = providerManager
+        let manager = providerManager
         let ragProject = project
 
         Task.detached { @MainActor in
@@ -567,7 +571,7 @@ struct ProjectDetailView: View {
                     await RAGEngine.shared.index(file: file)
                 }
             }
-            try? await provider.streamMessage(content: text, conversation: conv)
+            _ = try? await manager.streamMessage(content: text, conversation: conv)
         }
 
         selectedConversation = conv

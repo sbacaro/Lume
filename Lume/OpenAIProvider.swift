@@ -103,11 +103,15 @@ final class OpenAIProvider: AIProvider {
                 messages.append(["role": "user", "content": content])
 
                 let tools = self.buildToolDefinitions()
+                // Detecta se o modelo suporta function calling antes de enviar
+                var modelSupportsTools = self.modelSupportsTools(model)
 
                 var iterationCount = 0
-                let maxIterations = 5
+                let maxIterations = 12
                 var consecutiveToolFailures = 0
                 let maxConsecutiveFailures = 3
+                // Acumula texto entre iterações para auto-continuação silenciosa
+                var accumulatedResponseText = ""
 
                 while iterationCount < maxIterations {
                     iterationCount += 1
@@ -116,18 +120,26 @@ final class OpenAIProvider: AIProvider {
                         "model": model,
                         "messages": messages,
                         "stream": true,
-                        "tools": tools,
-                        "tool_choice": "auto"
                     ]
 
-                    if maxTokens > 0 && maxTokens != 4096 {
-                        payload["max_completion_tokens"] = maxTokens
-                        payload["max_tokens"] = maxTokens
+                    // Só inclui tools se o modelo suportar function calling
+                    if modelSupportsTools {
+                        payload["tools"] = tools
+                        payload["tool_choice"] = "auto"
+                    }
+
+                    // max_tokens: usa apenas o parâmetro correto por tipo de modelo
+                    if maxTokens > 0 {
+                        if self.isReasoningModel(model) {
+                            payload["max_completion_tokens"] = maxTokens
+                        } else {
+                            payload["max_tokens"] = maxTokens
+                        }
                     }
 
                     if let effort, self.isReasoningModel(model) {
                         payload["reasoning_effort"] = effort.rawValue
-                    } else {
+                    } else if !self.isReasoningModel(model) {
                         payload["temperature"] = temperature
                     }
 
@@ -143,12 +155,23 @@ final class OpenAIProvider: AIProvider {
                             body += line
                             if body.count > 4000 { break }
                         }
-                        throw AIProviderError.unknown("HTTP \(http.statusCode): \(body)")
+                        let bodyStr = body
+                        // Se o erro menciona tools/functions, desabilita e tenta novamente
+                        let toolRelatedError = bodyStr.lowercased().contains("tool") ||
+                            bodyStr.lowercased().contains("function") ||
+                            bodyStr.lowercased().contains("not supported")
+                        if modelSupportsTools && toolRelatedError {
+                            modelSupportsTools = false
+                            iterationCount -= 1 // não conta essa iteração
+                            continue
+                        }
+                        throw AIProviderError.unknown("HTTP \(http.statusCode): \(bodyStr)")
                     }
 
                     var textBuffer = ""
                     var toolCalls: [Int: ToolCallAccumulator] = [:]
                     var finishReason = ""
+                    var inReasoning = false
 
                     for try await line in bytes.lines {
                         guard line.hasPrefix("data: ") else { continue }
@@ -165,7 +188,16 @@ final class OpenAIProvider: AIProvider {
 
                         guard let delta = choice["delta"] as? [String: Any] else { continue }
 
+                        // Raciocínio (GLM/DeepSeek/o-series via compat): delta.reasoning_content / reasoning.
+                        // Envelopa em <think>…</think> para o painel de raciocínio renderizar.
+                        if let reasoning = (delta["reasoning_content"] as? String) ?? (delta["reasoning"] as? String),
+                           !reasoning.isEmpty {
+                            if !inReasoning { inReasoning = true; continuation.yield("<think>") }
+                            continuation.yield(reasoning)
+                        }
+
                         if let text = delta["content"] as? String, !text.isEmpty {
+                            if inReasoning { inReasoning = false; continuation.yield("</think>") }
                             textBuffer += text
                             continuation.yield(text)
                         }
@@ -184,10 +216,23 @@ final class OpenAIProvider: AIProvider {
                         }
                     }
 
-                    if toolCalls.isEmpty || finishReason == "stop" || finishReason == "length" {
+                    // Fecha o bloco de raciocínio se ainda estiver aberto.
+                    if inReasoning { continuation.yield("</think>"); inReasoning = false }
+
+                    // Auto-continuação silenciosa: quando o modelo atingiu max_tokens
+                    if finishReason == "length" {
+                        accumulatedResponseText += textBuffer
+                        messages.append(["role": "assistant", "content": accumulatedResponseText])
+                        messages.append(["role": "user", "content": "Continue exatamente de onde parou."])
+                        continue
+                    }
+
+                    // Se o modelo não suporta tools ou não retornou nenhuma, encerra
+                    if !modelSupportsTools || toolCalls.isEmpty || finishReason == "stop" {
                         break
                     }
 
+                    accumulatedResponseText += textBuffer
                     var assistantMessage: [String: Any] = ["role": "assistant"]
                     if !textBuffer.isEmpty { assistantMessage["content"] = textBuffer }
                     var toolCallsJSON: [[String: Any]] = []
@@ -214,6 +259,9 @@ final class OpenAIProvider: AIProvider {
                             }
                         }
 
+                        // Sinaliza a atividade em tempo real (interceptado pelo manager).
+                        continuation.yield("[[STATUS:\(Self.statusLabel(for: toolName))]]")
+
                         let result = await AgentToolExecutor.shared.execute(
                             toolName: toolName, input: input)
 
@@ -222,9 +270,9 @@ final class OpenAIProvider: AIProvider {
                         let inputClean = argsString
                             .replacingOccurrences(of: "\n", with: " ")
                             .replacingOccurrences(of: "|", with: "∣")
-                        let outputClean = String(result.output.prefix(500))
-                            .replacingOccurrences(of: "\n", with: " ")
+                        let outputClean = String(result.output.prefix(2000))
                             .replacingOccurrences(of: "|", with: "∣")
+                            .replacingOccurrences(of: "\n", with: "⏎")   // preserva estrutura
                         let successFlag = result.success ? "1" : "0"
                         
                         continuation.yield("\n[[TOOL:\(toolName)|\(inputClean)|\(outputClean)|\(successFlag)]]\n")
@@ -417,15 +465,158 @@ final class OpenAIProvider: AIProvider {
                         "required": ["url"]
                     ]
                 ]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "github_list_repos",
+                    "description": "Lista os repositórios do GitHub do usuário conectado. Requer GitHub conectado em Configurações.",
+                    "parameters": ["type": "object", "properties": [:] as [String: Any]]
+                ]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "github_get_repo",
+                    "description": "Mostra detalhes de um repositório do GitHub (descrição, linguagem, stars, issues abertas, branch padrão).",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "repo": ["type": "string", "description": "Repositório no formato 'owner/repo' (ou só 'repo' para o usuário conectado)"]
+                        ],
+                        "required": ["repo"]
+                    ]
+                ]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "github_list_issues",
+                    "description": "Lista issues de um repositório do GitHub (não inclui pull requests).",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "repo": ["type": "string", "description": "Repositório 'owner/repo'"],
+                            "state": ["type": "string", "description": "open, closed ou all (padrão: open)"]
+                        ],
+                        "required": ["repo"]
+                    ]
+                ]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "github_list_prs",
+                    "description": "Lista pull requests de um repositório do GitHub.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "repo": ["type": "string", "description": "Repositório 'owner/repo'"],
+                            "state": ["type": "string", "description": "open, closed ou all (padrão: open)"]
+                        ],
+                        "required": ["repo"]
+                    ]
+                ]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "github_create_issue",
+                    "description": "Cria uma nova issue em um repositório do GitHub.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "repo": ["type": "string", "description": "Repositório 'owner/repo'"],
+                            "title": ["type": "string", "description": "Título da issue"],
+                            "body": ["type": "string", "description": "Corpo/descrição (Markdown, opcional)"]
+                        ],
+                        "required": ["repo", "title"]
+                    ]
+                ]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "github_create_repo",
+                    "description": "Cria um novo repositório no GitHub do usuário conectado.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Nome do repositório"],
+                            "description": ["type": "string", "description": "Descrição (opcional)"],
+                            "private": ["type": "string", "description": "'true' para privado, 'false' para público (padrão: false)"]
+                        ],
+                        "required": ["name"]
+                    ]
+                ]
             ]
         ]
     }
 
     // MARK: - Helpers
 
+    /// Rótulo de atividade exibido ao usuário durante a execução de uma ferramenta.
+    static func statusLabel(for toolName: String) -> String {
+        switch toolName {
+        case "web_search":      return "Pesquisando na web…"
+        case "web_fetch":       return "Lendo página…"
+        case "run_shell":       return "Executando comando…"
+        case "write_file":      return "Escrevendo arquivo…"
+        case "read_file":       return "Lendo arquivo…"
+        case "list_directory":  return "Listando arquivos…"
+        case "create_directory":return "Criando diretório…"
+        case "github_list_repos":   return "Listando repositórios…"
+        case "github_get_repo":     return "Lendo repositório…"
+        case "github_list_issues":  return "Listando issues…"
+        case "github_list_prs":     return "Listando pull requests…"
+        case "github_create_issue": return "Criando issue…"
+        case "github_create_repo":  return "Criando repositório…"
+        default:                return "Trabalhando…"
+        }
+    }
+
     private func isReasoningModel(_ model: String) -> Bool {
-        let lower = model.lowercased()
-        return lower.hasPrefix("o1") || lower.hasPrefix("o3") || lower.hasPrefix("o4")
+        let bare = LLMRouter.bareModelName(model).lowercased()
+        return bare.hasPrefix("o1") || bare.hasPrefix("o3") || bare.hasPrefix("o4")
+    }
+
+    /// Detecta se o modelo suporta OpenAI-format function calling.
+    /// A maioria dos modelos modernos suporta (incluindo via LiteLLM translation),
+    /// mas alguns modelos mais antigos ou especializados não suportam.
+    /// Em caso de dúvida, tenta com tools — se der erro 400, faz retry sem.
+    func modelSupportsTools(_ model: String) -> Bool {
+        let bare = LLMRouter.bareModelName(model).lowercased()
+        // Modelos conhecidos por NÃO suportar tools.
+        // (GLM-4.5/4.6 suportam function calling — removidos daqui; se algum modelo
+        //  GLM antigo não suportar, o retry-sem-tools cobre automaticamente.)
+        let noToolsPatterns = [
+            "imagen",          // Modelos de imagem — não são chat
+            "embedding",       // Modelos de embedding
+            "rerank",          // Modelos de reranking
+            "whisper",         // Modelos de áudio
+            "tts",             // Text-to-speech
+            "dall-e",          // Geração de imagem
+            "stable-diffusion",
+            "codestral",       // Mistral codestral não suporta consistentemente
+        ]
+        if noToolsPatterns.contains(where: { bare.contains($0) }) { return false }
+        // Modelos com suporte confirmado
+        let toolsPatterns = [
+            "gpt-4", "gpt-3.5", "gpt-5",          // OpenAI
+            "o1", "o3", "o4",                       // OpenAI reasoning
+            "claude",                                // Anthropic (via LiteLLM)
+            "gemini",                                // Google (via LiteLLM)
+            "llama-3.1", "llama-3.2", "llama-3.3", // Llama 3.1+ suporta
+            "mistral-large", "mistral-medium",       // Mistral (algumas versões)
+            "mixtral",                               // Mixtral suporta
+            "deepseek",                              // DeepSeek
+            "nova",                                  // Amazon Nova
+            "qwen",                                  // Qwen2+
+            "glm-4.5", "glm-4.6", "glm-4-plus",     // GLM modernos
+        ]
+        if toolsPatterns.contains(where: { bare.contains($0) }) { return true }
+        // Para modelos desconhecidos: tenta com tools (retry sem se der erro)
+        return true
     }
 
     private func buildRequest(endpoint: String, method: String, body: [String: Any]?) -> URLRequest {

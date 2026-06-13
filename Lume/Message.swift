@@ -15,6 +15,8 @@ final class Message {
     var content: String
     var timestamp: Date = Date()
     var tokenCount: Int = 0
+    /// Fontes (RAG) usadas para gerar esta resposta — exibidas como citações.
+    var ragSources: [RAGSource] = []
 
     @Relationship(deleteRule: .cascade)
     var artifact: Artifact?

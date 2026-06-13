@@ -30,7 +30,14 @@ struct ChatDetailView: View {
     @State private var focusInput = false
     @State private var editingNotes = false
     @State private var scrollProxy: ScrollViewProxy? = nil
-    @State private var isAtBottom = true
+    @State private var displayedMessagesCount = 20
+    @State private var expandedMessageId: String?
+    @State private var expandedThinkingId: String?
+    @State private var showVersions = false
+    @State private var errorToast: String?
+    @State private var approval = ApprovalCoordinator.shared
+    @State private var queuedMessage: String?
+    @State private var isChatDropTargeted = false
 
     var body: some View {
         HSplitView {
@@ -39,6 +46,15 @@ struct ChatDetailView: View {
                 Divider()
                 messageList
                 if !attachedFiles.isEmpty { attachmentBar }
+                if let pending = approval.pending {
+                    approvalCard(pending)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                if let q = queuedMessage, !q.trimmingCharacters(in: .whitespaces).isEmpty {
+                    queuedChip(q)
+                }
+                
+                // Input fixo na base
                 ChatInputView(
                     text: $messageText,
                     placeholder: inputPlaceholder,
@@ -47,18 +63,50 @@ struct ChatDetailView: View {
                     onStop: { providerManager.cancelStreaming() },
                     onAttach: { showFileImporter = true },
                     onVoice: { Task { await dictation.toggleRecording() } },
+                    onQueue: { queueMessage() },
                     isDictating: dictation.isRecording,
                     modelName: conversation.modelName,
                     availableModels: availableModels,
                     onModelChange: { newModel in
-                        conversation.modelName = newModel
-                        providerManager.changeModel(newModel)
+                        providerManager.changeModel(newModel, for: conversation)
+                    },
+                    onProviderModelSelect: { provider, newModel in
+                        // Mantém modelo e provider em sincronia: ao escolher um modelo
+                        // dentro de um provider, troca o provider ativo para ele.
+                        conversation.providerType = provider.providerType
+                        providerManager.changeModel(newModel, for: conversation)
+                        try? modelContext.save()
+                        Task {
+                            try? await providerManager.setActiveProvider(
+                                configID: provider.id, config: provider, context: modelContext)
+                        }
                     },
                     attachedImages: $attachedImages
                 )
             }
             .frame(minWidth: 380)
             .background(Color(.windowBackgroundColor))
+            .onDrop(of: [.image, .fileURL], isTargeted: $isChatDropTargeted) { providers in
+                handleChatImageDrop(providers: providers)
+            }
+            .overlay {
+                if isChatDropTargeted {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [8]))
+                        .background(Color.accentColor.opacity(0.04))
+                        .overlay(
+                            Label("Solte para anexar", systemImage: "photo.badge.plus")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color.accentColor)
+                                .padding(.horizontal, 14).padding(.vertical, 8)
+                                .background(.ultraThinMaterial, in: Capsule())
+                        )
+                        .padding(8)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.15), value: isChatDropTargeted)
 
             if showInspector && activeArtifact == nil {
                 inspectorPanel
@@ -72,6 +120,8 @@ struct ChatDetailView: View {
                     .transition(.move(edge: .trailing))
             }
         }
+        .overlay(alignment: .top) { errorBannerView }
+        .animation(.easeInOut(duration: 0.2), value: errorToast)
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: allowedFileTypes,
@@ -86,6 +136,17 @@ struct ChatDetailView: View {
                 editingMessage = nil
             } onCancel: { editingMessage = nil }
         }
+        .sheet(isPresented: $showVersions) {
+            VersionHistorySheet(
+                branches: conversation.versionBranches.sorted { $0.createdAt > $1.createdAt },
+                onRestore: { restoreBranch($0); showVersions = false },
+                onDelete: { branch in
+                    conversation.versionBranches.removeAll { $0.id == branch.id }
+                    try? modelContext.save()
+                },
+                onClose: { showVersions = false }
+            )
+        }
         .onChange(of: dictation.transcript) { _, t in
             guard !t.isEmpty else { return }
             messageText = t
@@ -95,6 +156,16 @@ struct ChatDetailView: View {
                 Task {
                     try? await Task.sleep(for: .milliseconds(400))
                     await MainActor.run { if !messageText.isEmpty { sendMessage() } }
+                }
+            }
+        }
+        .onChange(of: providerManager.isLoading) { _, loading in
+            // Mensagem enfileirada: dispara automaticamente ao terminar a resposta atual.
+            if !loading, let queued = queuedMessage {
+                queuedMessage = nil
+                messageText = queued
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    if !providerManager.isLoading { sendMessage() }
                 }
             }
         }
@@ -155,10 +226,32 @@ struct ChatDetailView: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
 
+                    // Modelo escolhido pelo roteamento automático (quando difere do preferido)
+                    if providerManager.isLoading,
+                       let routed = providerManager.lastRoutingDecision?.model,
+                       routed != conversation.modelName {
+                        Text("→ \(shortModelName(routed))")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(Color.accentColor)
+                            .help("Roteamento automático escolheu \(routed) para esta mensagem")
+                    }
+
                     if providerManager.lastCacheHit {
                         Image(systemName: "bolt.fill")
                             .font(.system(size: 9))
                             .foregroundStyle(.yellow)
+                            .help("Resposta servida do cache semântico")
+                    }
+
+                    // Uso da conversa: tokens + custo estimado
+                    if conversation.totalTokensUsed > 0 {
+                        Text("·").font(.system(size: 10)).foregroundStyle(.tertiary)
+                        Image(systemName: "gauge.with.dots.needle.33percent")
+                            .font(.system(size: 9)).foregroundStyle(.tertiary)
+                        Text(usageLabel)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.tertiary)
+                            .help("Tokens usados nesta conversa e custo estimado (aproximado)")
                     }
                 }
             }
@@ -174,6 +267,20 @@ struct ChatDetailView: View {
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(.ultraThinMaterial, in: Capsule())
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+
+            // Velocidade de geração durante o streaming
+            if providerManager.isLoading && providerManager.streamingTokenCount > 0 {
+                HStack(spacing: 5) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 9)).foregroundStyle(.secondary)
+                    Text(streamingRateLabel)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 8).padding(.vertical, 3)
+                .background(.ultraThinMaterial, in: Capsule())
+                .transition(.opacity)
             }
 
             headerButton(icon: "terminal", isActive: false) { showTerminal = true }.help("Terminal")
@@ -195,7 +302,14 @@ struct ChatDetailView: View {
             }.help("Inspector")
 
             Menu {
-                Button("Exportar como Markdown", action: exportConversation)
+                Menu("Exportar") {
+                    Button("Markdown (arquivo)…") { ConversationExporter.saveMarkdown(conversation) }
+                    Button("PDF…") { ConversationExporter.savePDF(conversation) }
+                    Button("Copiar como Markdown") { ConversationExporter.copyMarkdown(conversation) }
+                }
+                Divider()
+                Button("Versões anteriores (\(conversation.versionBranches.count))") { showVersions = true }
+                    .disabled(conversation.versionBranches.isEmpty)
                 Divider()
                 Button("Limpar Cache") { Task { await SemanticCache.shared.clear() } }
                 Divider()
@@ -236,36 +350,7 @@ struct ChatDetailView: View {
                                 .frame(width: geometry.size.width)
                                 .frame(minHeight: geometry.size.height - 20)
                         } else {
-                            let sortedMessages = conversation.messages.sorted { $0.timestamp < $1.timestamp }
-                            ForEach(sortedMessages, id: \.id) { message in
-                                MessageRowView(
-                                    message: message,
-                                    isStreaming: providerManager.streamingMessageID == message.id,
-                                    toolCalls: activeToolCalls[message.id] ?? [],
-                                    onArtifactTap: { artifact in
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            if activeArtifact?.id == artifact.id {
-                                                activeArtifact = nil; showInspector = true
-                                            } else {
-                                                activeArtifact = artifact; showInspector = false
-                                            }
-                                        }
-                                    },
-                                    onRestartFrom: {
-                                        if message.role == .user {
-                                            restartConversation(from: message, withNewContent: nil)
-                                        } else {
-                                            focusInput = true
-                                        }
-                                    },
-                                    onEdit: { _ in editingMessage = message },
-                                    onSuggestionSelected: { selectedOption in
-                                        messageText = selectedOption
-                                        sendMessage()
-                                    }
-                                )
-                                .id(message.id)
-                            }
+                            messageListContent(geometry: geometry)
                         }
 
                         Color.clear.frame(height: 1).id("__bottom__")
@@ -277,6 +362,7 @@ struct ChatDetailView: View {
                     scrollToBottom(proxy: proxy, animated: false)
                 }
                 .onChange(of: conversation.messages.count) { _, _ in
+                    displayedMessagesCount = conversation.messages.count
                     scrollToBottom(proxy: proxy, animated: true)
                 }
                 .onChange(of: providerManager.streamingMessageID) { _, id in
@@ -288,6 +374,109 @@ struct ChatDetailView: View {
             }
         }
         .textSelection(.enabled)
+    }
+
+    // MARK: - Message List Content
+
+    private func messageListContent(geometry: GeometryProxy) -> some View {
+        // LazyVStack: só renderiza as linhas visíveis. Sem isso, cada flush do
+        // streaming re-avalia o corpo de TODAS as mensagens (e reparseava o
+        // markdown de cada uma), saturando CPU e memória em conversas longas.
+        LazyVStack(alignment: .leading, spacing: 0) {
+            if displayedMessagesCount < conversation.messages.count {
+                loadMoreButton
+            }
+            messageListRows
+        }
+    }
+
+    // MARK: - Load More Button
+
+    private var loadMoreButton: some View {
+        Button {
+            withAnimation {
+                displayedMessagesCount += 20
+            }
+        } label: {
+            HStack {
+                ProgressView().scaleEffect(0.7)
+                Text("Carregar \(min(20, conversation.messages.count - displayedMessagesCount)) mensagens anteriores")
+                    .font(.system(size: 12))
+                Spacer()
+            }
+            .padding(12)
+            .background(Color.primary.opacity(0.05))
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 12)
+    }
+
+    // MARK: - Message List Rows
+
+    private var messageListRows: some View {
+        let sortedMessages = conversation.messages.sorted { $0.timestamp < $1.timestamp }
+        let startIndex = max(0, sortedMessages.count - displayedMessagesCount)
+
+        return ForEach(Array(sortedMessages.enumerated()), id: \.element.id) { idx, message in
+            if idx >= startIndex {
+                messageRowForMessage(message)
+                    .id(message.id)
+            }
+        }
+    }
+
+    // MARK: - Message Row Builder
+
+    private func messageRowForMessage(_ message: Message) -> some View {
+        let isStreaming = providerManager.streamingMessageID == message.id
+        let toolCalls = activeToolCalls[message.id] ?? []
+        
+        return MessageRowView(
+            message: message,
+            isStreaming: isStreaming,
+            streamingActivity: isStreaming ? providerManager.streamingActivity : nil,
+            toolCalls: toolCalls,
+            isThinkingExpanded: expandedThinkingId == message.id,
+            onToggleThinking: { toggleThinking(messageId: message.id) },
+            onArtifactTap: handleArtifactTap,
+            onRestartFrom: { handleRestartFrom(message: message) },
+            onEdit: { _ in editingMessage = message },
+            onSuggestionSelected: handleSuggestionSelected
+        )
+    }
+
+    // MARK: - Message Handlers
+
+    private func toggleThinking(messageId: String) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            expandedThinkingId = expandedThinkingId == messageId ? nil : messageId
+        }
+    }
+
+    private func handleArtifactTap(_ artifact: Artifact) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if activeArtifact?.id == artifact.id {
+                activeArtifact = nil
+                showInspector = true
+            } else {
+                activeArtifact = artifact
+                showInspector = false
+            }
+        }
+    }
+
+    private func handleRestartFrom(message: Message) {
+        if message.role == .user {
+            restartConversation(from: message, withNewContent: nil)
+        } else {
+            focusInput = true
+        }
+    }
+
+    private func handleSuggestionSelected(_ suggestion: String) {
+        messageText = suggestion
+        sendMessage()
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy, animated: Bool) {
@@ -593,20 +782,41 @@ struct ChatDetailView: View {
         }
     }
 
+    /// Rótulo compacto de uso: tokens + custo estimado.
+    private var usageLabel: String {
+        let tokens = ModelPricing.formatTokens(conversation.totalTokensUsed)
+        if let cost = ModelPricing.estimatedCost(model: conversation.modelName,
+                                                 tokens: conversation.totalTokensUsed) {
+            return "\(tokens) tok · ~\(ModelPricing.formatCost(cost))"
+        }
+        return "\(tokens) tok"
+    }
+
+    /// Encurta nomes de modelo para exibição (remove prefixos/sufixos verbosos).
+    private func shortModelName(_ model: String) -> String {
+        model
+            .replacingOccurrences(of: "claude-", with: "")
+            .replacingOccurrences(of: "-20251001", with: "")
+    }
+
     private var availableModels: [String] {
         let active = providerConfigs.filter { $0.isActive }
         if let match = active.first(where: { $0.providerType == conversation.providerType }) {
+            // Usa modelos cacheados da API (mais completo e sempre atualizado)
             if !match.cachedModels.isEmpty {
                 var seen = Set<String>()
                 return match.cachedModels.filter { seen.insert($0).inserted }
             }
+            // Fallback estático apenas para Anthropic/OpenAI diretos ainda sem cache
             switch match.providerType {
-            case "openai":    return ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-            case "anthropic": return ["claude-opus-4-5", "claude-sonnet-4-5", "claude-3-5-haiku-20241022"]
-            default:          return [match.defaultModel]
+            case "openai":    return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"]
+            case "anthropic": return ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+            default:
+                // Gateways (litellm, custom, etc): sem cache ainda → mostra modelo atual
+                return conversation.modelName.isEmpty ? [match.defaultModel] : [conversation.modelName]
             }
         }
-        return [conversation.modelName]
+        return conversation.modelName.isEmpty ? [] : [conversation.modelName]
     }
 
     private var inputPlaceholder: String {
@@ -644,6 +854,31 @@ struct ChatDetailView: View {
 
     // MARK: - Actions
 
+    /// Drop de imagem em qualquer lugar da área de chat → anexa.
+    private func handleChatImageDrop(providers: [NSItemProvider]) -> Bool {
+        var handled = false
+        for provider in providers {
+            if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
+                provider.loadObject(ofClass: NSImage.self) { img, _ in
+                    if let img = img as? NSImage {
+                        DispatchQueue.main.async { attachedImages.append(img) }
+                    }
+                }
+                handled = true
+            } else if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+                provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, _ in
+                    if let data = item as? Data,
+                       let url = URL(dataRepresentation: data, relativeTo: nil),
+                       let img = NSImage(contentsOf: url) {
+                        DispatchQueue.main.async { attachedImages.append(img) }
+                    }
+                }
+                handled = true
+            }
+        }
+        return handled
+    }
+
     private func handleFileImport(result: Result<[URL], Error>) {
         guard case .success(let urls) = result else { return }
         Task {
@@ -670,6 +905,8 @@ struct ChatDetailView: View {
         providerManager.cancelStreaming()
         guard let idx = conversation.messages.firstIndex(where: { $0.id == message.id }) else { return }
         let content = newContent ?? message.content
+        // Branching: arquiva o trecho que será substituído (nada é perdido).
+        archiveBranch(fromIndex: idx, label: newContent != nil ? "Antes de editar" : "Antes de reiniciar")
         conversation.messages.removeSubrange(idx...)
         conversation.updatedAt = Date()
         try? modelContext.save()
@@ -680,10 +917,46 @@ struct ChatDetailView: View {
                 try await providerManager.streamMessage(content: content, conversation: conversation)
                 try? modelContext.save()
             } catch {
-                conversation.messages.append(
-                    Message(role: .assistant, content: "**Erro:** \(error.localizedDescription)"))
+                await MainActor.run { showErrorToast(error.localizedDescription) }
             }
         }
+    }
+
+    // MARK: - Branching (histórico de versões)
+
+    /// Arquiva o trecho de mensagens a partir de `fromIndex` antes de removê-lo,
+    /// para que a versão anterior possa ser restaurada. Mantém no máximo 12 versões.
+    private func archiveBranch(fromIndex: Int, label: String) {
+        guard fromIndex >= 0, fromIndex < conversation.messages.count else { return }
+        let removed = conversation.messages[fromIndex...]
+        let snapshot = removed.map {
+            BranchMessage(role: $0.role.rawValue, content: $0.content, timestamp: $0.timestamp)
+        }
+        guard !snapshot.isEmpty else { return }
+        conversation.versionBranches.append(
+            ConversationBranch(fromIndex: fromIndex, label: label, messages: Array(snapshot))
+        )
+        if conversation.versionBranches.count > 12 {
+            conversation.versionBranches.removeFirst(conversation.versionBranches.count - 12)
+        }
+    }
+
+    /// Restaura uma versão arquivada. Antes, arquiva o estado atual (reversível),
+    /// trunca a partir do ponto de origem e recria as mensagens do branch.
+    private func restoreBranch(_ branch: ConversationBranch) {
+        providerManager.cancelStreaming()
+        let idx = min(max(0, branch.fromIndex), conversation.messages.count)
+        if idx < conversation.messages.count {
+            archiveBranch(fromIndex: idx, label: "Antes de restaurar")
+            conversation.messages.removeSubrange(idx...)
+        }
+        for bm in branch.messages {
+            let role = MessageRole(rawValue: bm.role) ?? .assistant
+            conversation.messages.append(Message(role: role, content: bm.content, timestamp: bm.timestamp))
+        }
+        conversation.versionBranches.removeAll { $0.id == branch.id }
+        conversation.updatedAt = Date()
+        try? modelContext.save()
     }
 
     private func sendMessage() {
@@ -704,8 +977,10 @@ struct ChatDetailView: View {
         }
         let display = displayParts.joined(separator: "\n")
 
+        let modelHasVision = ModelCapabilities.supportsVision(conversation.modelName)
         var llmContent = text.isEmpty ? display : text
-        if !attachedImages.isEmpty {
+        // Modelos COM visão recebem a imagem em base64.
+        if !attachedImages.isEmpty && modelHasVision {
             let imgs = attachedImages.compactMap { img -> String? in
                 guard let tiff = img.tiffRepresentation,
                       let bmp = NSBitmapImageRep(data: tiff),
@@ -715,6 +990,8 @@ struct ChatDetailView: View {
             }.joined(separator: "\n")
             if !imgs.isEmpty { llmContent += "\n\n" + imgs }
         }
+        // Modelos SEM visão: descrição local (OCR + classificação) no lugar do base64.
+        let imagesForDescribe = modelHasVision ? [] : attachedImages
 
         conversation.messages.append(Message(role: .user, content: display))
         messageText = ""
@@ -725,9 +1002,16 @@ struct ChatDetailView: View {
 
         let title = conversation.title
         Task {
+            // Análise local (Vision) para modelos sem visão: OCR + classificação,
+            // anexada como descrição textual da imagem.
+            var finalLLM = llmContent
+            if !imagesForDescribe.isEmpty {
+                let desc = await VisionOCR.describe(in: imagesForDescribe)
+                if !desc.isEmpty { finalLLM += "\n\n" + desc }
+            }
             do {
                 let response = try await providerManager.streamMessage(
-                    content: llmContent, conversation: conversation)
+                    content: finalLLM, conversation: conversation)
                 conversation.updatedAt = Date()
                 syncTasksFromAI(response: response,
                                 messageID: conversation.messages.last?.id ?? "")
@@ -737,8 +1021,7 @@ struct ChatDetailView: View {
                         conversationTitle: title, summary: String(response.prefix(80)))
                 }
             } catch {
-                conversation.messages.append(
-                    Message(role: .assistant, content: "**Erro:** \(error.localizedDescription)"))
+                await MainActor.run { showErrorToast(error.localizedDescription) }
             }
         }
     }
@@ -784,23 +1067,133 @@ struct ChatDetailView: View {
         (try? AttributedString(markdown: text)) ?? AttributedString(text)
     }
 
-    private func exportConversation() {
-        let md = conversation.messages
-            .map { "**\($0.role.rawValue.capitalized):**\n\n\($0.content)" }
-            .joined(separator: "\n\n---\n\n")
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(md, forType: .string)
-    }
-
     private func clearHistory() {
         conversation.messages.removeAll()
         conversation.tasks.removeAll()
         conversation.referencedFiles.removeAll()
         conversation.contextTags.removeAll()
         conversation.updatedAt = Date()
+        try? modelContext.save()
     }
 
     private func deleteConversation() { modelContext.delete(conversation) }
+
+    // MARK: - Error Toast
+
+    private func showErrorToast(_ message: String) {
+        errorToast = message
+        Task {
+            try? await Task.sleep(for: .seconds(6))
+            await MainActor.run { if errorToast == message { errorToast = nil } }
+        }
+    }
+
+    @ViewBuilder
+    private var errorBannerView: some View {
+        if let msg = errorToast {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 13)).foregroundStyle(.orange)
+                Text(msg)
+                    .font(.system(size: 12)).foregroundStyle(.primary)
+                    .lineLimit(3).fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                Button { errorToast = nil } label: {
+                    Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }.buttonStyle(.plain)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .frame(maxWidth: 440)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.orange.opacity(0.35), lineWidth: 1))
+            .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
+            .padding(.top, 12)
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
+    /// Rótulo de velocidade de geração durante o streaming.
+    private var streamingRateLabel: String {
+        let elapsed = providerManager.streamingElapsed
+        guard elapsed > 0.4 else { return "\(providerManager.streamingTokenCount) tok" }
+        let rate = Double(providerManager.streamingTokenCount) / elapsed
+        return String(format: "%.0f tok/s", rate)
+    }
+
+    // MARK: - Approval Card
+
+    private func approvalCard(_ pending: ApprovalCoordinator.PendingApproval) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: pending.isDestructive ? "exclamationmark.triangle.fill" : "hand.raised.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(pending.isDestructive ? .orange : Color.accentColor)
+                Text(pending.summary)
+                    .font(.system(size: 13, weight: .semibold))
+                Spacer()
+                Text(pending.toolName)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+            }
+            ScrollView {
+                Text(pending.detail)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 120)
+            .padding(8)
+            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            HStack(spacing: 8) {
+                Text("O agente quer executar esta ação.")
+                    .font(.system(size: 11)).foregroundStyle(.tertiary)
+                Spacer()
+                Button("Recusar") { approval.resolve(false) }
+                    .buttonStyle(.bordered)
+                Button("Aprovar") { approval.resolve(true) }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder((pending.isDestructive ? Color.orange : Color.accentColor).opacity(0.35), lineWidth: 1))
+        .padding(.horizontal, 14)
+        .padding(.bottom, 6)
+    }
+
+    // MARK: - Queue (fila de mensagens)
+
+    /// Enfileira a mensagem digitada para enviar quando a resposta atual terminar.
+    private func queueMessage() {
+        let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty || !attachedImages.isEmpty else { return }
+        queuedMessage = messageText
+        messageText = ""
+    }
+
+    private func queuedChip(_ text: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.system(size: 11)).foregroundStyle(Color.accentColor)
+            Text("Na fila: \(text)")
+                .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+            Spacer()
+            Button { queuedMessage = nil } label: {
+                Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 6)
+        .background(Color.accentColor.opacity(0.08), in: Capsule())
+        .padding(.horizontal, 14).padding(.bottom, 4)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
 }
 
 // MARK: - FlowLayout
@@ -848,7 +1241,7 @@ struct EditMessageSheet: View {
                 .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1))
-            Text("A conversa será reiniciada a partir desta mensagem.")
+            Text("A conversa será reiniciada a partir desta mensagem. A versão anterior fica salva em “Versões anteriores”.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
             HStack {
                 Button("Cancelar", role: .cancel) { onCancel() }.buttonStyle(.plain).foregroundStyle(.secondary)
@@ -860,6 +1253,85 @@ struct EditMessageSheet: View {
             }
         }
         .padding(24).frame(width: 420)
+    }
+}
+
+// MARK: - Version History Sheet
+
+struct VersionHistorySheet: View {
+    let branches: [ConversationBranch]
+    let onRestore: (ConversationBranch) -> Void
+    let onDelete: (ConversationBranch) -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Versões anteriores")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                Spacer()
+                Button { onClose() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15)).foregroundStyle(.secondary)
+                }.buttonStyle(.plain)
+            }
+            .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 10)
+
+            Text("Trechos arquivados ao editar ou reiniciar a conversa. Restaurar substitui o trecho atual — de forma reversível, pois o estado de agora também é arquivado.")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 20).padding(.bottom, 12)
+
+            Divider()
+
+            if branches.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 28)).foregroundStyle(.tertiary)
+                    Text("Nenhuma versão arquivada")
+                        .font(.system(size: 13)).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(branches) { branch in branchRow(branch) }
+                    }
+                    .padding(16)
+                }
+            }
+        }
+        .frame(width: 480, height: 460)
+    }
+
+    private func branchRow(_ branch: ConversationBranch) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label(branch.label, systemImage: "clock.arrow.circlepath")
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(.primary)
+                Spacer()
+                Text(branch.createdAt.formatted(.relative(presentation: .named)))
+                    .font(.system(size: 10)).foregroundStyle(.tertiary)
+            }
+            Text(branch.preview)
+                .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 8) {
+                Text("\(branch.messages.count) mensagens")
+                    .font(.system(size: 10)).foregroundStyle(.tertiary)
+                Spacer()
+                Button(role: .destructive) { onDelete(branch) } label: {
+                    Image(systemName: "trash").font(.system(size: 11))
+                }.buttonStyle(.plain).foregroundStyle(.secondary)
+                Button { onRestore(branch) } label: {
+                    Text("Restaurar").font(.system(size: 11, weight: .semibold))
+                }.buttonStyle(.borderedProminent).controlSize(.small)
+            }
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
     }
 }
 
@@ -963,7 +1435,6 @@ struct AttachmentChipView: View {
 }
 
 // MARK: - Terminal Sheet
-// ✅ Barra customizada estilo macOS com semáforo + título "Lume Terminal"
 
 struct TerminalSheetView: View {
     @Environment(\.dismiss) private var dismiss
@@ -972,19 +1443,14 @@ struct TerminalSheetView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // ── Barra de título customizada ──────────────────────
             ZStack {
-                // Fundo da barra — cinza escuro igual à imagem
                 Color(red: 0.18, green: 0.18, blue: 0.18)
 
-                // Título centralizado
                 Text("Lume Terminal")
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
                     .foregroundStyle(Color(red: 0.0, green: 0.85, blue: 0.85))
 
-                // Botões semáforo à esquerda
                 HStack(spacing: 6) {
-                    // ✅ Vermelho — fecha
                     Button { dismiss() } label: {
                         Circle()
                             .fill(isHoveringClose
@@ -1000,12 +1466,10 @@ struct TerminalSheetView: View {
                     .buttonStyle(.plain)
                     .onHover { isHoveringClose = $0 }
 
-                    // Amarelo — decorativo
                     Circle()
                         .fill(Color(red: 0.95, green: 0.73, blue: 0.10))
                         .frame(width: 12, height: 12)
 
-                    // Verde — decorativo
                     Circle()
                         .fill(Color(red: 0.15, green: 0.78, blue: 0.25))
                         .frame(width: 12, height: 12)
@@ -1016,19 +1480,16 @@ struct TerminalSheetView: View {
             }
             .frame(height: 36)
 
-            // ── Terminal ─────────────────────────────────────────
             TerminalView()
                 .frame(minWidth: 700, minHeight: 420)
                 .background(Color.black)
         }
         .frame(minWidth: 700, minHeight: 456)
         .background(Color.black)
-        // ✅ Esconde botões nativos do macOS
         .background(WindowButtonHider())
     }
 }
 
-// ✅ Esconde os botões da janela assim que a view entra na hierarquia
 struct WindowButtonHider: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
@@ -1042,7 +1503,7 @@ struct WindowButtonHider: NSViewRepresentable {
         return view
     }
     func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             if let window = nsView.window {
                 window.standardWindowButton(.closeButton)?.isHidden = true
                 window.standardWindowButton(.miniaturizeButton)?.isHidden = true

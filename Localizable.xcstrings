@@ -22,6 +22,19 @@
     "(%lld)" : {
 
     },
+    "@%@" : {
+
+    },
+    "%@ · %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld/%3$lld"
+          }
+        }
+      }
+    },
     "%@ ▋" : {
 
     },
@@ -54,6 +67,9 @@
         }
       }
     },
+    "%lld mensagens" : {
+
+    },
     "%lld mensagens · %@" : {
       "localizations" : {
         "en" : {
@@ -69,6 +85,16 @@
     },
     "%lld modelos disponíveis" : {
 
+    },
+    "%lld públicos · %lld privados" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld públicos · %2$lld privados"
+          }
+        }
+      }
     },
     "%lld resultado%@" : {
       "localizations" : {
@@ -109,7 +135,7 @@
     "%lldk" : {
 
     },
-    "•" : {
+    "→ %@" : {
 
     },
     "↑%lld staged" : {
@@ -148,7 +174,7 @@
     "100k" : {
 
     },
-    "A conversa será reiniciada a partir desta mensagem." : {
+    "A conversa será reiniciada a partir desta mensagem. A versão anterior fica salva em “Versões anteriores”." : {
 
     },
     "Aa" : {
@@ -205,6 +231,12 @@
     "Agente de Código" : {
 
     },
+    "Agir" : {
+
+    },
+    "Agir sem perguntar" : {
+
+    },
     "AIzaSy..." : {
 
     },
@@ -226,10 +258,16 @@
     "Apagar Projeto" : {
 
     },
+    "Aparência" : {
+
+    },
     "API Key" : {
 
     },
     "API Key (opcional para alguns servidores)" : {
+
+    },
+    "Aprovar" : {
 
     },
     "Arquivar" : {
@@ -239,6 +277,9 @@
 
     },
     "Assistente de configuração" : {
+
+    },
+    "Ativa" : {
 
     },
     "Ativo" : {
@@ -289,7 +330,13 @@
     "Buscar" : {
 
     },
+    "Buscar conversas, mensagens ou ações…" : {
+
+    },
     "Buscar no código…" : {
+
+    },
+    "Buscar…" : {
 
     },
     "Cache semântico" : {
@@ -298,16 +345,22 @@
     "Cancelar" : {
 
     },
-    "Cancelar (⌘.)" : {
+    "Carregando git…" : {
 
     },
-    "Carregando git…" : {
+    "Carregando issues e PRs…" : {
 
     },
     "Carregando log…" : {
 
     },
     "Carregando status…" : {
+
+    },
+    "Carregando…" : {
+
+    },
+    "Carregar %lld mensagens anteriores" : {
 
     },
     "clean" : {
@@ -317,6 +370,9 @@
 
     },
     "Cole sua API Key aqui" : {
+
+    },
+    "Cole um Personal Access Token (classic ou fine-grained) com escopo `repo`." : {
 
     },
     "Comando" : {
@@ -341,6 +397,12 @@
 
     },
     "Concluído" : {
+
+    },
+    "Conectado" : {
+
+    },
+    "Conectar" : {
 
     },
     "Conectar um Provider de IA" : {
@@ -370,7 +432,19 @@
     "Copiar código" : {
 
     },
+    "Copiar como Markdown" : {
+
+    },
+    "Cor de acento" : {
+
+    },
     "Cowork" : {
+
+    },
+    "Criar" : {
+
+    },
+    "Criar issue" : {
 
     },
     "Criar perfil padrão" : {
@@ -409,10 +483,22 @@
     "Desarquivar" : {
 
     },
+    "Desativada" : {
+
+    },
+    "Desconectar" : {
+
+    },
+    "Descrição (opcional)" : {
+
+    },
     "Diferenciar maiúsculas/minúsculas" : {
 
     },
     "Digite sua senha para executar comandos com privilégios elevados." : {
+
+    },
+    "Ditado" : {
 
     },
     "DuckDuckGo ativo por padrão" : {
@@ -427,10 +513,16 @@
     "Editor de workflows em breve" : {
 
     },
+    "Enfileirar — envia ao terminar a resposta" : {
+
+    },
     "Enviar (↩)" : {
 
     },
     "Erro no Ditado" : {
+
+    },
+    "esc" : {
 
     },
     "Escolha onde o Lume vai buscar inteligência." : {
@@ -466,10 +558,16 @@
     "Exigir workspace para operações de arquivo" : {
 
     },
-    "Exportar como Markdown" : {
+    "Exportar" : {
+
+    },
+    "Extra" : {
 
     },
     "Falhou" : {
+
+    },
+    "Fatos que a IA deve lembrar em todas as conversas (ex.: \"Trabalho na Rumo Logística\", \"Prefiro respostas objetivas em português\")." : {
 
     },
     "Fechar" : {
@@ -478,16 +576,31 @@
     "Ferramentas" : {
 
     },
+    "Fila" : {
+
+    },
     "Filtros" : {
 
     },
     "Fixar" : {
 
     },
+    "Fontes" : {
+
+    },
     "Framework detectado:" : {
 
     },
     "Gerador de Ícones" : {
+
+    },
+    "Gerando resposta" : {
+
+    },
+    "Gerar token →" : {
+
+    },
+    "ghp_… ou github_pat_…" : {
 
     },
     "Git" : {
@@ -500,6 +613,9 @@
 
     },
     "Google Custom Search (opcional)" : {
+
+    },
+    "Grande" : {
 
     },
     "Gravando…" : {
@@ -553,6 +669,9 @@
     "Instruções para o assistente" : {
 
     },
+    "Issues abertas (%lld)" : {
+
+    },
     "Limpar Cache" : {
 
     },
@@ -577,6 +696,12 @@
     "Lume %@" : {
 
     },
+    "Lume executa ações sem pedir aprovação" : {
+
+    },
+    "Lume pausa para você aprovar cada ação" : {
+
+    },
     "Lume Terminal" : {
 
     },
@@ -584,6 +709,9 @@
 
     },
     "Mais opções" : {
+
+    },
+    "Markdown (arquivo)…" : {
 
     },
     "Máx. iterações do agente" : {
@@ -595,6 +723,9 @@
     "Memória" : {
 
     },
+    "Memória persistente" : {
+
+    },
     "Mensagem do commit" : {
 
     },
@@ -604,13 +735,13 @@
     "Modelo padrão" : {
 
     },
-    "Modelos" : {
-
-    },
     "Mover para projeto" : {
 
     },
     "Mudar o nome" : {
+
+    },
+    "Na fila: %@" : {
 
     },
     "Nenhum conector configurado" : {
@@ -622,13 +753,22 @@
     "Nenhum perfil de estilo" : {
 
     },
+    "Nenhum PR aberto." : {
+
+    },
     "Nenhum projeto" : {
 
     },
     "Nenhum projeto ainda" : {
 
     },
+    "Nenhum repositório." : {
+
+    },
     "Nenhum resultado para \"%@\"" : {
+
+    },
+    "Nenhum resultado para “%@”" : {
 
     },
     "Nenhum workflow" : {
@@ -649,10 +789,19 @@
     "Nenhuma conversa disponível" : {
 
     },
+    "Nenhuma issue aberta." : {
+
+    },
+    "Nenhuma memória ainda. Você também pode salvar memórias direto de uma mensagem, no botão de cérebro." : {
+
+    },
     "Nenhuma sessão ainda" : {
 
     },
     "Nenhuma tarefa agendada" : {
+
+    },
+    "Nenhuma versão arquivada" : {
 
     },
     "No que você gostaria de trabalhar neste projeto?" : {
@@ -679,10 +828,19 @@
     "Nome do Provider" : {
 
     },
+    "nome-do-repo" : {
+
+    },
     "Nova conversa" : {
 
     },
     "Nova Conversa" : {
+
+    },
+    "Nova issue" : {
+
+    },
+    "Nova memória…" : {
 
     },
     "Nova tarefa" : {
@@ -695,6 +853,9 @@
 
     },
     "O acesso é restrito à pasta selecionada.\nNenhum outro arquivo do seu computador é acessado." : {
+
+    },
+    "O agente quer executar esta ação." : {
 
     },
     "O idioma do Lume segue as preferências do sistema macOS." : {
@@ -736,19 +897,46 @@
     "OUTPUT" : {
 
     },
+    "Padrão" : {
+
+    },
+    "Parar (⌘.)" : {
+
+    },
+    "Parar gravação" : {
+
+    },
     "Passou" : {
+
+    },
+    "PDF…" : {
 
     },
     "Pensando…" : {
 
     },
+    "Pequeno" : {
+
+    },
+    "Perguntar" : {
+
+    },
+    "Perguntar antes de agir" : {
+
+    },
     "Pesquisar" : {
+
+    },
+    "Pré-visualização" : {
 
     },
     "Preciso" : {
 
     },
     "Preview" : {
+
+    },
+    "Privado" : {
 
     },
     "Processando…" : {
@@ -781,6 +969,9 @@
     "Pull" : {
 
     },
+    "Pull requests abertos (%lld)" : {
+
+    },
     "Push" : {
 
     },
@@ -802,6 +993,9 @@
     "Reconfigure providers, busca na web e veja dicas do app." : {
 
     },
+    "Recusar" : {
+
+    },
     "Reenviar" : {
 
     },
@@ -814,6 +1008,12 @@
     "Resetar aplicação?" : {
 
     },
+    "Resposta servida do cache semântico" : {
+
+    },
+    "Restaurar" : {
+
+    },
     "Revelar" : {
 
     },
@@ -821,6 +1021,9 @@
 
     },
     "Roteamento automático de modelos" : {
+
+    },
+    "Roteamento automático escolheu %@ para esta mensagem" : {
 
     },
     "S:%lld" : {
@@ -877,6 +1080,9 @@
     "Sobre MCP →" : {
 
     },
+    "Solte para anexar" : {
+
+    },
     "Stage All" : {
 
     },
@@ -884,6 +1090,9 @@
 
     },
     "stdio" : {
+
+    },
+    "Tamanho do texto" : {
 
     },
     "Tente termos diferentes ou ajuste os filtros." : {
@@ -901,10 +1110,29 @@
     "Tipos:" : {
 
     },
+    "Título" : {
+
+    },
     "Tokens máximos de contexto" : {
 
     },
+    "Tokens usados nesta conversa e custo estimado (aproximado)" : {
+
+    },
     "Transporte" : {
+
+    },
+    "Trecho %lld de %lld · relevância %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Trecho %1$lld de %2$lld · relevância %3$@"
+          }
+        }
+      }
+    },
+    "Trechos arquivados ao editar ou reiniciar a conversa. Restaurar substitui o trecho atual — de forma reversível, pois o estado de agora também é arquivado." : {
 
     },
     "Trocar" : {
@@ -938,6 +1166,12 @@
 
     },
     "Ver novidades" : {
+
+    },
+    "Versões anteriores" : {
+
+    },
+    "Versões anteriores (%lld)" : {
 
     },
     "Voltar" : {

@@ -7,6 +7,48 @@ import SwiftUI
 import AppKit
 import Foundation
 
+// MARK: - Font Scale Environment
+
+/// Escala aplicada a todo o texto renderizado das mensagens.
+/// Ajustável pelo usuário em Configurações → Aparência. 1.0 = tamanho padrão.
+private struct MarkdownFontScaleKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 1.0
+}
+
+extension EnvironmentValues {
+    var markdownFontScale: CGFloat {
+        get { self[MarkdownFontScaleKey.self] }
+        set { self[MarkdownFontScaleKey.self] = newValue }
+    }
+}
+
+// MARK: - Inline Markdown Cache
+
+/// Parsear markdown inline (`AttributedString(markdown:)`) é caro. Durante o
+/// streaming a `body` re-executa ~20x/s e, sem cache, TODOS os blocos estáveis
+/// seriam reparseados a cada flush — custo O(n²) que estoura CPU e memória.
+/// Memoiza o resultado por string. `NSCache` é thread-safe e libera entradas
+/// automaticamente sob pressão de memória, então não cresce sem limite.
+private final class AttrBox { let value: AttributedString; init(_ v: AttributedString) { value = v } }
+
+enum MarkdownInlineCache {
+    private static let cache: NSCache<NSString, AttrBox> = {
+        let c = NSCache<NSString, AttrBox>()
+        c.countLimit = 800
+        return c
+    }()
+
+    static func render(_ text: String) -> AttributedString {
+        let key = text as NSString
+        if let hit = cache.object(forKey: key) { return hit.value }
+        var opts = AttributedString.MarkdownParsingOptions()
+        opts.interpretedSyntax = .full
+        let attr = (try? AttributedString(markdown: text, options: opts)) ?? AttributedString(text)
+        cache.setObject(AttrBox(attr), forKey: key)
+        return attr
+    }
+}
+
 // MARK: - Main View
 
 struct MarkdownTextView: View {
@@ -16,23 +58,24 @@ struct MarkdownTextView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let (thinkContent, mainContent) = extractThinking(text)
+            // Extrai o "processo" (raciocínio + ferramentas, em ordem) e a resposta final.
+            let (events, answer) = extractProcess(text)
 
-            if let thinking = thinkContent, !thinking.isEmpty {
-                ThinkingBlockView(content: thinking, isStreaming: isStreaming)
+            if !events.isEmpty {
+                ProcessTimelineView(events: events, isStreaming: isStreaming)
             }
 
             if isStreaming {
-                let cleanedContent = removeSuggestionsBlock(from: mainContent)
+                let cleanedContent = removeSuggestionsBlock(from: answer)
                 let blocks = parseBlocks(cleanedContent)
                 ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
                     let isLast = index == blocks.count - 1
-                    MarkdownBlockView(block: block, isStreaming: isLast)
+                    MarkdownBlockView(block: block, isStreaming: isLast).equatable()
                 }
-            } else if let suggestion = ContextManager.extractSuggestions(from: mainContent) {
+            } else if let suggestion = ContextManager.extractSuggestions(from: answer) {
                 if !suggestion.textBefore.isEmpty {
                     ForEach(Array(parseBlocks(suggestion.textBefore).enumerated()), id: \.offset) { _, block in
-                        MarkdownBlockView(block: block, isStreaming: false)
+                        MarkdownBlockView(block: block, isStreaming: false).equatable()
                     }
                 }
                 if let onSelect = onSuggestionSelected {
@@ -41,13 +84,13 @@ struct MarkdownTextView: View {
                 }
                 if !suggestion.textAfter.isEmpty {
                     ForEach(Array(parseBlocks(suggestion.textAfter).enumerated()), id: \.offset) { _, block in
-                        MarkdownBlockView(block: block, isStreaming: false)
+                        MarkdownBlockView(block: block, isStreaming: false).equatable()
                     }
                 }
             } else {
-                let blocks = parseBlocks(mainContent)
+                let blocks = parseBlocks(answer)
                 ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
-                    MarkdownBlockView(block: block, isStreaming: false)
+                    MarkdownBlockView(block: block, isStreaming: false).equatable()
                 }
             }
         }
@@ -89,13 +132,127 @@ struct MarkdownTextView: View {
         return (combined, main)
     }
 
+    /// Extrai o processo (raciocínio `<think>` + ferramentas `[[TOOL:]]`, na ordem)
+    /// e devolve também a resposta final já sem esses marcadores.
+    func extractProcess(_ raw: String) -> (events: [ProcessEvent], answer: String) {
+        var events: [ProcessEvent] = []
+        var answer = ""
+        var rest = Substring(raw)
+
+        while !rest.isEmpty {
+            let thinkR = rest.range(of: "<think>")
+            let toolR = rest.range(of: "[[TOOL:")
+            let lowers = [thinkR, toolR].compactMap { $0?.lowerBound }
+            guard let nextLower = lowers.min() else {
+                answer += rest
+                break
+            }
+            answer += rest[rest.startIndex..<nextLower]
+
+            if let tr = thinkR, tr.lowerBound == nextLower {
+                let after = rest[tr.upperBound...]
+                if let end = after.range(of: "</think>") {
+                    let content = String(after[after.startIndex..<end.lowerBound])
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !content.isEmpty { events.append(ProcessEvent(kind: .reasoning(content))) }
+                    rest = after[end.upperBound...]
+                } else {
+                    let content = String(after).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !content.isEmpty { events.append(ProcessEvent(kind: .reasoning(content))) }
+                    rest = Substring()
+                }
+            } else {
+                let after = rest[nextLower...]   // começa em "[[TOOL:"
+                if let end = after.range(of: "]]") {
+                    let blockStr = String(after[after.startIndex..<end.upperBound])
+                    if let item = Self.parseToolBlock(blockStr) {
+                        events.append(ProcessEvent(kind: .tool(item)))
+                    }
+                    rest = after[end.upperBound...]
+                } else {
+                    rest = Substring()   // ferramenta parcial (streaming) — ignora
+                }
+            }
+        }
+        return (events, answer.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    /// Converte "[[TOOL:name|input|output|success]]" em ToolCallItem.
+    static func parseToolBlock(_ block: String) -> ToolCallItem? {
+        guard block.hasPrefix("[[TOOL:"), block.hasSuffix("]]") else { return nil }
+        let inner = String(block.dropFirst(7).dropLast(2))
+        var parts: [String] = []
+        for sep in ["∣", "|"] {
+            parts = inner.components(separatedBy: sep)
+            if parts.count >= 3 { break }
+        }
+        guard parts.count >= 3 else { return nil }
+        let name = parts[0].trimmingCharacters(in: .whitespaces)
+        var input = parts[1].trimmingCharacters(in: .whitespaces)
+        var output = parts[2].trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: "⏎", with: "\n")   // restaura quebras de linha
+        let success = parts.count >= 4 ? parts[3].trimmingCharacters(in: .whitespaces) == "1" : true
+        if input.hasPrefix("{") || input.hasPrefix("[") {
+            if let data = input.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                input = json.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
+            }
+        }
+        if output.count > 4000 { output = String(output.prefix(4000)) + "…" }
+        return ToolCallItem(name: name, input: input, output: output, success: success)
+    }
+
     func parseBlocks(_ raw: String) -> [MarkdownBlock] {
         var blocks: [MarkdownBlock] = []
         let lines = raw.components(separatedBy: "\n")
         var i = 0
 
+        // Nível de indentação para listas aninhadas (2 espaços ou 1 tab = 1 nível, máx. 6).
+        func indentLevel(of line: String) -> Int {
+            var spaces = 0
+            for ch in line {
+                if ch == " " { spaces += 1 }
+                else if ch == "\t" { spaces += 4 }
+                else { break }
+            }
+            return min(spaces / 2, 6)
+        }
+
+        // Divide uma linha de tabela em células, removendo as bordas externas.
+        func splitRow(_ line: String) -> [String] {
+            var s = line.trimmingCharacters(in: .whitespaces)
+            if s.hasPrefix("|") { s.removeFirst() }
+            if s.hasSuffix("|") { s.removeLast() }
+            return s.components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+        }
+
+        // Verifica se a linha é o separador de cabeçalho de tabela (ex.: |---|:--:|).
+        func isTableSeparator(_ line: String) -> Bool {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard t.contains("-"), t.contains("|") else { return false }
+            let cells = splitRow(t)
+            guard !cells.isEmpty else { return false }
+            return cells.allSatisfy { cell in
+                let c = cell.trimmingCharacters(in: .whitespaces)
+                return !c.isEmpty && c.contains("-") && c.allSatisfy { $0 == "-" || $0 == ":" }
+            }
+        }
+
+        func parseAlignments(_ line: String) -> [TableColumnAlignment] {
+            splitRow(line).map { cell in
+                let c = cell.trimmingCharacters(in: .whitespaces)
+                let left = c.hasPrefix(":")
+                let right = c.hasSuffix(":")
+                if left && right { return .center }
+                if right { return .trailing }
+                return .leading
+            }
+        }
+
         while i < lines.count {
-            let line = lines[i]
+            let rawLine = lines[i]
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            let indent = indentLevel(of: rawLine)
 
             // Detecta bloco de tool call — formato: [[TOOL:nome∣input∣output∣success]]
             if line.hasPrefix("[[TOOL:") && line.hasSuffix("]]") {
@@ -120,7 +277,13 @@ struct MarkdownTextView: View {
                     if output.count > 500 {
                         output = String(output.prefix(500)) + "..."
                     }
-                    blocks.append(.toolCall(name: name, input: input, output: output, success: success))
+                    let item = ToolCallItem(name: name, input: input, output: output, success: success)
+                    // Agrupa chamadas consecutivas numa única caixa.
+                    if case .toolGroup(let items)? = blocks.last {
+                        blocks[blocks.count - 1] = .toolGroup(calls: items + [item])
+                    } else {
+                        blocks.append(.toolGroup(calls: [item]))
+                    }
                     i += 1; continue
                 }
             }
@@ -129,7 +292,7 @@ struct MarkdownTextView: View {
                 let language = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
                 var codeLines: [String] = []
                 i += 1
-                while i < lines.count && !lines[i].hasPrefix("```") {
+                while i < lines.count && !lines[i].trimmingCharacters(in: .whitespaces).hasPrefix("```") {
                     codeLines.append(lines[i])
                     i += 1
                 }
@@ -138,18 +301,54 @@ struct MarkdownTextView: View {
                 i += 1; continue
             }
 
+            // Tabela: linha com "|" seguida por uma linha separadora (|---|---|).
+            if line.contains("|"), i + 1 < lines.count, isTableSeparator(lines[i + 1]) {
+                let headers = splitRow(line)
+                let alignments = parseAlignments(lines[i + 1])
+                i += 2
+                var rows: [[String]] = []
+                while i < lines.count {
+                    let t = lines[i].trimmingCharacters(in: .whitespaces)
+                    if t.isEmpty || !t.contains("|") { break }
+                    rows.append(splitRow(t))
+                    i += 1
+                }
+                blocks.append(.table(headers: headers, rows: rows, alignments: alignments))
+                continue
+            }
+
+            // Blockquote: agrupa linhas consecutivas iniciadas por ">".
+            if line.hasPrefix(">") {
+                var quoteLines: [String] = []
+                while i < lines.count {
+                    let t = lines[i].trimmingCharacters(in: .whitespaces)
+                    guard t.hasPrefix(">") else { break }
+                    let stripped = String(t.drop(while: { $0 == ">" })).trimmingCharacters(in: .whitespaces)
+                    quoteLines.append(stripped)
+                    i += 1
+                }
+                blocks.append(.blockquote(lines: quoteLines))
+                continue
+            }
+
             if line.hasPrefix("#### ")      { blocks.append(.heading(level: 4, content: String(line.dropFirst(5)))); i += 1; continue }
             if line.hasPrefix("### ")       { blocks.append(.heading(level: 3, content: String(line.dropFirst(4)))); i += 1; continue }
             if line.hasPrefix("## ")        { blocks.append(.heading(level: 2, content: String(line.dropFirst(3)))); i += 1; continue }
             if line.hasPrefix("# ")         { blocks.append(.heading(level: 1, content: String(line.dropFirst(2)))); i += 1; continue }
 
-            if line.hasPrefix("- ") || line.hasPrefix("* ") || line.hasPrefix("• ") {
-                blocks.append(.bulletItem(content: String(line.dropFirst(2))))
+            // Task list (checkbox) — precisa vir antes do bullet genérico.
+            if let task = Self.parseTaskItem(line) {
+                blocks.append(.taskItem(checked: task.checked, content: task.content, indent: indent))
                 i += 1; continue
             }
 
-            if let match = line.firstMatch(of: /^(\d+)\.\s+(.+)/) {
-                blocks.append(.numberedItem(number: Int(match.1) ?? 1, content: String(match.2)))
+            if line.hasPrefix("- ") || line.hasPrefix("* ") || line.hasPrefix("+ ") || line.hasPrefix("• ") {
+                blocks.append(.bulletItem(content: String(line.dropFirst(2)), indent: indent))
+                i += 1; continue
+            }
+
+            if let num = Self.parseNumberedItem(line) {
+                blocks.append(.numberedItem(number: num.number, content: num.content, indent: indent))
                 i += 1; continue
             }
 
@@ -157,17 +356,19 @@ struct MarkdownTextView: View {
                 blocks.append(.divider); i += 1; continue
             }
 
-            if line.trimmingCharacters(in: .whitespaces).isEmpty {
+            if line.isEmpty {
                 i += 1; continue
             }
 
             var paragraphLines = [line]
             while i + 1 < lines.count {
-                let next = lines[i + 1]
-                if next.trimmingCharacters(in: .whitespaces).isEmpty { break }
+                let next = lines[i + 1].trimmingCharacters(in: .whitespaces)
+                if next.isEmpty { break }
                 if next.hasPrefix("#") || next.hasPrefix("- ") || next.hasPrefix("* ") ||
-                   next.hasPrefix("• ") || next.hasPrefix("```") || next.hasPrefix("[[TOOL:") { break }
-                if next.firstMatch(of: /^\d+\.\s/) != nil { break }
+                   next.hasPrefix("+ ") || next.hasPrefix("• ") || next.hasPrefix("```") ||
+                   next.hasPrefix("[[TOOL:") || next.hasPrefix(">") { break }
+                if Self.startsWithNumberedMarker(next) { break }
+                if next.contains("|"), i + 2 < lines.count, isTableSeparator(lines[i + 2]) { break }
                 paragraphLines.append(next)
                 i += 1
             }
@@ -175,6 +376,62 @@ struct MarkdownTextView: View {
             i += 1
         }
         return blocks
+    }
+
+    // MARK: - Parsing manual (substitui Swift Regex no hot path do streaming)
+    // Swift Regex (`firstMatch(of:/.../)`) é lento e era executado por linha a
+    // cada flush (~20x/s), dominando a CPU. Estas versões escaneiam caracteres
+    // diretamente — ordens de magnitude mais rápidas.
+
+    private static func isDigit(_ s: Unicode.Scalar) -> Bool { s.value >= 48 && s.value <= 57 }
+    private static func isSpace(_ s: Unicode.Scalar) -> Bool { s == " " || s == "\t" }
+    private static func scalarsToString<S: Sequence>(_ s: S) -> String where S.Element == Unicode.Scalar {
+        var out = ""
+        out.unicodeScalars.append(contentsOf: s)
+        return out
+    }
+
+    /// "- [ ] texto" / "- [x] texto" (também `*` e `+`).
+    static func parseTaskItem(_ line: String) -> (checked: Bool, content: String)? {
+        let chars = Array(line.unicodeScalars)
+        guard chars.count >= 5 else { return nil }
+        guard chars[0] == "-" || chars[0] == "*" || chars[0] == "+" else { return nil }
+        var i = 1
+        guard i < chars.count, isSpace(chars[i]) else { return nil }
+        while i < chars.count, isSpace(chars[i]) { i += 1 }
+        guard i + 2 < chars.count, chars[i] == "[", chars[i + 2] == "]" else { return nil }
+        let mark = chars[i + 1]
+        guard mark == " " || mark == "x" || mark == "X" else { return nil }
+        i += 3
+        guard i < chars.count, isSpace(chars[i]) else { return nil }
+        while i < chars.count, isSpace(chars[i]) { i += 1 }
+        let content = scalarsToString(chars[i...])
+        return (mark == "x" || mark == "X", content)
+    }
+
+    /// "123. texto".
+    static func parseNumberedItem(_ line: String) -> (number: Int, content: String)? {
+        let chars = Array(line.unicodeScalars)
+        var i = 0
+        while i < chars.count, isDigit(chars[i]) { i += 1 }
+        guard i > 0, i < chars.count, chars[i] == "." else { return nil }
+        let number = Int(scalarsToString(chars[0..<i])) ?? 1
+        i += 1
+        guard i < chars.count, isSpace(chars[i]) else { return nil }
+        while i < chars.count, isSpace(chars[i]) { i += 1 }
+        guard i < chars.count else { return nil }
+        let content = scalarsToString(chars[i...])
+        return (number, content)
+    }
+
+    /// Detecta apenas o início "123. " (lookahead barato).
+    static func startsWithNumberedMarker(_ line: String) -> Bool {
+        let chars = Array(line.unicodeScalars)
+        var i = 0
+        while i < chars.count, isDigit(chars[i]) { i += 1 }
+        guard i > 0, i < chars.count, chars[i] == "." else { return false }
+        i += 1
+        return i < chars.count && isSpace(chars[i])
     }
 
     private func formatJSON(_ json: [String: Any]) -> String {
@@ -235,6 +492,332 @@ struct ThinkingBlockView: View {
                     .textSelection(.enabled)
             }
         }
+    }
+}
+
+// MARK: - Process Timeline (raciocínio + ferramentas, estilo Claude)
+
+struct ProcessTimelineView: View {
+    let events: [ProcessEvent]
+    var isStreaming: Bool = false
+    @State private var expanded = false
+    @Environment(\.markdownFontScale) private var scale
+
+    private var summary: String {
+        var searches = 0, pages = 0, thoughts = 0
+        for e in events {
+            switch e.kind {
+            case .reasoning: thoughts += 1
+            case .tool(let t):
+                if t.name == "web_search" { searches += 1 }
+                else if t.name == "web_fetch" { pages += 1 }
+            }
+        }
+        var parts: [String] = []
+        if thoughts > 0 { parts.append("Raciocínio") }
+        if searches > 0 { parts.append("\(searches) busca\(searches > 1 ? "s" : "")") }
+        if pages > 0 { parts.append("\(pages) página\(pages > 1 ? "s" : "")") }
+        return parts.isEmpty ? "Processo" : parts.joined(separator: " · ")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) { expanded.toggle() }
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text(isStreaming ? "Pensando…" : summary)
+                        .font(.system(size: 11 * scale, weight: .medium)).foregroundStyle(.secondary)
+                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 8 * scale, weight: .semibold)).foregroundStyle(.tertiary)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 7).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if expanded {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Identidade POSICIONAL (não `event.id`): `extractProcess` recria
+                    // os eventos a cada flush com UUIDs novos; usar o UUID faria o
+                    // SwiftUI reconstruir a timeline inteira ~12x/s. A ordem é
+                    // append-only, então a posição é estável e só o último muda.
+                    ForEach(Array(events.enumerated()), id: \.offset) { idx, event in
+                        ProcessRow(event: event, isLast: idx == events.count - 1)
+                    }
+                }
+                .padding(.horizontal, 12).padding(.bottom, 10)
+            }
+        }
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
+    }
+}
+
+private struct ProcessRow: View {
+    let event: ProcessEvent
+    let isLast: Bool
+    @Environment(\.markdownFontScale) private var scale
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(spacing: 0) {
+                ZStack {
+                    Circle().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1).frame(width: 18, height: 18)
+                    Image(systemName: icon).font(.system(size: 9)).foregroundStyle(iconColor)
+                }
+                if !isLast {
+                    Rectangle().fill(Color.primary.opacity(0.10))
+                        .frame(width: 1).frame(maxHeight: .infinity)
+                }
+            }
+            .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 4) {
+                content
+            }
+            .padding(.bottom, isLast ? 0 : 12)
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var icon: String {
+        switch event.kind {
+        case .reasoning: return "clock"
+        case .tool(let t): return ToolGroupView.timelineIcon(t.name)
+        }
+    }
+
+    private var iconColor: Color {
+        if case .tool(let t) = event.kind, !t.success { return .red }
+        return .secondary
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch event.kind {
+        case .reasoning(let text):
+            Text(text)
+                .font(.system(size: 11 * scale))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+        case .tool(let t):
+            Text(ToolGroupView.timelineLabel(t.name))
+                .font(.system(size: 11.5 * scale, weight: .medium))
+                .foregroundStyle(t.success ? Color.primary : Color.red)
+            let detail = ToolGroupView.timelineDetail(t)
+            if !detail.isEmpty {
+                Text(detail).font(.system(size: 10 * scale)).foregroundStyle(.tertiary).lineLimit(1)
+            }
+            if t.name == "web_search" {
+                let results = SearchResultParser.parse(t.output)
+                if !results.isEmpty {
+                    SearchResultsCard(results: results)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Search results parsing + card
+
+enum SearchResultParser {
+    struct Item: Identifiable { let id = UUID(); let title: String; let url: String }
+
+    static func parse(_ output: String) -> [Item] {
+        var items: [Item] = []
+        var currentTitle = ""
+        for rawLine in output.components(separatedBy: "\n") {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.hasPrefix("**") {
+                var title = line.replacingOccurrences(of: "**", with: "")
+                // remove prefixo "N. "
+                while let f = title.first, f.isNumber { title.removeFirst() }
+                if title.hasPrefix(".") { title.removeFirst() }
+                currentTitle = title.trimmingCharacters(in: .whitespaces)
+            } else if line.hasPrefix("URL:") || line.hasPrefix("Fonte:") {
+                let url = line
+                    .replacingOccurrences(of: "URL:", with: "")
+                    .replacingOccurrences(of: "Fonte:", with: "")
+                    .trimmingCharacters(in: .whitespaces)
+                if !url.isEmpty {
+                    items.append(Item(title: currentTitle.isEmpty ? url : currentTitle, url: url))
+                    currentTitle = ""
+                }
+            }
+        }
+        return items
+    }
+}
+
+private struct SearchResultsCard: View {
+    let results: [SearchResultParser.Item]
+    @Environment(\.markdownFontScale) private var scale
+
+    var body: some View {
+        let shown = Array(results.prefix(8))
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(shown) { item in
+                HStack(spacing: 8) {
+                    Image(systemName: "globe").font(.system(size: 9.5 * scale))
+                        .foregroundStyle(.secondary).frame(width: 14)
+                    Text(item.title).font(.system(size: 10.5 * scale)).foregroundStyle(.primary).lineLimit(1)
+                    Spacer(minLength: 8)
+                    Text(host(item.url)).font(.system(size: 9.5 * scale)).foregroundStyle(.tertiary).lineLimit(1)
+                }
+                .padding(.vertical, 5).padding(.horizontal, 8)
+                if item.id != shown.last?.id { Divider().opacity(0.4) }
+            }
+        }
+        .padding(.vertical, 2)
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
+        .padding(.top, 4)
+    }
+
+    private func host(_ url: String) -> String {
+        URL(string: url)?.host?.replacingOccurrences(of: "www.", with: "") ?? url
+    }
+}
+
+// MARK: - Tool Group (caixa única recolhível para várias ferramentas)
+
+struct ToolGroupView: View {
+    let calls: [ToolCallItem]
+    @State private var expanded = false
+
+    private var summary: String {
+        func count(_ names: Set<String>) -> Int { calls.filter { names.contains($0.name) }.count }
+        let searches = count(["web_search"])
+        let pages    = count(["web_fetch"])
+        let shells   = count(["run_shell"])
+        let files    = count(["read_file", "write_file", "list_directory", "create_directory"])
+        var parts: [String] = []
+        if searches > 0 { parts.append("\(searches) busca\(searches > 1 ? "s" : "")") }
+        if pages > 0    { parts.append("\(pages) página\(pages > 1 ? "s" : "")") }
+        if shells > 0   { parts.append("\(shells) comando\(shells > 1 ? "s" : "")") }
+        if files > 0    { parts.append("\(files) arquivo\(files > 1 ? "s" : "")") }
+        return parts.isEmpty ? "\(calls.count) ações" : parts.joined(separator: " · ")
+    }
+
+    private var icon: String {
+        if calls.contains(where: { $0.name == "web_search" || $0.name == "web_fetch" }) { return "globe" }
+        if calls.contains(where: { $0.name == "run_shell" }) { return "terminal" }
+        return "wrench.and.screwdriver"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) { expanded.toggle() }
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: icon)
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text(summary)
+                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 7)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if expanded {
+                // Timeline estilo Claude: linha conectora + ícone + ação por etapa.
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(calls.enumerated()), id: \.offset) { idx, call in
+                        HStack(alignment: .top, spacing: 10) {
+                            VStack(spacing: 0) {
+                                ZStack {
+                                    Circle()
+                                        .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
+                                        .frame(width: 18, height: 18)
+                                    Image(systemName: Self.timelineIcon(call.name))
+                                        .font(.system(size: 9))
+                                        .foregroundStyle(call.success ? Color.secondary : Color.red)
+                                }
+                                if idx < calls.count - 1 {
+                                    Rectangle().fill(Color.primary.opacity(0.10))
+                                        .frame(width: 1).frame(maxHeight: .infinity)
+                                }
+                            }
+                            .frame(width: 18)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(Self.timelineLabel(call.name))
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(call.success ? Color.primary : Color.red)
+                                let detail = Self.timelineDetail(call)
+                                if !detail.isEmpty {
+                                    Text(detail)
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                        .textSelection(.enabled)
+                                }
+                            }
+                            .padding(.bottom, idx < calls.count - 1 ? 12 : 0)
+
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }
+                .padding(.horizontal, 12).padding(.bottom, 10)
+            }
+        }
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
+    }
+
+    // MARK: - Timeline helpers
+
+    static func timelineIcon(_ name: String) -> String {
+        switch name {
+        case "web_search":       return "magnifyingglass"
+        case "web_fetch":        return "globe"
+        case "run_shell":        return "terminal"
+        case "read_file":        return "doc.text"
+        case "write_file":       return "square.and.pencil"
+        case "list_directory":   return "folder"
+        case "create_directory": return "folder.badge.plus"
+        default:                 return "wrench.and.screwdriver"
+        }
+    }
+
+    static func timelineLabel(_ name: String) -> String {
+        switch name {
+        case "web_search":       return "Pesquisou na web"
+        case "web_fetch":        return "Acessou página"
+        case "run_shell":        return "Executou comando"
+        case "read_file":        return "Leu arquivo"
+        case "write_file":       return "Escreveu arquivo"
+        case "list_directory":   return "Listou diretório"
+        case "create_directory": return "Criou diretório"
+        default:                 return name
+        }
+    }
+
+    /// Extrai o parâmetro mais relevante do input (query/url/path/command).
+    static func timelineDetail(_ call: ToolCallItem) -> String {
+        let input = call.input
+        for key in ["query", "url", "path", "command"] {
+            if let r = input.range(of: "\(key):") {
+                let after = input[r.upperBound...]
+                let val = after.prefix(while: { $0 != "," && $0 != "}" })
+                    .trimmingCharacters(in: .whitespaces)
+                if !val.isEmpty { return val }
+            }
+        }
+        return input.count > 70 ? String(input.prefix(70)) + "…" : input
     }
 }
 
@@ -368,29 +951,73 @@ struct ToolCallBlockView: View {
 
 // MARK: - Block enum
 
-enum MarkdownBlock {
+enum TableColumnAlignment: Equatable {
+    case leading, center, trailing
+}
+
+struct ToolCallItem: Identifiable, Equatable {
+    let id = UUID()
+    let name: String
+    let input: String
+    let output: String
+    let success: Bool
+
+    // Compara por CONTEÚDO (ignora o `id` aleatório), para que reparsear a mesma
+    // chamada a cada flush produza um item "igual" e o SwiftUI possa pular o re-render.
+    static func == (lhs: ToolCallItem, rhs: ToolCallItem) -> Bool {
+        lhs.name == rhs.name && lhs.input == rhs.input &&
+        lhs.output == rhs.output && lhs.success == rhs.success
+    }
+}
+
+/// Evento do "processo" do modelo (raciocínio ou chamada de ferramenta), em ordem.
+struct ProcessEvent: Identifiable {
+    let id = UUID()
+    enum Kind {
+        case reasoning(String)
+        case tool(ToolCallItem)
+    }
+    let kind: Kind
+}
+
+enum MarkdownBlock: Equatable {
     case heading(level: Int, content: String)
     case code(language: String?, content: String)
     case inlineCode(content: String)
     case paragraph(content: String)
-    case bulletItem(content: String)
-    case numberedItem(number: Int, content: String)
+    case bulletItem(content: String, indent: Int)
+    case numberedItem(number: Int, content: String, indent: Int)
+    case taskItem(checked: Bool, content: String, indent: Int)
+    case blockquote(lines: [String])
+    case table(headers: [String], rows: [[String]], alignments: [TableColumnAlignment])
     case divider
-    case toolCall(name: String, input: String, output: String, success: Bool)
+    /// Várias chamadas de ferramenta consecutivas agrupadas numa única caixa.
+    case toolGroup(calls: [ToolCallItem])
 }
 
 // MARK: - Block View
 
-struct MarkdownBlockView: View {
+struct MarkdownBlockView: View, Equatable {
     let block: MarkdownBlock
     var isStreaming: Bool = false
+
+    // Permite que o SwiftUI pule o re-render de blocos idênticos durante o
+    // streaming (só o último bloco muda). Usado via `.equatable()` na ForEach.
+    static func == (lhs: MarkdownBlockView, rhs: MarkdownBlockView) -> Bool {
+        lhs.isStreaming == rhs.isStreaming && lhs.block == rhs.block
+    }
 
     var body: some View {
         switch block {
         case .heading(let level, let content):
             MarkdownHeadingView(level: level, content: content)
         case .code(let language, let content):
-            CodeBlockView(code: content, language: language, defaultExpanded: false)
+            // Auto-expande blocos curtos (≤40 linhas); colapsa os longos.
+            CodeBlockView(
+                code: content,
+                language: language,
+                defaultExpanded: content.split(separator: "\n", omittingEmptySubsequences: false).count <= 40
+            )
         case .inlineCode(let content):
             Text(content)
                 .font(.system(.body, design: .monospaced))
@@ -399,14 +1026,20 @@ struct MarkdownBlockView: View {
                 .cornerRadius(4)
         case .paragraph(let content):
             MarkdownParagraphView(content: content, showCursor: isStreaming)
-        case .bulletItem(let content):
-            MarkdownBulletView(content: content, showCursor: isStreaming)
-        case .numberedItem(let number, let content):
-            MarkdownNumberedView(number: number, content: content)
+        case .bulletItem(let content, let indent):
+            MarkdownBulletView(content: content, indent: indent, showCursor: isStreaming)
+        case .numberedItem(let number, let content, let indent):
+            MarkdownNumberedView(number: number, content: content, indent: indent)
+        case .taskItem(let checked, let content, let indent):
+            MarkdownTaskItemView(checked: checked, content: content, indent: indent)
+        case .blockquote(let lines):
+            MarkdownBlockquoteView(lines: lines)
+        case .table(let headers, let rows, let alignments):
+            MarkdownTableView(headers: headers, rows: rows, alignments: alignments)
         case .divider:
             Divider().padding(.vertical, 4)
-        case .toolCall(let name, let input, let output, let success):
-            ToolCallBlockView(name: name, input: input, output: output, success: success)
+        case .toolGroup(let calls):
+            ToolGroupView(calls: calls)
         }
     }
 }
@@ -416,27 +1049,27 @@ struct MarkdownBlockView: View {
 struct MarkdownHeadingView: View {
     let level: Int
     let content: String
+    @Environment(\.markdownFontScale) private var scale
 
     var body: some View {
         Text(renderInline(content))
-            .font(font).fontWeight(.bold)
+            .font(.system(size: baseSize * scale, weight: .bold))
             .padding(.top, level <= 2 ? 8 : 4)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .textSelection(.enabled)
     }
 
-    private var font: Font {
+    private var baseSize: CGFloat {
         switch level {
-        case 1: return .title2
-        case 2: return .title3
-        case 3: return .headline
-        default: return .subheadline
+        case 1: return 22
+        case 2: return 18
+        case 3: return 16
+        default: return 14.5
         }
     }
 
     private func renderInline(_ text: String) -> AttributedString {
-        var opts = AttributedString.MarkdownParsingOptions()
-        opts.interpretedSyntax = .full
-        return (try? AttributedString(markdown: text, options: opts)) ?? AttributedString(text)
+        MarkdownInlineCache.render(text)
     }
 }
 
@@ -445,23 +1078,27 @@ struct MarkdownHeadingView: View {
 struct MarkdownParagraphView: View {
     let content: String
     var showCursor: Bool = false
+    @Environment(\.markdownFontScale) private var scale
 
     var body: some View {
         Group {
             if showCursor {
-                Text("\(renderInline(content)) ▋")
+                // Durante o streaming, o último bloco CRESCE a cada frame. Fazer
+                // `AttributedString(markdown:)` nele 12x/s é O(n²) e satura a CPU.
+                // Renderiza texto puro enquanto escreve; o parse rico acontece
+                // uma única vez quando a mensagem finaliza (showCursor = false).
+                Text(content + " ▋")
             } else {
                 Text(renderInline(content)).textSelection(.enabled)
             }
         }
-        .lineSpacing(4)
+        .font(.system(size: 14 * scale))
+        .lineSpacing(4 * scale)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     func renderInline(_ text: String) -> AttributedString {
-        var opts = AttributedString.MarkdownParsingOptions()
-        opts.interpretedSyntax = .full
-        return (try? AttributedString(markdown: text, options: opts)) ?? AttributedString(text)
+        MarkdownInlineCache.render(text)
     }
 }
 
@@ -469,26 +1106,32 @@ struct MarkdownParagraphView: View {
 
 struct MarkdownBulletView: View {
     let content: String
+    var indent: Int = 0
     var showCursor: Bool = false
+    @Environment(\.markdownFontScale) private var scale
+
+    private var marker: String {
+        switch indent { case 0: return "•"; case 1: return "◦"; default: return "▪" }
+    }
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("•").foregroundStyle(.secondary).frame(minWidth: 12)
+            Text(marker).foregroundStyle(.secondary).frame(minWidth: 12)
             Group {
                 if showCursor {
-                    Text("\(renderInline(content)) ▋")
+                    Text(content + " ▋")   // texto puro durante o streaming (ver MarkdownParagraphView)
                 } else {
                     Text(renderInline(content)).textSelection(.enabled)
                 }
             }
+            .font(.system(size: 14 * scale))
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.leading, CGFloat(indent) * 16)
     }
 
     func renderInline(_ text: String) -> AttributedString {
-        var opts = AttributedString.MarkdownParsingOptions()
-        opts.interpretedSyntax = .full
-        return (try? AttributedString(markdown: text, options: opts)) ?? AttributedString(text)
+        MarkdownInlineCache.render(text)
     }
 }
 
@@ -497,18 +1140,173 @@ struct MarkdownBulletView: View {
 struct MarkdownNumberedView: View {
     let number: Int
     let content: String
+    var indent: Int = 0
+    @Environment(\.markdownFontScale) private var scale
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("\(number).").foregroundStyle(.secondary).frame(minWidth: 20, alignment: .trailing)
-            Text(renderInline(content)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+            Text("\(number).")
+                .font(.system(size: 14 * scale))
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 20, alignment: .trailing)
+            Text(renderInline(content))
+                .font(.system(size: 14 * scale))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.leading, CGFloat(indent) * 16)
     }
 
     func renderInline(_ text: String) -> AttributedString {
-        var opts = AttributedString.MarkdownParsingOptions()
-        opts.interpretedSyntax = .full
-        return (try? AttributedString(markdown: text, options: opts)) ?? AttributedString(text)
+        MarkdownInlineCache.render(text)
+    }
+}
+
+// MARK: - Task List Item
+
+struct MarkdownTaskItemView: View {
+    let checked: Bool
+    let content: String
+    var indent: Int = 0
+    @Environment(\.markdownFontScale) private var scale
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: checked ? "checkmark.square.fill" : "square")
+                .font(.system(size: 13 * scale))
+                .foregroundStyle(checked ? Color.accentColor : Color.secondary)
+            Text(renderInline(content))
+                .font(.system(size: 14 * scale))
+                .foregroundStyle(checked ? .secondary : .primary)
+                .strikethrough(checked, color: .secondary)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.leading, CGFloat(indent) * 16)
+    }
+
+    func renderInline(_ text: String) -> AttributedString {
+        MarkdownInlineCache.render(text)
+    }
+}
+
+// MARK: - Blockquote
+
+struct MarkdownBlockquoteView: View {
+    let lines: [String]
+    @Environment(\.markdownFontScale) private var scale
+
+    var body: some View {
+        HStack(spacing: 0) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.accentColor.opacity(0.5))
+                .frame(width: 3)
+            Text(renderInline(lines.joined(separator: "\n")))
+                .font(.system(size: 14 * scale))
+                .foregroundStyle(.secondary)
+                .italic()
+                .textSelection(.enabled)
+                .padding(.leading, 12)
+                .padding(.vertical, 2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 2)
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+    }
+
+    func renderInline(_ text: String) -> AttributedString {
+        MarkdownInlineCache.render(text)
+    }
+}
+
+// MARK: - Table
+
+struct MarkdownTableView: View {
+    let headers: [String]
+    let rows: [[String]]
+    let alignments: [TableColumnAlignment]
+    @Environment(\.markdownFontScale) private var scale
+
+    private var columnCount: Int {
+        max(headers.count, rows.map { $0.count }.max() ?? 0)
+    }
+
+    private func alignment(for column: Int) -> Alignment {
+        guard column < alignments.count else { return .leading }
+        switch alignments[column] {
+        case .leading: return .leading
+        case .center: return .center
+        case .trailing: return .trailing
+        }
+    }
+
+    private func textAlignment(for column: Int) -> TextAlignment {
+        guard column < alignments.count else { return .leading }
+        switch alignments[column] {
+        case .leading: return .leading
+        case .center: return .center
+        case .trailing: return .trailing
+        }
+    }
+
+    private func cell(_ value: String, column: Int, isHeader: Bool) -> some View {
+        Text(renderInline(Self.normalizeCell(value)))
+            .font(.system(size: 13 * scale, weight: isHeader ? .semibold : .regular))
+            .foregroundStyle(isHeader ? .primary : .secondary)
+            .multilineTextAlignment(textAlignment(for: column))
+            .fixedSize(horizontal: false, vertical: true)   // quebra o texto em vez de esticar
+            .textSelection(.enabled)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, alignment: alignment(for: column))
+    }
+
+    /// Converte quebras de linha HTML (<br>) em quebras reais dentro da célula.
+    private static func normalizeCell(_ s: String) -> String {
+        s.replacingOccurrences(of: "<br>", with: "\n")
+         .replacingOccurrences(of: "<br/>", with: "\n")
+         .replacingOccurrences(of: "<br />", with: "\n")
+    }
+
+    var body: some View {
+        // Sem ScrollView horizontal: a tabela ocupa a largura disponível (de leitura)
+        // e o texto das células quebra, evitando tabelas gigantes que vazam.
+        VStack(spacing: 0) {
+            // Cabeçalho
+            HStack(spacing: 0) {
+                ForEach(0..<columnCount, id: \.self) { col in
+                    cell(col < headers.count ? headers[col] : "", column: col, isHeader: true)
+                    if col < columnCount - 1 { Divider() }
+                }
+            }
+            .background(Color.primary.opacity(0.06))
+
+            Divider()
+
+            // Linhas
+            ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
+                HStack(spacing: 0) {
+                    ForEach(0..<columnCount, id: \.self) { col in
+                        cell(col < row.count ? row[col] : "", column: col, isHeader: false)
+                        if col < columnCount - 1 { Divider() }
+                    }
+                }
+                .background(rowIndex % 2 == 1 ? Color.primary.opacity(0.02) : Color.clear)
+                if rowIndex < rows.count - 1 { Divider().opacity(0.5) }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .padding(.vertical, 4)
+    }
+
+    func renderInline(_ text: String) -> AttributedString {
+        MarkdownInlineCache.render(text)
     }
 }
 
@@ -710,7 +1508,24 @@ struct SyntaxHighlightedView: View {
 // MARK: - Syntax Highlighter
 
 enum SyntaxHighlighter {
+    // Cache do realce por (linha + linguagem + tamanho de fonte). Durante o
+    // streaming, blocos de código longos seriam re-realçados linha a linha a
+    // cada flush; o cache evita esse retrabalho. NSCache libera sob pressão.
+    private static let lineCache: NSCache<NSString, NSAttributedString> = {
+        let c = NSCache<NSString, NSAttributedString>()
+        c.countLimit = 3000
+        return c
+    }()
+
     static func highlight(line: String, language: String, baseFont: NSFont) -> NSAttributedString {
+        let key = "\(language.lowercased())|\(Int(baseFont.pointSize))|\(line)" as NSString
+        if let hit = lineCache.object(forKey: key) { return hit }
+        let result = computeHighlight(line: line, language: language, baseFont: baseFont)
+        lineCache.setObject(result, forKey: key)
+        return result
+    }
+
+    private static func computeHighlight(line: String, language: String, baseFont: NSFont) -> NSAttributedString {
         switch language.lowercased() {
         case "swift":                return highlightSwift(line, font: baseFont)
         case "python", "py":         return highlightPython(line, font: baseFont)

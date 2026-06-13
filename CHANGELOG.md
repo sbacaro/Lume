@@ -5,6 +5,54 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.2.0] — 2026-06-12
+
+### Adicionado
+
+#### Renderização de mensagens
+- **Tabelas** markdown com cabeçalho, alinhamento por coluna (`:--`, `--:`, `:-:`), zebra e scroll horizontal
+- **Blockquotes** (`>`) com barra de acento
+- **Checkboxes** de task list (`- [ ]` / `- [x]`) com texto riscado quando concluído
+- **Listas aninhadas** com indentação e marcadores por nível (•/◦/▪)
+- **Tamanho de fonte ajustável** das mensagens (Pequeno/Padrão/Grande/Extra) em Configurações → Avançado, com pré-visualização ao vivo
+
+#### Inteligência e contexto
+- **Memória persistente** entre conversas: fatos do usuário injetados no system prompt, com aba de gestão (categorias, ativar/desativar, editar) e captura rápida a partir de qualquer mensagem
+- **Contexto temporal**: data e hora atuais do macOS enviadas a cada mensagem, ancorando a IA no presente
+- **Títulos de conversa on-device** via Apple Foundation Models (privado, gratuito, com fallback)
+- **RAG híbrido**: busca vetorial (cosine) combinada com lexical (BM25-lite)
+- **Citações RAG clicáveis**: seção "Fontes" nas respostas, com popover do trecho, documento e relevância
+- **Vision OCR**: texto de imagens anexadas extraído localmente (pt-BR/en) e incluído no contexto — útil até para modelos sem visão
+- **Badge de modelo e custo**: modelo escolhido pelo roteamento automático + tokens e custo estimado por conversa
+
+#### Interface e UX
+- **Paleta de comandos (⌘K)** com busca global por título *e* conteúdo das mensagens, e ações rápidas
+- **Atalhos de teclado**: ⌘N (nova conversa), ⌘F (busca), ⌘1/2/3 (alternar Chat/Cowork/Code)
+- **Auto-scroll inteligente**: só acompanha o fim se o usuário já estava lá, com botão flutuante "ir ao fim"
+- **Toast de erro** transitório (substitui mensagens de erro no histórico)
+- **Velocidade de geração** (tok/s) ao vivo no header durante o streaming
+- **Timestamp** também nas respostas do assistente
+- **Thumbnails** das imagens anexadas, com remoção individual
+- **Histórico de versões (branching)**: editar/reiniciar não destrói mais o trecho anterior — ele é arquivado e pode ser restaurado de forma reversível
+
+#### Tema
+- **Cor de acento** customizável (6 opções) e **aparência** Claro/Escuro/Sistema, aplicadas em todo o app
+
+#### Voz
+- **Leitura em voz alta (TTS)** das respostas via `AVSpeechSynthesizer`, com limpeza de markdown
+- Abstração de transcrição (`TranscriptionProvider`) preparada para motor local Whisper (WhisperKit)
+
+#### Exportação
+- Export de conversa como **Markdown** (arquivo) e **PDF** paginado, além de copiar para a área de transferência
+
+### Alterado
+- Blocos de código agora **auto-expandem** quando curtos (≤40 linhas); longos continuam colapsados
+- Largura de leitura das respostas limitada (~760pt) para legibilidade em janelas largas
+- `RAGEngine` passou de busca puramente vetorial para **recuperação híbrida** com fontes rastreáveis
+- Títulos automáticos deixaram de usar as primeiras palavras do texto, passando a usar modelo on-device
+
+---
+
 ## [1.0.0] — 2025-06-26
 
 ### Adicionado
@@ -83,4 +131,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - [ ] Planilhas nativas
 - [ ] Histórico de versões de artifacts
 - [ ] Exportação de projetos
-- [ ] Temas de cor customizáveis
+- [ ] Ditado local com Whisper (WhisperKit) — abstração pronta, falta adicionar o pacote no Xcode
+- [x] Temas de cor customizáveis
+- [x] Memória persistente entre conversas
+- [x] Histórico de versões de conversas (branching)

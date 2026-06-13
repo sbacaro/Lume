@@ -18,7 +18,7 @@ final class AIProviderConfig {
     var defaultModel: String
     var isActive: Bool = true
     var temperature: Double = 0.7
-    var maxTokens: Int = 2048
+    var maxTokens: Int = 8192
     var createdAt: Date = Date()
 
     /// Models fetched from the provider API and cached locally.

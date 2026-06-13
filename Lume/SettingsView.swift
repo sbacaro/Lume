@@ -15,7 +15,9 @@ struct SettingsView: View {
     enum SettingsTab: String, CaseIterable {
         case providers  = "Providers"
         case agent      = "Agente"
+        case github     = "GitHub"
         case style      = "Estilo"
+        case memory     = "Memória"
         case mcp        = "MCP"
         case workflows  = "Workflows"
         case tasks      = "Tarefas"
@@ -25,7 +27,9 @@ struct SettingsView: View {
             switch self {
             case .providers: return "bolt.fill"
             case .agent:     return "cpu"
+            case .github:    return "chevron.left.forwardslash.chevron.right"
             case .style:     return "paintbrush.fill"
+            case .memory:    return "brain.head.profile"
             case .mcp:       return "puzzlepiece.extension.fill"
             case .workflows: return "arrow.triangle.branch"
             case .tasks:     return "calendar.badge.clock"
@@ -106,7 +110,9 @@ struct SettingsView: View {
                 switch selectedTab {
                 case .providers: ProviderSettingsContent()
                 case .agent:     AgentSettingsView()
+                case .github:    GitHubSettingsView()
                 case .style:     StyleSettingsView()
+                case .memory:    MemorySettingsView()
                 case .mcp:       MCPSettingsView()
                 case .workflows: WorkflowSettingsView()
                 case .tasks:     TaskSettingsView()
@@ -125,6 +131,7 @@ struct SettingsView: View {
 
 struct AgentSettingsView: View {
     @State private var config = LumeConfig.load()
+    @State private var cacheCleared = false
 
     var body: some View {
         ScrollView {
@@ -207,17 +214,131 @@ struct AgentSettingsView: View {
                     Divider().opacity(0.4)
                     Toggle("Cache semântico", isOn: $config.enableSemanticCache)
                         .onChange(of: config.enableSemanticCache) { _, _ in config.save() }
+                    HStack {
+                        Text("Respostas repetidas vêm do cache. Limpe se vir respostas antigas/erradas.")
+                            .font(.system(size: 11)).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                        Button {
+                            Task { await SemanticCache.shared.clear() }
+                            cacheCleared = true
+                        } label: {
+                            Label(cacheCleared ? "Cache limpo ✓" : "Limpar cache", systemImage: "trash")
+                                .font(.system(size: 11))
+                        }
+                        .disabled(cacheCleared)
+                    }
                     Divider().opacity(0.4)
                     Toggle("RAG em documentos", isOn: $config.enableRAG)
                         .onChange(of: config.enableRAG) { _, _ in config.save() }
                     Divider().opacity(0.4)
                     Toggle("Prompt Caching (Anthropic)", isOn: $config.enablePromptCaching)
                         .onChange(of: config.enablePromptCaching) { _, _ in config.save() }
+                    Divider().opacity(0.4)
+                    Toggle("Memória persistente", isOn: $config.enableMemory)
+                        .onChange(of: config.enableMemory) { _, _ in config.save() }
                 }
                 .font(.system(size: 13))
             }
             .padding(24)
         }
+    }
+}
+
+// MARK: - Memory Settings
+
+struct MemorySettingsView: View {
+    @State private var store = MemoryStore.shared
+    @State private var newText = ""
+    @State private var newCategory: MemoryCategory = .general
+    @State private var editingID: String?
+    @State private var editingText = ""
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                settingsSection("Adicionar memória") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Fatos que a IA deve lembrar em todas as conversas (ex.: \"Trabalho na Rumo Logística\", \"Prefiro respostas objetivas em português\").")
+                            .font(.system(size: 11)).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        HStack(spacing: 8) {
+                            Picker("", selection: $newCategory) {
+                                ForEach(MemoryCategory.allCases, id: \.self) { c in
+                                    Label(c.label, systemImage: c.icon).tag(c)
+                                }
+                            }
+                            .labelsHidden().frame(width: 150)
+                            TextField("Nova memória…", text: $newText)
+                                .textFieldStyle(.roundedBorder)
+                                .onSubmit { addMemory() }
+                            Button("Adicionar") { addMemory() }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(newText.trimmingCharacters(in: .whitespaces).isEmpty)
+                        }
+                    }
+                }
+
+                settingsSection("Memórias (\(store.items.count))") {
+                    if store.items.isEmpty {
+                        Text("Nenhuma memória ainda. Você também pode salvar memórias direto de uma mensagem, no botão de cérebro.")
+                            .font(.system(size: 12)).foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        ForEach(store.items) { item in
+                            memoryRow(item)
+                            if item.id != store.items.last?.id { Divider().opacity(0.3) }
+                        }
+                    }
+                }
+            }
+            .padding(24)
+        }
+    }
+
+    private func memoryRow(_ item: MemoryItem) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: item.categoryEnum.icon)
+                .font(.system(size: 12))
+                .foregroundStyle(item.isEnabled ? Color.accentColor : Color.secondary)
+                .frame(width: 18)
+
+            if editingID == item.id {
+                TextField("", text: $editingText)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { commitEdit(item) }
+                Button("OK") { commitEdit(item) }.controlSize(.small)
+            } else {
+                Text(item.content)
+                    .font(.system(size: 12))
+                    .foregroundStyle(item.isEnabled ? .primary : .secondary)
+                    .strikethrough(!item.isEnabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .onTapGesture(count: 2) { editingID = item.id; editingText = item.content }
+            }
+
+            Toggle("", isOn: Binding(get: { item.isEnabled }, set: { _ in store.toggle(item) }))
+                .labelsHidden().controlSize(.mini)
+                .help(item.isEnabled ? "Ativa" : "Desativada")
+
+            Button { store.delete(item) } label: {
+                Image(systemName: "trash").font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain).help("Apagar")
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func addMemory() {
+        store.add(newText, category: newCategory)
+        newText = ""
+    }
+
+    private func commitEdit(_ item: MemoryItem) {
+        var updated = item
+        updated.content = editingText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !updated.content.isEmpty { store.update(updated) }
+        editingID = nil
     }
 }
 
@@ -606,10 +727,81 @@ struct AdvancedSettingsView: View {
     @State private var googleCX     = UserDefaults.standard.string(forKey: "google_search_cx") ?? ""
     @State private var showOnboarding = false
     @State private var showResetConfirmation = false
+    @AppStorage("lume.messageFontScale") private var messageFontScale: Double = 1.0
+    @AppStorage(ThemeKeys.accent) private var accentRaw = AccentChoice.clay.rawValue
+    @AppStorage(ThemeKeys.appearance) private var appearanceRaw = AppearanceChoice.system.rawValue
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+
+                settingsSection("Aparência das Mensagens") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Tamanho do texto")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            Picker("", selection: $messageFontScale) {
+                                Text("Pequeno").tag(0.85)
+                                Text("Padrão").tag(1.0)
+                                Text("Grande").tag(1.15)
+                                Text("Extra").tag(1.3)
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 280)
+                        }
+                        Text("Pré-visualização")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                        MarkdownTextView(text: "O **Lume** renderiza tabelas, listas e código.\n\n| Modelo | Janela |\n|---|---:|\n| Opus 4.8 | 200k |\n| GPT-4o | 128k |\n\n- [x] Tabelas\n- [ ] Mais temas")
+                            .environment(\.markdownFontScale, CGFloat(messageFontScale))
+                            .padding(12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.primary.opacity(0.04),
+                                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                }
+
+                settingsSection("Tema") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Cor de acento").font(.system(size: 12, weight: .medium))
+                            HStack(spacing: 10) {
+                                ForEach(AccentChoice.allCases) { choice in
+                                    Button { accentRaw = choice.rawValue } label: {
+                                        Circle()
+                                            .fill(choice.color)
+                                            .frame(width: 24, height: 24)
+                                            .overlay {
+                                                Circle().strokeBorder(
+                                                    Color.primary.opacity(accentRaw == choice.rawValue ? 0.8 : 0),
+                                                    lineWidth: 2)
+                                            }
+                                            .overlay {
+                                                if accentRaw == choice.rawValue {
+                                                    Image(systemName: "checkmark")
+                                                        .font(.system(size: 10, weight: .bold))
+                                                        .foregroundStyle(.white)
+                                                }
+                                            }
+                                    }
+                                    .buttonStyle(.plain).help(choice.label)
+                                }
+                            }
+                        }
+                        Divider().opacity(0.4)
+                        HStack {
+                            Text("Aparência").font(.system(size: 12, weight: .medium))
+                            Spacer()
+                            Picker("", selection: $appearanceRaw) {
+                                ForEach(AppearanceChoice.allCases) { c in
+                                    Label(c.label, systemImage: c.icon).tag(c.rawValue)
+                                }
+                            }
+                            .pickerStyle(.segmented).frame(width: 260)
+                        }
+                    }
+                }
 
                 settingsSection("Idioma do App") {
                     HStack(spacing: 14) {
@@ -776,25 +968,25 @@ struct AdvancedSettingsView: View {
 
     private func resetAppData() {
         // Deletar todas as conversas
-        var conversationDescriptor = FetchDescriptor<Conversation>()
+        let conversationDescriptor = FetchDescriptor<Conversation>()
         if let conversations = try? modelContext.fetch(conversationDescriptor) {
             conversations.forEach { modelContext.delete($0) }
         }
 
         // Deletar todos os projetos
-        var projectDescriptor = FetchDescriptor<Project>()
+        let projectDescriptor = FetchDescriptor<Project>()
         if let projects = try? modelContext.fetch(projectDescriptor) {
             projects.forEach { modelContext.delete($0) }
         }
 
         // Deletar todas as tarefas agendadas
-        var taskDescriptor = FetchDescriptor<ScheduledTask>()
+        let taskDescriptor = FetchDescriptor<ScheduledTask>()
         if let tasks = try? modelContext.fetch(taskDescriptor) {
             tasks.forEach { modelContext.delete($0) }
         }
 
         // Deletar todos os workflows
-        var workflowDescriptor = FetchDescriptor<Workflow>()
+        let workflowDescriptor = FetchDescriptor<Workflow>()
         if let workflows = try? modelContext.fetch(workflowDescriptor) {
             workflows.forEach { modelContext.delete($0) }
         }
@@ -811,7 +1003,7 @@ struct AdvancedSettingsView: View {
 // MARK: - Provider Settings Content
 
 struct ProviderSettingsContent: View {
-    @State private var providerManager = AIProviderManager()
+    @State private var providerManager = AIProviderManager.shared
     var body: some View {
         ProviderSettingsView(providerManager: providerManager)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -13,7 +13,7 @@ struct ContentView: View {
     @Environment(\.lumeConfig) private var config
     @Query(sort: \Conversation.updatedAt, order: .reverse) private var allConversations: [Conversation]
     @Query(sort: \Project.updatedAt, order: .reverse) private var projects: [Project]
-    @State private var providerManager = AIProviderManager()
+    @State private var providerManager = AIProviderManager.shared
     @Query(filter: #Predicate<AIProviderConfig> { $0.isActive }) private var activeConfigs: [AIProviderConfig]
     private var activeConfig: AIProviderConfig? { activeConfigs.first }
 
@@ -28,6 +28,9 @@ struct ContentView: View {
     @State private var updateManager = UpdateManager.shared
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "lume_onboarding_completed")
     @State private var showNewProject = false
+    @State private var showCommandPalette = false
+    @AppStorage(ThemeKeys.accent) private var accentRaw = AccentChoice.clay.rawValue
+    @AppStorage(ThemeKeys.appearance) private var appearanceRaw = AppearanceChoice.system.rawValue
 
     var body: some View {
         NavigationSplitView(columnVisibility: $sidebarVisibility) {
@@ -58,6 +61,7 @@ struct ContentView: View {
         .navigationSplitViewStyle(.balanced)
         .task {
             await loadActiveProvider()
+            await GitHubService.shared.bootstrap()
             WindowOpener.shared.openNewProject = { showNewProject = true }
             TaskScheduler.shared.onTaskFired = { task in
                 if let conv = allConversations.first(where: { $0.id == task.conversationID }) {
@@ -77,7 +81,43 @@ struct ContentView: View {
             NewProjectSheet()
                 .environment(\.modelContext, modelContext)
         }
+        .sheet(isPresented: $showCommandPalette) {
+            CommandPaletteView(
+                conversations: allConversations,
+                onSelectConversation: { conv in
+                    selectedConversation = conv
+                    selectedProject = conv.project
+                    if conv.tags.contains("code") { sidebarMode = .code }
+                    else if conv.project != nil { sidebarMode = .cowork }
+                    else { sidebarMode = .chat }
+                },
+                onNewConversation: { createNewConversation() },
+                onOpenSettings: { WindowOpener.shared.openSettings?() }
+            )
+        }
+        .background {
+            Group {
+                Button("") { showCommandPalette = true }
+                    .keyboardShortcut("k", modifiers: .command)
+                Button("") { createNewConversation() }
+                    .keyboardShortcut("n", modifiers: .command)
+                Button("") { withAnimation { showSearch = true } }
+                    .keyboardShortcut("f", modifiers: .command)
+                Button("") { withAnimation { sidebarMode = .chat } }
+                    .keyboardShortcut("1", modifiers: .command)
+                Button("") { withAnimation { sidebarMode = .cowork } }
+                    .keyboardShortcut("2", modifiers: .command)
+                Button("") { withAnimation { sidebarMode = .code } }
+                    .keyboardShortcut("3", modifiers: .command)
+            }
+            .opacity(0)
+        }
+        .tint(accentColor)
+        .preferredColorScheme(colorScheme)
     }
+
+    private var accentColor: Color { (AccentChoice(rawValue: accentRaw) ?? .clay).color }
+    private var colorScheme: ColorScheme? { (AppearanceChoice(rawValue: appearanceRaw) ?? .system).colorScheme }
 
     // MARK: - Sidebar
 
@@ -647,7 +687,7 @@ struct ContentView: View {
         selectedConversation = conv; selectedProject = nil; sidebarMode = mode
         Task {
             try? await Task.sleep(for: .milliseconds(100))
-            try? await providerManager.streamMessage(content: text, conversation: conv)
+            _ = try? await providerManager.streamMessage(content: text, conversation: conv)
             conv.updatedAt = Date(); try? modelContext.save()
         }
     }

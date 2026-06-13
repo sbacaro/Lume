@@ -30,9 +30,9 @@ final class AnthropicProvider: AIProvider {
     let name = "Anthropic"
     var baseURL = URL(string: "https://api.anthropic.com/v1")!
     var apiKey: String
-    var defaultModel: String = "claude-opus-4-5"
+    var defaultModel: String = "claude-opus-4-8"
     var temperature: Double = 0.7
-    var maxTokens: Int = 4096
+    var maxTokens: Int = 8192
     var usePromptCaching = true
 
     /// Extended thinking — quando .off, desabilitado
@@ -102,85 +102,140 @@ final class AnthropicProvider: AIProvider {
                             "cache_control": ["type": "ephemeral"]]]
                         : systemPrompt
 
-                    var payload: [String: Any] = [
-                        "model": model,
-                        "max_tokens": maxTokens,
-                        "system": systemBlock,
-                        "messages": messages,
-                        "stream": true
-                    ]
+                    // Auto-continuação: loop até stop_reason != "max_tokens"
+                    var accumulatedText = ""
+                    var iterationCount = 0
+                    let maxContinuations = 10
 
-                    // Extended thinking
-                    if thinkingBudget != .off {
-                        payload["thinking"] = [
-                            "type": "enabled",
-                            "budget_tokens": thinkingBudget.rawValue
+                    while iterationCount < maxContinuations {
+                        iterationCount += 1
+
+                        var payload: [String: Any] = [
+                            "model": model,
+                            "max_tokens": maxTokens,
+                            "system": systemBlock,
+                            "messages": messages,
+                            "stream": true
                         ]
-                        // Com thinking, max_tokens deve ser > budget_tokens
-                        maxTokens = max(maxTokens, thinkingBudget.rawValue + 1024)
-                        payload["max_tokens"] = maxTokens
-                        // Temperature deve ser 1 com thinking habilitado
-                        payload["temperature"] = 1
-                    } else {
-                        payload["temperature"] = temperature
-                    }
 
-                    let request = URLRequest.createAnthropicRequest(
-                        endpoint: "/messages",
-                        method: "POST",
-                        apiKey: apiKey,
-                        baseURL: baseURL,
-                        usePromptCaching: usePromptCaching,
-                        useThinking: thinkingBudget != .off,
-                        body: payload
-                    )
+                        // Extended thinking
+                        if thinkingBudget != .off {
+                            payload["thinking"] = [
+                                "type": "enabled",
+                                "budget_tokens": thinkingBudget.rawValue
+                            ]
+                            maxTokens = max(maxTokens, thinkingBudget.rawValue + 1024)
+                            payload["max_tokens"] = maxTokens
+                            payload["temperature"] = 1
+                        } else {
+                            payload["temperature"] = temperature
+                        }
 
-                    let (bytes, response) = try await URLSession.shared.bytes(for: request)
-                    guard let http = response as? HTTPURLResponse,
-                          http.statusCode == 200 else {
-                        continuation.finish(throwing: AIProviderError.invalidResponse)
-                        return
-                    }
+                        let request = URLRequest.createAnthropicRequest(
+                            endpoint: "/messages",
+                            method: "POST",
+                            apiKey: apiKey,
+                            baseURL: baseURL,
+                            usePromptCaching: usePromptCaching,
+                            useThinking: thinkingBudget != .off,
+                            body: payload
+                        )
 
-                    var inThinkingBlock = false
+                        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                        guard let http = response as? HTTPURLResponse,
+                              http.statusCode == 200 else {
+                            continuation.finish(throwing: AIProviderError.invalidResponse)
+                            return
+                        }
 
-                    for try await line in bytes.lines {
-                        guard line.hasPrefix("data: ") else { continue }
-                        let jsonString = String(line.dropFirst(6))
-                        guard let data = jsonString.data(using: .utf8),
-                              let event = try? JSONDecoder().decode(AnthropicStreamEvent.self, from: data)
-                        else { continue }
+                        var stopReason: String? = nil
+                        var chunkText = ""
+                        var inThinkingBlock = false
 
-                        switch event.type {
-                        case "content_block_start":
-                            // Detecta início de bloco thinking
-                            if event.contentBlock?.type == "thinking" {
-                                inThinkingBlock = true
-                                continuation.yield("<think>")
-                            } else {
-                                inThinkingBlock = false
+                        for try await line in bytes.lines {
+                            guard line.hasPrefix("data: ") else { continue }
+                            let jsonString = String(line.dropFirst(6))
+                            guard let data = jsonString.data(using: .utf8),
+                                  let event = try? JSONDecoder().decode(AnthropicStreamEvent.self, from: data)
+                            else { continue }
+
+                            switch event.type {
+                            case "message_delta":
+                                // Captura stop_reason para decidir se continua
+                                stopReason = event.delta?.stopReason
+                            case "content_block_start":
+                                if event.contentBlock?.type == "thinking" {
+                                    inThinkingBlock = true
+                                    continuation.yield("<think>")
+                                } else {
+                                    inThinkingBlock = false
+                                }
+                            case "content_block_stop":
+                                if inThinkingBlock {
+                                    continuation.yield("</think>")
+                                    inThinkingBlock = false
+                                }
+                            case "content_block_delta":
+                                if let text = event.delta?.text, !text.isEmpty {
+                                    continuation.yield(text)
+                                    chunkText += text
+                                } else if let thinking = event.delta?.thinking, !thinking.isEmpty {
+                                    continuation.yield(thinking)
+                                }
+                            default:
+                                break
                             }
-                        case "content_block_stop":
-                            if inThinkingBlock {
-                                continuation.yield("</think>")
-                                inThinkingBlock = false
-                            }
-                        case "content_block_delta":
-                            if let text = event.delta?.text, !text.isEmpty {
-                                continuation.yield(text)
-                            } else if let thinking = event.delta?.thinking, !thinking.isEmpty {
-                                continuation.yield(thinking)
-                            }
-                        default:
+                        }
+
+                        accumulatedText += chunkText
+
+                        // Terminou naturalmente — encerra loop
+                        if stopReason != "max_tokens" {
                             break
                         }
+
+                        // Auto-continuação silenciosa: o usuário vê o texto chegando sem interrupção
+                        messages.append(["role": "assistant", "content": accumulatedText])
+                        messages.append(["role": "user", "content": "Continue exatamente de onde parou."])
                     }
+
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
                 }
             }
         }
+    }
+
+    // MARK: - Fetch Models (Anthropic usa x-api-key, não Authorization: Bearer)
+
+    func fetchAvailableModels() async throws -> [String] {
+        var request = URLRequest(url: baseURL.appendingPathComponent("/models"))
+        request.httpMethod = "GET"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            // Fallback para lista estática se a API não responder
+            return [
+                "claude-opus-4-8",
+                "claude-sonnet-4-6",
+                "claude-haiku-4-5-20251001"
+            ]
+        }
+
+        struct AnthropicModelsResponse: Decodable {
+            let data: [AnthropicModelItem]
+            struct AnthropicModelItem: Decodable { let id: String }
+        }
+
+        guard let decoded = try? JSONDecoder().decode(AnthropicModelsResponse.self, from: data) else {
+            return ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+        }
+
+        return decoded.data.map { $0.id }
     }
 }
 
@@ -201,6 +256,12 @@ struct AnthropicStreamDelta: Decodable {
     let type: String?
     let text: String?
     let thinking: String?
+    let stopReason: String?
+
+    enum CodingKeys: String, CodingKey {
+        case type, text, thinking
+        case stopReason = "stop_reason"
+    }
 }
 
 struct AnthropicContentBlock: Decodable {

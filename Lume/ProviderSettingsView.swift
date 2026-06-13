@@ -156,8 +156,8 @@ struct ProviderDetailView: View {
 
     private var staticModels: [String] {
         switch provider.providerType {
-        case "openai":    return ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-        case "anthropic": return ["claude-opus-4-5", "claude-sonnet-4-5", "claude-3-5-haiku-20241022"]
+        case "openai":    return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"]
+        case "anthropic": return ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
         default:          return []
         }
     }
@@ -405,17 +405,21 @@ struct ProviderDetailView: View {
             switch provider.providerType {
             case "openai":
                 tempProvider = OpenAIProvider(apiKey: apiKey)
-            case "openai_custom":
-                guard let url = URL(string: provider.baseURL) else {
-                    fetchError = "URL base inválida"; isFetchingModels = false; return
-                }
-                tempProvider = OpenAIProvider(apiKey: apiKey, baseURL: url)
             case "anthropic":
                 tempProvider = AnthropicProvider(apiKey: apiKey)
             default:
-                fetchError = "Provider não suportado"; isFetchingModels = false; return
+                // Todos os providers OpenAI-compatible (openai_custom, litellm, ollama,
+                // vllm, tgi, portkey, etc.) usam o mesmo endpoint /models
+                guard !provider.baseURL.isEmpty, let url = URL(string: provider.baseURL) else {
+                    fetchError = "Configure a Base URL antes de buscar modelos"
+                    isFetchingModels = false
+                    return
+                }
+                tempProvider = OpenAIProvider(apiKey: apiKey, baseURL: url)
             }
-            let models = try await tempProvider.fetchAvailableModels()
+            // Remove duplicatas preservando a ordem (gateways às vezes repetem modelos).
+            var seen = Set<String>()
+            let models = try await tempProvider.fetchAvailableModels().filter { seen.insert($0).inserted }
             provider.cachedModels = models
             if !models.isEmpty && !models.contains(provider.defaultModel) {
                 provider.defaultModel = models[0]
@@ -423,7 +427,7 @@ struct ProviderDetailView: View {
             try? modelContext.save()
             validationMessage = "✓ \(models.count) modelos carregados"
         } catch {
-            fetchError = "Erro: \(error.localizedDescription)"
+            fetchError = "Erro ao buscar modelos: \(error.localizedDescription)"
         }
         isFetchingModels = false
     }
@@ -534,7 +538,7 @@ struct AddProviderView: View {
             finalDefaultModel = "gpt-4o"
         case "anthropic":
             finalBaseURL = "https://api.anthropic.com/v1"
-            finalDefaultModel = "claude-opus-4-5"
+            finalDefaultModel = "claude-opus-4-8"
         case "openai_custom":
             finalBaseURL = baseURL
             finalDefaultModel = "default"

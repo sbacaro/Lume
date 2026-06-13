@@ -13,9 +13,58 @@ import Security
 enum Shell {
 
     // PATH completo para garantir que git, swift, npm etc sejam encontrados
-    private static let fullPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/opt/homebrew/sbin"
+    nonisolated private static let fullPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/opt/homebrew/sbin"
+
+    /// Drena stdout/stderr CONCORRENTEMENTE enquanto o processo roda e só então
+    /// espera o término. Sem isso ocorre o deadlock clássico do `Process`: o
+    /// buffer do pipe (64 KB) enche, o processo bloqueia esperando alguém ler,
+    /// e `waitUntilExit()` nunca retorna — congelando comandos com muita saída
+    /// (ex.: `log show`). Aplica timeout (mata o processo) e limita o tamanho do
+    /// texto devolvido para não estourar memória.
+    nonisolated private static func drain(
+        _ process: Process,
+        stdout: Pipe,
+        stderr: Pipe,
+        timeout: TimeInterval = 90
+    ) -> (out: String, err: String, timedOut: Bool) {
+        let lock = NSLock()
+        var outData = Data()
+        var errData = Data()
+        let group = DispatchGroup()
+        let q = DispatchQueue(label: "lume.shell.read", attributes: .concurrent)
+        group.enter()
+        q.async {
+            let d = stdout.fileHandleForReading.readDataToEndOfFile()
+            lock.lock(); outData = d; lock.unlock(); group.leave()
+        }
+        group.enter()
+        q.async {
+            let d = stderr.fileHandleForReading.readDataToEndOfFile()
+            lock.lock(); errData = d; lock.unlock(); group.leave()
+        }
+        var timedOut = false
+        let killer = DispatchWorkItem {
+            if process.isRunning { timedOut = true; process.terminate() }
+        }
+        DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: killer)
+        process.waitUntilExit()
+        killer.cancel()
+        group.wait()   // garante que os pipes foram totalmente lidos
+        let cap = 200_000   // ~200 KB de texto já é mais que suficiente p/ o modelo
+        func text(_ data: Data) -> String {
+            var s = String(data: data, encoding: .utf8) ?? ""
+            if s.count > cap { s = String(s.prefix(cap)) + "\n…(saída truncada)" }
+            return s
+        }
+        lock.lock(); let o = text(outData); let e = text(errData); lock.unlock()
+        return (o, e, timedOut)
+    }
 
     nonisolated static func run(command: String, workingDirectory: String?) -> ToolResult {
+        // Comandos com sudo → diálogo nativo de administrador (Touch ID/senha), roda como root.
+        if command.range(of: "\\bsudo\\b", options: .regularExpression) != nil {
+            return runAdmin(command: command, workingDirectory: workingDirectory)
+        }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-c", command]
@@ -32,15 +81,70 @@ enum Shell {
         process.standardError  = stderrPipe
         do {
             try process.run()
-            process.waitUntilExit()
-            let stdout = String(data: stdoutPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            let stderr = String(data: stderrPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            let output = [stdout, stderr].filter { !$0.isEmpty }.joined(separator: "\n")
+            let (out, err, timedOut) = drain(process, stdout: stdoutPipe, stderr: stderrPipe)
+            let output = [out, err].filter { !$0.isEmpty }.joined(separator: "\n")
+            if timedOut {
+                return Shell.failure("Tempo esgotado (90s) — comando interrompido. Saída parcial:\n\(output)")
+            }
             return process.terminationStatus == 0
                 ? Shell.success(output.isEmpty ? "(no output)" : output, metadata: ["exit_code": "0"])
                 : Shell.failure("Exit \(process.terminationStatus): \(output)")
         } catch {
             return Shell.failure("Failed to launch: \(error.localizedDescription)")
+        }
+    }
+
+    /// Executa um comando como administrador (root) via o diálogo de autenticação
+    /// nativo do macOS (Touch ID / senha de admin). Não precisa de senha armazenada.
+    /// Usado automaticamente quando o comando contém `sudo`.
+    nonisolated static func runAdmin(command: String, workingDirectory: String?) -> ToolResult {
+        // `do shell script ... with administrator privileges` já roda como root,
+        // então removemos o `sudo` para evitar pedido de senha duplicado em TTY inexistente.
+        var cmd = command.replacingOccurrences(
+            of: "\\bsudo\\b\\s*", with: "", options: .regularExpression)
+
+        // Diretório de trabalho.
+        if let wd = workingDirectory, !wd.isEmpty {
+            let safeWD = wd.replacingOccurrences(of: "'", with: "'\\''")
+            cmd = "cd '\(safeWD)' && \(cmd)"
+        }
+
+        // Injeta PATH para o shell root encontrar binários do Homebrew etc.
+        cmd = "export PATH=\(fullPath):$PATH; \(cmd)"
+
+        // Escapa para a string literal do AppleScript (apenas \ e ").
+        let escaped = cmd
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = "do shell script \"\(escaped)\" with administrator privileges"
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError  = stderrPipe
+        do {
+            try process.run()
+            let (out, err, timedOut) = drain(process, stdout: stdoutPipe, stderr: stderrPipe)
+            let output = [out, err]
+                .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                .joined(separator: "\n")
+            if timedOut {
+                return Shell.failure("Tempo esgotado (90s) — comando interrompido. Saída parcial:\n\(output)")
+            }
+            if process.terminationStatus == 0 {
+                return Shell.success(output.isEmpty ? "(no output)" : output,
+                                     metadata: ["exit_code": "0", "elevated": "1"])
+            }
+            // -128 = usuário cancelou o diálogo de autenticação.
+            if output.contains("-128") || output.lowercased().contains("user canceled") {
+                return Shell.failure("Autenticação de administrador cancelada pelo usuário.")
+            }
+            return Shell.failure("Exit \(process.terminationStatus): \(output)")
+        } catch {
+            return Shell.failure("Falha ao executar com privilégios de administrador: \(error.localizedDescription)")
         }
     }
 
@@ -162,10 +266,8 @@ enum Shell {
         let errPipe = Pipe()
         process.standardOutput = pipe
         process.standardError  = errPipe
-        try? process.run()
-        process.waitUntilExit()
-        let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(),    encoding: .utf8) ?? ""
-        let err = String(data: errPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        do { try process.run() } catch { return (error.localizedDescription, 1) }
+        let (out, err, _) = drain(process, stdout: pipe, stderr: errPipe)
         return (out.isEmpty ? err : out, process.terminationStatus)
     }
 

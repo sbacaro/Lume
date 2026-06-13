@@ -154,11 +154,25 @@ struct WebSearchTool: AgentTool {
             guard results.count < maxResults else { break }
             let text    = String(block.1)
             let title   = text.firstMatch(of: titlePattern).map { stripHTML(String($0.2)) } ?? ""
-            let url     = text.firstMatch(of: titlePattern).map { String($0.1) } ?? ""
+            let rawURL  = text.firstMatch(of: titlePattern).map { String($0.1) } ?? ""
+            let url     = resolveDDGURL(rawURL)
             let snippet = text.firstMatch(of: snippetPattern).map { stripHTML(String($0.1)) } ?? ""
             if !title.isEmpty { results.append(SearchResult(title: title, snippet: snippet, url: url)) }
         }
         return results
+    }
+
+    /// Converte o link de redirect do DuckDuckGo na URL real.
+    /// Ex.: "//duckduckgo.com/l/?uddg=https%3A%2F%2Fportal.inmet.gov.br..." → "https://portal.inmet.gov.br/..."
+    func resolveDDGURL(_ raw: String) -> String {
+        var s = raw.replacingOccurrences(of: "&amp;", with: "&")
+        if s.hasPrefix("//") { s = "https:" + s }
+        if let comps = URLComponents(string: s),
+           let uddg = comps.queryItems?.first(where: { $0.name == "uddg" })?.value,
+           !uddg.isEmpty {
+            return uddg
+        }
+        return s
     }
 
     func stripHTML(_ html: String) -> String {

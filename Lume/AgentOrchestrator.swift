@@ -230,7 +230,7 @@ enum WorkflowFactory {
                 return ["query": state.variables["query"] ?? content]
             }))
         builder.addNode(LLMNode(id: "synthesize", name: "Sintetizar",
-            systemPrompt: "Sintetize as informações encontradas.",
+            systemPrompt: "Sintetize as informações encontradas com fidelidade às fontes e cite-as. Não invente dados: se algo não estiver nas fontes, diga que não foi encontrado em vez de supor.",
             providerManager: providerManager, conversation: conversation))
         builder.addNode(OutputNode { state in state.variables["last_response"] ?? "" })
         builder.addSimpleEdge(from: "search", to: "synthesize")
@@ -243,7 +243,7 @@ enum WorkflowFactory {
         let builder = AgentGraph.Builder()
         builder.maxIterations = 5
         builder.addNode(LLMNode(id: "generate", name: "Gerar Código",
-            systemPrompt: "Gere código limpo e funcional.",
+            systemPrompt: "Gere código limpo e funcional. Não invente APIs, bibliotecas ou funções inexistentes; se não tiver certeza de uma API, sinalize em vez de supor. Não pressuponha arquivos ou contexto que não foram fornecidos.",
             providerManager: providerManager, conversation: conversation))
         builder.addNode(ToolNode(id: "test", name: "Testar", toolName: "run_shell",
             inputExtractor: { state in
@@ -253,7 +253,7 @@ enum WorkflowFactory {
             condition: { state in !(state.toolResults["run_shell"] ?? "").lowercased().contains("error") },
             trueVariable: "end", falseVariable: "fix"))
         builder.addNode(LLMNode(id: "fix", name: "Corrigir",
-            systemPrompt: "Corrija os erros no código.",
+            systemPrompt: "Corrija os erros no código com base na causa real apontada pela saída do teste. Não invente correções que não se baseiem no erro observado.",
             providerManager: providerManager, conversation: conversation))
         builder.addNode(OutputNode { state in state.variables["last_response"] ?? "" })
         builder.addSimpleEdge(from: "generate", to: "test")

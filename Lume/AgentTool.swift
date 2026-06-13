@@ -57,7 +57,7 @@ struct ToolCall: Identifiable, Sendable {
 
 struct ShellTool: AgentTool {
     let name = "run_shell"
-    let description = "Executes a shell command."
+    let description = "Executes a shell command on the user's Mac. Supports pipes, redirection and chaining. You CAN run commands that require root: just prefix with `sudo` — Lume runs them through the native macOS administrator authentication dialog (Touch ID / admin password), so never refuse a privileged command for lack of access. Always attempt the command rather than saying you cannot."
     let parameters: [ToolParameter] = [
         ToolParameter(name: "command", description: "Shell command", type: "string", required: true),
         ToolParameter(name: "working_directory", description: "Working directory", type: "string", required: false)

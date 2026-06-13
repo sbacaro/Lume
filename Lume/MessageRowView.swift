@@ -8,15 +8,19 @@ import SwiftUI
 struct MessageRowView: View {
     let message: Message
     var isStreaming: Bool = false
+    var streamingActivity: String? = nil
     var toolCalls: [ToolCall] = []
+    var isThinkingExpanded: Bool = false
+    var onToggleThinking: (() -> Void)? = nil
     var onArtifactTap: ((Artifact) -> Void)? = nil
-    var thinkingTracker: ThinkingTracker? = nil
     var onRestartFrom: (() -> Void)? = nil
     var onEdit: ((String) -> Void)? = nil
     var onSuggestionSelected: ((String) -> Void)? = nil
 
     @State private var isHovering = false
     @State private var copied = false
+    @State private var savedMemory = false
+    @AppStorage("lume.messageFontScale") private var messageFontScale: Double = 1.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -38,7 +42,7 @@ struct MessageRowView: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text(message.content)
-                    .font(.system(size: 14))
+                    .font(.system(size: 14 * CGFloat(messageFontScale)))
                     .foregroundStyle(.primary)
                     .textSelection(.enabled)
                     .multilineTextAlignment(.leading)
@@ -68,11 +72,6 @@ struct MessageRowView: View {
 
     private var userActionBar: some View {
         HStack(spacing: 4) {
-            Text(timeLabel)
-                .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
-                .fixedSize()
-
             HStack(spacing: 2) {
                 actionButton(icon: "arrow.counterclockwise", help: "Reiniciar conversa a partir daqui") {
                     onRestartFrom?()
@@ -80,11 +79,24 @@ struct MessageRowView: View {
                 actionButton(icon: "pencil", help: "Editar mensagem") {
                     onEdit?(message.content)
                 }
+                actionButton(icon: savedMemory ? "checkmark" : "brain", help: "Salvar na memória") {
+                    MemoryStore.shared.add(message.content)
+                    withAnimation(.easeInOut(duration: 0.15)) { savedMemory = true }
+                    Task {
+                        try? await Task.sleep(for: .seconds(2))
+                        withAnimation(.easeInOut(duration: 0.15)) { savedMemory = false }
+                    }
+                }
                 actionButton(icon: copied ? "checkmark" : "doc.on.doc", help: "Copiar mensagem") {
                     copyMessage()
                 }
             }
             .opacity(isHovering ? 1 : 0)
+
+            Text(timeLabel)
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+                .fixedSize()
         }
         .frame(height: 28)
     }
@@ -131,12 +143,6 @@ struct MessageRowView: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 10) {
-                if let tracker = thinkingTracker,
-                   (isStreaming || !tracker.steps.isEmpty) {
-                    ThinkingPanelView(tracker: tracker, isStreaming: isStreaming)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-
                 if !toolCalls.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(toolCalls) { AgentToolCallView(toolCall: $0) }
@@ -149,16 +155,33 @@ struct MessageRowView: View {
                         isStreaming: isStreaming,
                         onSuggestionSelected: onSuggestionSelected
                     )
-                    .font(.system(size: 14))
+                    .environment(\.markdownFontScale, CGFloat(messageFontScale))
+                    // Largura de leitura confortável em janelas largas (linhas não ficam enormes)
+                    .frame(maxWidth: 760, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if !message.ragSources.isEmpty {
+                    ragSourcesView
                 }
 
                 if let artifact = message.artifact {
                     artifactChip(artifact)
                 }
 
-                if isStreaming && message.content.isEmpty && toolCalls.isEmpty && thinkingTracker == nil {
-                    thinkingIndicator
+                if isStreaming {
+                    HStack(spacing: 8) {
+                        StarLoaderView(starSize: 16)
+                        if let activity = streamingActivity, !activity.isEmpty {
+                            Text(activity)
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                                .transition(.opacity)
+                                .id(activity)
+                        }
+                    }
+                    .padding(.top, 2)
+                    .animation(.easeInOut(duration: 0.2), value: streamingActivity)
                 }
 
                 assistantActionBar
@@ -174,23 +197,38 @@ struct MessageRowView: View {
     // MARK: - Assistant Action Bar
 
     private var assistantActionBar: some View {
-        HStack(spacing: 2) {
-            actionButton(
-                icon: copied ? "checkmark" : "doc.on.doc",
-                help: "Copiar resposta"
-            ) {
-                copyMessage()
-            }
+        let isSpeaking = SpeechManager.shared.speakingID == message.id
+        return HStack(spacing: 4) {
+            Text(timeLabel)
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+                .fixedSize()
 
-            actionButton(
-                icon: "arrow.turn.down.right",
-                help: "Continuar a partir daqui"
-            ) {
-                onRestartFrom?()
+            HStack(spacing: 2) {
+                actionButton(
+                    icon: copied ? "checkmark" : "doc.on.doc",
+                    help: "Copiar resposta"
+                ) {
+                    copyMessage()
+                }
+
+                actionButton(
+                    icon: isSpeaking ? "stop.circle" : "speaker.wave.2",
+                    help: isSpeaking ? "Parar leitura" : "Ler em voz alta"
+                ) {
+                    SpeechManager.shared.toggle(id: message.id, text: message.content)
+                }
+
+                actionButton(
+                    icon: "arrow.turn.down.right",
+                    help: "Continuar a partir daqui"
+                ) {
+                    onRestartFrom?()
+                }
             }
+            .opacity((isHovering || isSpeaking) && !isStreaming ? 1 : 0)
         }
         .frame(height: 28)
-        .opacity(isHovering && !isStreaming ? 1 : 0)
     }
 
     // MARK: - Artifact Chip
@@ -230,28 +268,24 @@ struct MessageRowView: View {
     }
 
     private var assistantAvatar: some View {
-        ZStack {
-            Circle()
-                .fill(LinearGradient(
-                    colors: [Color(red: 0.98, green: 0.55, blue: 0.25),
-                             Color(red: 0.85, green: 0.30, blue: 0.65)],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                ))
-                .frame(width: 28, height: 28)
-                .shadow(color: Color.orange.opacity(0.3), radius: 6, y: 2)
-            Image(systemName: "sparkles")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.white)
-        }
+        // Mesma marca do ícone do app (squircle + estrela de 4 pontas).
+        LumeMark(size: 28)
     }
 
-    private var thinkingIndicator: some View {
-        HStack(spacing: 5) {
-            ForEach(0..<3, id: \.self) { i in ThinkingDot(delay: Double(i) * 0.2) }
+    private var ragSourcesView: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Fontes")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.tertiary)
+                .tracking(0.6)
+            FlowLayout(spacing: 6) {
+                ForEach(message.ragSources) { source in
+                    RAGSourceChip(source: source)
+                }
+            }
         }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
+        .padding(.top, 2)
+        .frame(maxWidth: 760, alignment: .leading)
     }
 
     private func artifactIcon(for type: ArtifactType) -> String {
@@ -299,22 +333,40 @@ private extension View {
     }
 }
 
-// MARK: - ThinkingDot
+// MARK: - RAG Source Chip
 
-private struct ThinkingDot: View {
-    let delay: Double
-    @State private var scale: CGFloat = 0.4
-    @State private var opacity: Double = 0.25
+private struct RAGSourceChip: View {
+    let source: RAGSource
+    @State private var showPopover = false
 
     var body: some View {
-        Circle()
-            .fill(.primary.opacity(0.5))
-            .frame(width: 7, height: 7)
-            .scaleEffect(scale).opacity(opacity)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true).delay(delay)) {
-                    scale = 1.0; opacity = 1.0
-                }
+        Button { showPopover.toggle() } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "doc.text.magnifyingglass").font(.system(size: 9))
+                Text("\(source.document) · \(source.chunkIndex + 1)/\(source.totalChunks)")
+                    .font(.system(size: 10, weight: .medium)).lineLimit(1)
             }
+            .foregroundStyle(Color.accentColor)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(Color.accentColor.opacity(0.10), in: Capsule())
+            .overlay(Capsule().strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showPopover, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(source.document).font(.system(size: 12, weight: .semibold))
+                Text("Trecho \(source.chunkIndex + 1) de \(source.totalChunks) · relevância \(String(format: "%.0f%%", min(max(source.score, 0), 1) * 100))")
+                    .font(.system(size: 10)).foregroundStyle(.secondary)
+                Divider()
+                ScrollView {
+                    Text(source.snippet)
+                        .font(.system(size: 12))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 160)
+            }
+            .padding(14).frame(width: 320)
+        }
     }
 }
