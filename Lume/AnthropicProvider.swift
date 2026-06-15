@@ -91,23 +91,37 @@ final class AnthropicProvider: AIProvider {
         return AsyncThrowingStream { continuation in
             Task {
                 do {
-                    var messages: [[String: Any]] = []
-                    for msg in conversationHistory {
-                        messages.append(["role": msg.role, "content": msg.content])
-                    }
-                    messages.append(["role": "user", "content": content])
+                    // A API da Anthropic é estrita: papel `system` só no topo (nunca no
+                    // array de mensagens), papéis têm de ALTERNAR user/assistant, a 1ª
+                    // mensagem precisa ser `user` e não pode haver conteúdo vazio. O app
+                    // monta as mensagens "à moda OpenAI" (tolerante), então sanitizamos aqui.
+                    var raw = conversationHistory.map { (role: $0.role, content: $0.content) }
+                    raw.append((role: "user", content: content))
+                    let (systemExtra, messages0) = AnthropicProvider.sanitizeForAnthropic(raw)
+                    var messages = messages0
+
+                    // Qualquer texto de mensagens `system` do histórico (ex.: resumo de
+                    // contexto) é dobrado no system prompt — onde o Claude espera.
+                    let systemText = systemExtra.isEmpty
+                        ? systemPrompt
+                        : systemPrompt + "\n\n" + systemExtra
 
                     let systemBlock: Any = usePromptCaching
-                        ? [["type": "text", "text": systemPrompt,
+                        ? [["type": "text", "text": systemText,
                             "cache_control": ["type": "ephemeral"]]]
-                        : systemPrompt
+                        : systemText
 
-                    // Auto-continuação: loop até stop_reason != "max_tokens"
-                    var accumulatedText = ""
+                    // Ferramentas: mesma fonte única usada pelos demais providers
+                    // (AgentToolExecutor.availableTools), garantindo paridade total.
+                    let toolDefs = await AnthropicProvider.buildToolDefinitions()
+                    var toolsEnabled = !toolDefs.isEmpty
+
+                    // Loop combinado: cobre auto-continuação (stop_reason == "max_tokens")
+                    // e rodadas de ferramentas (stop_reason == "tool_use").
                     var iterationCount = 0
-                    let maxContinuations = 10
+                    let maxIterations = 20
 
-                    while iterationCount < maxContinuations {
+                    while iterationCount < maxIterations {
                         iterationCount += 1
 
                         var payload: [String: Any] = [
@@ -117,6 +131,7 @@ final class AnthropicProvider: AIProvider {
                             "messages": messages,
                             "stream": true
                         ]
+                        if toolsEnabled { payload["tools"] = toolDefs }
 
                         // Extended thinking
                         if thinkingBudget != .off {
@@ -142,15 +157,36 @@ final class AnthropicProvider: AIProvider {
                         )
 
                         let (bytes, response) = try await URLSession.shared.bytes(for: request)
-                        guard let http = response as? HTTPURLResponse,
-                              http.statusCode == 200 else {
+                        guard let http = response as? HTTPURLResponse else {
                             continuation.finish(throwing: AIProviderError.invalidResponse)
+                            return
+                        }
+                        if http.statusCode != 200 {
+                            var body = ""
+                            for try await line in bytes.lines {
+                                body += line
+                                if body.count > 4000 { break }
+                            }
+                            // Erro relacionado a ferramentas: desabilita e tenta de novo sem tools
+                            let lower = body.lowercased()
+                            if toolsEnabled && (lower.contains("tool") || lower.contains("not supported")) {
+                                toolsEnabled = false
+                                iterationCount -= 1
+                                continue
+                            }
+                            continuation.finish(throwing: AIProviderError.unknown("HTTP \(http.statusCode): \(body)"))
                             return
                         }
 
                         var stopReason: String? = nil
                         var chunkText = ""
                         var inThinkingBlock = false
+                        // Blocos da resposta acumulados por índice, para reconstruir a
+                        // mensagem do assistant na ordem original (thinking → text → tool_use).
+                        var blockType: [Int: String] = [:]
+                        var blockText: [Int: String] = [:]                       // texto de "text" e "thinking"
+                        var blockSignature: [Int: String] = [:]                  // assinatura de "thinking"
+                        var toolUses: [Int: (id: String, name: String, json: String)] = [:]
 
                         for try await line in bytes.lines {
                             guard line.hasPrefix("data: ") else { continue }
@@ -160,13 +196,29 @@ final class AnthropicProvider: AIProvider {
                             else { continue }
 
                             switch event.type {
+                            case "error":
+                                // Erro no meio do stream (ex.: overloaded_error). Antes era
+                                // ignorado → resposta saía vazia. Agora propaga com mensagem.
+                                let msg = event.error?.message ?? "Erro no stream da Anthropic."
+                                continuation.finish(throwing: AIProviderError.unknown(msg))
+                                return
                             case "message_delta":
-                                // Captura stop_reason para decidir se continua
+                                // Captura stop_reason para decidir continuação/ferramentas
                                 stopReason = event.delta?.stopReason
                             case "content_block_start":
-                                if event.contentBlock?.type == "thinking" {
+                                let idx = event.index ?? 0
+                                let type = event.contentBlock?.type ?? "text"
+                                blockType[idx] = type
+                                if type == "thinking" {
                                     inThinkingBlock = true
                                     continuation.yield("<think>")
+                                } else if type == "tool_use" {
+                                    inThinkingBlock = false
+                                    toolUses[idx] = (
+                                        id: event.contentBlock?.id ?? "",
+                                        name: event.contentBlock?.name ?? "",
+                                        json: ""
+                                    )
                                 } else {
                                     inThinkingBlock = false
                                 }
@@ -176,27 +228,102 @@ final class AnthropicProvider: AIProvider {
                                     inThinkingBlock = false
                                 }
                             case "content_block_delta":
-                                if let text = event.delta?.text, !text.isEmpty {
+                                let idx = event.index ?? 0
+                                if let partial = event.delta?.partialJson {
+                                    // Argumentos da ferramenta chegam como input_json_delta
+                                    if var acc = toolUses[idx] {
+                                        acc.json += partial
+                                        toolUses[idx] = acc
+                                    }
+                                } else if let text = event.delta?.text, !text.isEmpty {
                                     continuation.yield(text)
                                     chunkText += text
+                                    blockText[idx, default: ""] += text
                                 } else if let thinking = event.delta?.thinking, !thinking.isEmpty {
                                     continuation.yield(thinking)
+                                    blockText[idx, default: ""] += thinking
+                                } else if let signature = event.delta?.signature {
+                                    blockSignature[idx] = signature
                                 }
                             default:
                                 break
                             }
                         }
 
-                        accumulatedText += chunkText
-
-                        // Terminou naturalmente — encerra loop
-                        if stopReason != "max_tokens" {
+                        // Nenhuma ferramenta chamada → fluxo de texto puro
+                        if toolUses.isEmpty {
+                            // Auto-continuação só se houve texto (Claude rejeita assistant vazio).
+                            if stopReason == "max_tokens",
+                               !chunkText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                messages.append(["role": "assistant", "content": chunkText])
+                                messages.append(["role": "user", "content": "Continue exatamente de onde parou."])
+                                continue
+                            }
                             break
                         }
 
-                        // Auto-continuação silenciosa: o usuário vê o texto chegando sem interrupção
-                        messages.append(["role": "assistant", "content": accumulatedText])
-                        messages.append(["role": "user", "content": "Continue exatamente de onde parou."])
+                        // Rodada de ferramentas: reconstrói a mensagem do assistant com TODOS
+                        // os blocos na ordem original. Os blocos de thinking precisam ser
+                        // reenviados com a assinatura quando extended thinking está ativo.
+                        var assistantContent: [[String: Any]] = []
+                        for idx in blockType.keys.sorted() {
+                            switch blockType[idx] ?? "" {
+                            case "thinking":
+                                var tb: [String: Any] = ["type": "thinking", "thinking": blockText[idx] ?? ""]
+                                if let sig = blockSignature[idx] { tb["signature"] = sig }
+                                assistantContent.append(tb)
+                            case "text":
+                                let t = blockText[idx] ?? ""
+                                if !t.isEmpty { assistantContent.append(["type": "text", "text": t]) }
+                            case "tool_use":
+                                if let tu = toolUses[idx] {
+                                    let inputObj = (try? JSONSerialization.jsonObject(with: Data(tu.json.utf8))) as? [String: Any] ?? [:]
+                                    assistantContent.append([
+                                        "type": "tool_use",
+                                        "id": tu.id,
+                                        "name": tu.name,
+                                        "input": inputObj
+                                    ])
+                                }
+                            default:
+                                break
+                            }
+                        }
+                        messages.append(["role": "assistant", "content": assistantContent])
+
+                        // Executa cada ferramenta (em ordem) e monta os tool_result
+                        let orderedTools = toolUses.sorted { $0.key < $1.key }.map { $0.value }
+                        var resultBlocks: [[String: Any]] = []
+                        for tu in orderedTools {
+                            var input: [String: String] = [:]
+                            if let argsObj = (try? JSONSerialization.jsonObject(with: Data(tu.json.utf8))) as? [String: Any] {
+                                for (k, v) in argsObj { input[k] = "\(v)" }
+                            }
+
+                            // Sinaliza a atividade em tempo real (mesmo formato do OpenAIProvider)
+                            continuation.yield("[[STATUS:\(OpenAIProvider.statusLabel(for: tu.name))]]")
+                            // executeStreaming transmite a saída do shell ao vivo para a UI.
+                            let result = await AgentToolExecutor.shared.executeStreaming(toolName: tu.name, input: input) { line in
+                                continuation.yield("[[STATUS:\(line)]]")
+                            }
+
+                            let inputClean = tu.json
+                                .replacingOccurrences(of: "\n", with: " ")
+                                .replacingOccurrences(of: "|", with: "∣")
+                            let outputClean = String(result.output.prefix(2000))
+                                .replacingOccurrences(of: "|", with: "∣")
+                                .replacingOccurrences(of: "\n", with: "⏎")
+                            continuation.yield("\n[[TOOL:\(tu.name)|\(inputClean)|\(outputClean)|\(result.success ? "1" : "0")]]\n")
+
+                            resultBlocks.append([
+                                "type": "tool_result",
+                                "tool_use_id": tu.id,
+                                "content": result.output,
+                                "is_error": !result.success
+                            ])
+                        }
+                        messages.append(["role": "user", "content": resultBlocks])
+                        // Continua o loop: o modelo recebe os resultados e prossegue.
                     }
 
                     continuation.finish()
@@ -205,6 +332,67 @@ final class AnthropicProvider: AIProvider {
                 }
             }
         }
+    }
+
+    // MARK: - Tool Definitions
+
+    /// Gera as ferramentas no formato da API da Anthropic (`input_schema`) a partir
+    /// da MESMA fonte única usada pelos demais providers: `AgentToolExecutor.availableTools`.
+    /// Assim, qualquer ferramenta nova (incl. github_*) fica disponível em todos os providers.
+    @MainActor
+    static func buildToolDefinitions() -> [[String: Any]] {
+        AgentToolExecutor.shared.availableTools.map { tool in
+            var properties: [String: Any] = [:]
+            var required: [String] = []
+            for p in tool.parameters {
+                properties[p.name] = ["type": p.type, "description": p.description]
+                if p.required { required.append(p.name) }
+            }
+            var schema: [String: Any] = ["type": "object", "properties": properties]
+            if !required.isEmpty { schema["required"] = required }
+            return [
+                "name": tool.name,
+                "description": tool.description,
+                "input_schema": schema
+            ]
+        }
+    }
+
+    // MARK: - Sanitização de mensagens (regras estritas da Anthropic)
+
+    /// Converte uma lista de mensagens (montada "à moda OpenAI", tolerante) numa sequência
+    /// VÁLIDA para a Anthropic. Regras aplicadas:
+    /// - papel `system` nunca entra no array → o texto é devolvido em `systemExtra` para
+    ///   ser dobrado no system prompt (onde o Claude espera);
+    /// - conteúdo vazio é descartado (Claude rejeita mensagens vazias);
+    /// - mensagens consecutivas do mesmo papel são fundidas (Claude exige ALTERNÂNCIA);
+    /// - a sequência tem de começar com `user` (assistants iniciais órfãos são removidos).
+    static func sanitizeForAnthropic(
+        _ raw: [(role: String, content: String)]
+    ) -> (systemExtra: String, messages: [[String: Any]]) {
+        var systemExtra = ""
+        var cleaned: [(role: String, content: String)] = []
+        for m in raw {
+            let role = m.role.lowercased()
+            let content = m.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            if content.isEmpty { continue }
+            if role == "system" {
+                systemExtra += (systemExtra.isEmpty ? "" : "\n\n") + content
+                continue
+            }
+            let norm = (role == "assistant") ? "assistant" : "user"
+            if var last = cleaned.last, last.role == norm {
+                last.content += "\n\n" + content
+                cleaned[cleaned.count - 1] = last
+            } else {
+                cleaned.append((role: norm, content: content))
+            }
+        }
+        while let first = cleaned.first, first.role == "assistant" {
+            cleaned.removeFirst()
+        }
+        let messages = cleaned.map { ["role": $0.role, "content": $0.content] as [String: Any] }
+        return (systemExtra, messages)
     }
 
     // MARK: - Fetch Models (Anthropic usa x-api-key, não Authorization: Bearer)
@@ -243,29 +431,41 @@ final class AnthropicProvider: AIProvider {
 
 struct AnthropicStreamEvent: Decodable {
     let type: String
+    let index: Int?
     let delta: AnthropicStreamDelta?
     let contentBlock: AnthropicContentBlock?
+    let error: AnthropicStreamError?
 
     enum CodingKeys: String, CodingKey {
-        case type, delta
+        case type, index, delta, error
         case contentBlock = "content_block"
     }
+}
+
+struct AnthropicStreamError: Decodable {
+    let type: String?
+    let message: String?
 }
 
 struct AnthropicStreamDelta: Decodable {
     let type: String?
     let text: String?
     let thinking: String?
+    let signature: String?
     let stopReason: String?
+    let partialJson: String?
 
     enum CodingKeys: String, CodingKey {
-        case type, text, thinking
+        case type, text, thinking, signature
         case stopReason = "stop_reason"
+        case partialJson = "partial_json"
     }
 }
 
 struct AnthropicContentBlock: Decodable {
     let type: String?
+    let id: String?
+    let name: String?
 }
 
 struct AnthropicResponse: Decodable {

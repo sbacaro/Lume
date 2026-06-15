@@ -107,9 +107,9 @@ final class OpenAIProvider: AIProvider {
                 var modelSupportsTools = self.modelSupportsTools(model)
 
                 var iterationCount = 0
-                let maxIterations = 12
+                let maxIterations = 20
                 var consecutiveToolFailures = 0
-                let maxConsecutiveFailures = 3
+                let maxConsecutiveFailures = 5
                 // Acumula texto entre iterações para auto-continuação silenciosa
                 var accumulatedResponseText = ""
 
@@ -262,8 +262,13 @@ final class OpenAIProvider: AIProvider {
                         // Sinaliza a atividade em tempo real (interceptado pelo manager).
                         continuation.yield("[[STATUS:\(Self.statusLabel(for: toolName))]]")
 
-                        let result = await AgentToolExecutor.shared.execute(
-                            toolName: toolName, input: input)
+                        // executeStreaming transmite a saída do shell ao vivo (linha a linha)
+                        // para a UI acompanhar o processo enquanto roda.
+                        let result = await AgentToolExecutor.shared.executeStreaming(
+                            toolName: toolName, input: input
+                        ) { line in
+                            continuation.yield("[[STATUS:\(line)]]")
+                        }
 
                         // Emite bloco estruturado [[TOOL:...]] — renderizado como ToolCallBlockView
                         // Sanitiza inputs para usar | como separador

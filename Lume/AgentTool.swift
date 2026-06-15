@@ -57,7 +57,7 @@ struct ToolCall: Identifiable, Sendable {
 
 struct ShellTool: AgentTool {
     let name = "run_shell"
-    let description = "Executes a shell command on the user's Mac. Supports pipes, redirection and chaining. You CAN run commands that require root: just prefix with `sudo` — Lume runs them through the native macOS administrator authentication dialog (Touch ID / admin password), so never refuse a privileged command for lack of access. Always attempt the command rather than saying you cannot."
+    let description = "Executes a shell command on the user's Mac. Supports pipes, redirection and chaining. You CAN run commands that require root: just prefix with `sudo` — Lume runs them through the native macOS administrator authentication dialog (Touch ID / admin password), so never refuse a privileged command for lack of access. Always attempt the command rather than saying you cannot. SECURITY: any file deletion (rm/rmdir/unlink) ALWAYS requires explicit user approval and is automatically sent to the macOS Trash (never permanently deleted) — this is enforced and cannot be bypassed, so just use `rm` normally."
     let parameters: [ToolParameter] = [
         ToolParameter(name: "command", description: "Shell command", type: "string", required: true),
         ToolParameter(name: "working_directory", description: "Working directory", type: "string", required: false)

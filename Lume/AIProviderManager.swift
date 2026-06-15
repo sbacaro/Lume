@@ -7,6 +7,7 @@ import Foundation
 import Observation
 
 @Observable
+@MainActor
 final class AIProviderManager {
     /// Instância única compartilhada por todo o app. Sem isso, a tela de
     /// Configurações usava uma instância PRÓPRIA: ao cadastrar/ativar um provider
@@ -258,6 +259,14 @@ final class AIProviderManager {
             baseSystemPrompt = memoryBlock + "\n\n" + baseSystemPrompt
         }
 
+        // ── CONTEXTO DE GITHUB ───────────────────────────────────
+        // Informa a QUALQUER provider/modelo que o GitHub já está autenticado e
+        // quais repositórios existem, para que use as ferramentas github_* em vez
+        // de pedir token ao usuário ("ele não recebe a chave").
+        if let githubBlock = await GitHubService.shared.contextBlock() {
+            baseSystemPrompt += "\n\n" + githubBlock
+        }
+
         // ── CONTEXTO DO PROJETO (Cowork) ──────────────────────────
         if let project = conversation.project {
             var projectContext = "\n\n## Projeto Atual\n"
@@ -390,7 +399,11 @@ final class AIProviderManager {
 
         var fullResponse = ""
 
-        let task = Task<String, Error> {
+        let task = Task<String, Error> { [weak self] in
+            guard let self = self else {
+                throw NSError(domain: "AIProviderManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Self deallocated"])
+            }
+            
             var accumulated = ""
             var tokenCount = 0
             var lastFlush = Date.distantPast
@@ -403,7 +416,7 @@ final class AIProviderManager {
                 // Sinal de atividade — não faz parte do conteúdo da mensagem.
                 if chunk.hasPrefix("[[STATUS:") && chunk.hasSuffix("]]") {
                     let label = String(chunk.dropFirst(9).dropLast(2))
-                    await MainActor.run { self.streamingActivity = label }
+                    self.streamingActivity = label
                     continue
                 }
                 accumulated += chunk
@@ -418,24 +431,20 @@ final class AIProviderManager {
                 let snapshot = accumulated
                 let tc = tokenCount
                 let activity = Self.deriveActivity(from: snapshot)
-                await MainActor.run {
-                    assistantMsg.content = snapshot
-                    self.streamingTokenCount = tc
-                    if self.streamingActivity != activity { self.streamingActivity = activity }
-                    if let start = self.streamingStartTime {
-                        self.streamingElapsed = Date().timeIntervalSince(start)
-                    }
+                assistantMsg.content = snapshot
+                self.streamingTokenCount = tc
+                if self.streamingActivity != activity { self.streamingActivity = activity }
+                if let start = self.streamingStartTime {
+                    self.streamingElapsed = Date().timeIntervalSince(start)
                 }
             }
             // Flush final (garante o texto completo) + contagem de tokens.
             let finalText = accumulated
             let finalTokens = tokenCount
-            await MainActor.run {
-                assistantMsg.content = finalText
+            assistantMsg.content = finalText
                 assistantMsg.tokenCount = finalTokens
                 conversation.totalTokensUsed += finalTokens
                 conversation.messageCount = conversation.messages.count
-            }
             return accumulated
         }
         streamingTask = task
@@ -600,7 +609,7 @@ final class AIProviderManager {
         // assíncrono. Se indisponível, mantém o título provisório.
         Task { [weak conversation] in
             guard let refined = await OnDeviceTitler.generateTitle(for: content) else { return }
-            await MainActor.run { conversation?.title = refined }
+            conversation?.title = refined
         }
     }
 
@@ -737,7 +746,7 @@ final class AIProviderManager {
         for word in words {
             accumulated += (accumulated.isEmpty ? "" : " ") + word
             let current = accumulated
-            await MainActor.run { message.content = current }
+            message.content = current
             try? await Task.sleep(nanoseconds: delayNs)
         }
     }

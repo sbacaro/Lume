@@ -62,6 +62,21 @@ final class AgentToolExecutor {
             ?? ToolResult(success: false, output: "Erro ao executar '\(toolName)'.", metadata: [:])
     }
 
+    /// Igual a `execute`, mas para `run_shell` transmite a saída ao vivo via `onStream`
+    /// (cada linha de output enquanto o comando roda). Demais ferramentas ignoram o callback.
+    func executeStreaming(
+        toolName: String,
+        input: [String: String],
+        onStream: @escaping @Sendable (String) -> Void
+    ) async -> ToolResult {
+        if toolName == "run_shell", let command = input["command"] {
+            return await runShell(command: command,
+                                  workingDirectory: input["working_directory"],
+                                  onStream: onStream)
+        }
+        return await execute(toolName: toolName, input: input)
+    }
+
     func webSearch(query: String, maxResults: Int = 5) async -> ToolResult {
         let tool = WebSearchTool()
         return (try? await tool.execute(with: ["query": query, "max_results": "\(maxResults)"]))
@@ -74,12 +89,45 @@ final class AgentToolExecutor {
             ?? ToolResult(success: false, output: "Erro ao acessar URL.", metadata: [:])
     }
 
-    func runShell(command: String, workingDirectory: String?) async -> ToolResult {
-        guard await approveIfNeeded(toolName: "run_shell",
-                                    summary: "Executar comando no terminal",
-                                    detail: command, isDestructive: true)
-        else { return cancelledResult("run_shell") }
-        return await Task.detached { Shell.run(command: command, workingDirectory: workingDirectory) }.value
+    func runShell(
+        command: String,
+        workingDirectory: String?,
+        onStream: (@Sendable (String) -> Void)? = nil
+    ) async -> ToolResult {
+        // ── SEGURANÇA: exclusão de arquivos ──────────────────────────────
+        // Se o comando apaga arquivos, a aprovação do usuário é SEMPRE obrigatória —
+        // independentemente do modo de aprovação (não pode ser desativada). A exclusão
+        // é redirecionada para a Lixeira do macOS (nunca permanente).
+        let isDeletion = Shell.isFileDeletion(command)
+        if isDeletion {
+            let approved = await ApprovalCoordinator.shared.requestApproval(
+                toolName: "delete_file",
+                summary: "Apagar arquivo(s) — vai para a Lixeira",
+                detail: command,
+                isDestructive: true
+            )
+            guard approved else { return cancelledResult("run_shell") }
+        } else {
+            guard await approveIfNeeded(toolName: "run_shell",
+                                        summary: "Executar comando no terminal",
+                                        detail: command, isDestructive: true)
+            else { return cancelledResult("run_shell") }
+        }
+
+        // Disponibiliza o token do GitHub (cadastrado em Configurações → GitHub) para o
+        // shell, para que scripts/`gh`/`curl`/`git` autentiquem sem pedir nada ao usuário.
+        var extraEnv: [String: String] = [:]
+        let ghToken = GitHubService.shared.token
+        if !ghToken.isEmpty {
+            extraEnv["GITHUB_TOKEN"] = ghToken
+            extraEnv["GH_TOKEN"] = ghToken
+        }
+
+        return await Task.detached {
+            Shell.run(command: command, workingDirectory: workingDirectory,
+                      onOutput: onStream, extraEnv: extraEnv,
+                      redirectDeletionToTrash: true)
+        }.value
     }
 
     func readFile(at path: String) async -> ToolResult {

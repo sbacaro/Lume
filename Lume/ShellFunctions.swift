@@ -15,62 +15,154 @@ enum Shell {
     // PATH completo para garantir que git, swift, npm etc sejam encontrados
     nonisolated private static let fullPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/opt/homebrew/sbin"
 
-    /// Drena stdout/stderr CONCORRENTEMENTE enquanto o processo roda e só então
-    /// espera o término. Sem isso ocorre o deadlock clássico do `Process`: o
-    /// buffer do pipe (64 KB) enche, o processo bloqueia esperando alguém ler,
-    /// e `waitUntilExit()` nunca retorna — congelando comandos com muita saída
-    /// (ex.: `log show`). Aplica timeout (mata o processo) e limita o tamanho do
-    /// texto devolvido para não estourar memória.
+    /// Timeout de INATIVIDADE (s): o processo só é interrompido se ficar este tempo
+    /// SEM produzir nenhuma saída (stdout/stderr). Enquanto está "rolando" — gerando
+    /// output — roda o tempo que precisar (builds longos: `xcodebuild`, `pkgbuild`,
+    /// `productbuild`, `codesign`, `notarytool`). O relógio reinicia a cada saída.
+    /// Serve apenas para matar processos travados de verdade. Ajustável globalmente.
+    nonisolated(unsafe) static var idleTimeout: TimeInterval = 300
+
+    // MARK: - Segurança: exclusão de arquivos → Lixeira (nunca permanente)
+
+    /// Detecta se o comando tenta apagar arquivos/pastas. Usado para FORÇAR aprovação
+    /// do usuário (ação de segurança, não desativável por nenhum modo de aprovação).
+    nonisolated static func isFileDeletion(_ command: String) -> Bool {
+        let patterns = [
+            "\\brm\\b", "\\brmdir\\b", "\\bunlink\\b",
+            "/bin/rm\\b", "/usr/bin/unlink\\b",
+            "\\bshred\\b", "\\bsrm\\b",
+            "-delete\\b",            // find ... -delete
+            "git\\s+clean\\b"        // git clean -f remove arquivos não rastreados
+        ]
+        return patterns.contains { command.range(of: $0, options: .regularExpression) != nil }
+    }
+
+    /// Prelúdio injetado nos comandos do AGENTE: redefine rm/rmdir/unlink para mover à
+    /// Lixeira do macOS em vez de apagar. Finder é o método primário (preserva "Colocar
+    /// de volta"); `mv` para ~/.Trash é o fallback. Flags (que começam com `-`) são ignoradas.
+    nonisolated private static let trashPrelude: String =
+        "__lume_trash() { for f in \"$@\"; do [ \"${f#-}\" != \"$f\" ] && continue; { [ -e \"$f\" ] || [ -L \"$f\" ]; } || continue; case \"$f\" in /*) a=\"$f\";; *) a=\"$PWD/$f\";; esac; /usr/bin/osascript -e \"tell application \\\"Finder\\\" to delete (POSIX file \\\"$a\\\")\" >/dev/null 2>&1 || { mkdir -p \"$HOME/.Trash\"; /bin/mv -f \"$a\" \"$HOME/.Trash/\" 2>/dev/null; }; done; }\n"
+        + "rm() { __lume_trash \"$@\"; }\n"
+        + "rmdir() { __lume_trash \"$@\"; }\n"
+        + "unlink() { __lume_trash \"$@\"; }\n"
+
+    /// Aplica o redirecionamento para a Lixeira a um comando: reescreve `rm` absoluto
+    /// para a função e injeta o prelúdio.
+    nonisolated private static func applyTrashRedirect(_ command: String) -> String {
+        let rewritten = command
+            .replacingOccurrences(of: "/usr/bin/rm", with: "rm")
+            .replacingOccurrences(of: "/bin/rm", with: "rm")
+        return trashPrelude + rewritten
+    }
+
+    /// Drena stdout/stderr INCREMENTALMENTE enquanto o processo roda, acompanhando-o:
+    /// cada pedaço de saída atualiza `lastActivity`. Um watchdog só termina o processo
+    /// se ele ficar `idleTimeout` segundos sem produzir nada (travado). Sem essa drenagem
+    /// concorrente ocorreria o deadlock clássico do `Process` (buffer de pipe de 64 KB
+    /// enche, processo bloqueia, `waitUntilExit()` nunca retorna). Limita o texto
+    /// devolvido para não estourar memória.
     nonisolated private static func drain(
         _ process: Process,
         stdout: Pipe,
         stderr: Pipe,
-        timeout: TimeInterval = 90
+        idleTimeout: TimeInterval = Shell.idleTimeout,
+        onOutput: (@Sendable (String) -> Void)? = nil
     ) -> (out: String, err: String, timedOut: Bool) {
         let lock = NSLock()
         var outData = Data()
         var errData = Data()
-        let group = DispatchGroup()
-        let q = DispatchQueue(label: "lume.shell.read", attributes: .concurrent)
-        group.enter()
-        q.async {
-            let d = stdout.fileHandleForReading.readDataToEndOfFile()
-            lock.lock(); outData = d; lock.unlock(); group.leave()
-        }
-        group.enter()
-        q.async {
-            let d = stderr.fileHandleForReading.readDataToEndOfFile()
-            lock.lock(); errData = d; lock.unlock(); group.leave()
-        }
-        var timedOut = false
-        let killer = DispatchWorkItem {
-            if process.isRunning { timedOut = true; process.terminate() }
-        }
-        DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: killer)
-        process.waitUntilExit()
-        killer.cancel()
-        group.wait()   // garante que os pipes foram totalmente lidos
+        var lastActivity = Date()
+        var lastEmit = Date.distantPast
+        var idleKilled = false
         let cap = 200_000   // ~200 KB de texto já é mais que suficiente p/ o modelo
+
+        // Emite ao vivo a última linha de saída (no máx. ~10x/s) para a UI acompanhar
+        // o processo em tempo real, sem inundar a interface.
+        let emitLive: (Data) -> Void = { d in
+            guard let onOutput else { return }
+            lock.lock()
+            let due = Date().timeIntervalSince(lastEmit) >= 0.1
+            if due { lastEmit = Date() }
+            lock.unlock()
+            guard due, let s = String(data: d, encoding: .utf8) else { return }
+            let lastLine = s.split(whereSeparator: { $0.isNewline }).last.map(String.init) ?? ""
+            let clean = lastLine
+                .replacingOccurrences(of: "]]", with: "] ]")
+                .trimmingCharacters(in: .whitespaces)
+            if !clean.isEmpty { onOutput(String(clean.prefix(160))) }
+        }
+
+        // Leitura incremental: cada chunk reinicia o relógio de inatividade e atualiza
+        // o status ao vivo.
+        stdout.fileHandleForReading.readabilityHandler = { handle in
+            let d = handle.availableData
+            guard !d.isEmpty else { return }
+            lock.lock(); outData.append(d); lastActivity = Date(); lock.unlock()
+            emitLive(d)
+        }
+        stderr.fileHandleForReading.readabilityHandler = { handle in
+            let d = handle.availableData
+            guard !d.isEmpty else { return }
+            lock.lock(); errData.append(d); lastActivity = Date(); lock.unlock()
+            emitLive(d)
+        }
+
+        // Watchdog: verifica periodicamente; só mata se ficou MUDO por idleTimeout.
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "lume.shell.watchdog"))
+        timer.schedule(deadline: .now() + 5, repeating: 5)
+        timer.setEventHandler {
+            lock.lock(); let idle = Date().timeIntervalSince(lastActivity); lock.unlock()
+            if process.isRunning && idle > idleTimeout {
+                lock.lock(); idleKilled = true; lock.unlock()
+                process.terminate()
+            }
+        }
+        timer.resume()
+
+        process.waitUntilExit()
+        timer.cancel()
+
+        // Encerra os handlers e captura qualquer saída remanescente no buffer.
+        stdout.fileHandleForReading.readabilityHandler = nil
+        stderr.fileHandleForReading.readabilityHandler = nil
+        let restOut = stdout.fileHandleForReading.readDataToEndOfFile()
+        let restErr = stderr.fileHandleForReading.readDataToEndOfFile()
+
         func text(_ data: Data) -> String {
             var s = String(data: data, encoding: .utf8) ?? ""
             if s.count > cap { s = String(s.prefix(cap)) + "\n…(saída truncada)" }
             return s
         }
-        lock.lock(); let o = text(outData); let e = text(errData); lock.unlock()
-        return (o, e, timedOut)
+        lock.lock()
+        outData.append(restOut); errData.append(restErr)
+        let o = text(outData); let e = text(errData); let killed = idleKilled
+        lock.unlock()
+        return (o, e, killed)
     }
 
-    nonisolated static func run(command: String, workingDirectory: String?) -> ToolResult {
+    nonisolated static func run(
+        command: String,
+        workingDirectory: String?,
+        onOutput: (@Sendable (String) -> Void)? = nil,
+        extraEnv: [String: String] = [:],
+        redirectDeletionToTrash: Bool = false
+    ) -> ToolResult {
         // Comandos com sudo → diálogo nativo de administrador (Touch ID/senha), roda como root.
         if command.range(of: "\\bsudo\\b", options: .regularExpression) != nil {
-            return runAdmin(command: command, workingDirectory: workingDirectory)
+            return runAdmin(command: command, workingDirectory: workingDirectory,
+                            onOutput: onOutput, extraEnv: extraEnv,
+                            redirectDeletionToTrash: redirectDeletionToTrash)
         }
+        // Segurança: exclusões vão para a Lixeira (rm/rmdir/unlink → mover ao Trash).
+        let effectiveCommand = redirectDeletionToTrash ? applyTrashRedirect(command) : command
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-c", command]
-        // ✅ Injeta PATH completo
+        process.arguments = ["-c", effectiveCommand]
+        // ✅ Injeta PATH completo + variáveis extras (ex.: GITHUB_TOKEN/GH_TOKEN).
+        // No env do processo (não na linha de comando) — não aparece em `ps`.
         var env = ProcessInfo.processInfo.environment
         env["PATH"] = fullPath
+        for (k, v) in extraEnv { env[k] = v }
         process.environment = env
         if let wd = workingDirectory {
             process.currentDirectoryURL = URL(fileURLWithPath: wd)
@@ -81,10 +173,10 @@ enum Shell {
         process.standardError  = stderrPipe
         do {
             try process.run()
-            let (out, err, timedOut) = drain(process, stdout: stdoutPipe, stderr: stderrPipe)
+            let (out, err, timedOut) = drain(process, stdout: stdoutPipe, stderr: stderrPipe, onOutput: onOutput)
             let output = [out, err].filter { !$0.isEmpty }.joined(separator: "\n")
             if timedOut {
-                return Shell.failure("Tempo esgotado (90s) — comando interrompido. Saída parcial:\n\(output)")
+                return Shell.failure("Processo sem saída por \(Int(Shell.idleTimeout))s (aparentemente travado) — interrompido. Saída parcial:\n\(output)")
             }
             return process.terminationStatus == 0
                 ? Shell.success(output.isEmpty ? "(no output)" : output, metadata: ["exit_code": "0"])
@@ -97,7 +189,13 @@ enum Shell {
     /// Executa um comando como administrador (root) via o diálogo de autenticação
     /// nativo do macOS (Touch ID / senha de admin). Não precisa de senha armazenada.
     /// Usado automaticamente quando o comando contém `sudo`.
-    nonisolated static func runAdmin(command: String, workingDirectory: String?) -> ToolResult {
+    nonisolated static func runAdmin(
+        command: String,
+        workingDirectory: String?,
+        onOutput: (@Sendable (String) -> Void)? = nil,
+        extraEnv: [String: String] = [:],
+        redirectDeletionToTrash: Bool = false
+    ) -> ToolResult {
         // `do shell script ... with administrator privileges` já roda como root,
         // então removemos o `sudo` para evitar pedido de senha duplicado em TTY inexistente.
         var cmd = command.replacingOccurrences(
@@ -109,8 +207,16 @@ enum Shell {
             cmd = "cd '\(safeWD)' && \(cmd)"
         }
 
-        // Injeta PATH para o shell root encontrar binários do Homebrew etc.
-        cmd = "export PATH=\(fullPath):$PATH; \(cmd)"
+        // Injeta PATH + variáveis extras (ex.: GITHUB_TOKEN/GH_TOKEN) para o shell root.
+        var prefix = "export PATH=\(fullPath):$PATH; "
+        for (k, v) in extraEnv {
+            let safeV = v.replacingOccurrences(of: "'", with: "'\\''")
+            prefix += "export \(k)='\(safeV)'; "
+        }
+        cmd = prefix + cmd
+
+        // Segurança: exclusões vão para a Lixeira mesmo em comandos com privilégios.
+        if redirectDeletionToTrash { cmd = applyTrashRedirect(cmd) }
 
         // Escapa para a string literal do AppleScript (apenas \ e ").
         let escaped = cmd
@@ -127,12 +233,12 @@ enum Shell {
         process.standardError  = stderrPipe
         do {
             try process.run()
-            let (out, err, timedOut) = drain(process, stdout: stdoutPipe, stderr: stderrPipe)
+            let (out, err, timedOut) = drain(process, stdout: stdoutPipe, stderr: stderrPipe, onOutput: onOutput)
             let output = [out, err]
                 .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                 .joined(separator: "\n")
             if timedOut {
-                return Shell.failure("Tempo esgotado (90s) — comando interrompido. Saída parcial:\n\(output)")
+                return Shell.failure("Processo sem saída por \(Int(Shell.idleTimeout))s (aparentemente travado) — interrompido. Saída parcial:\n\(output)")
             }
             if process.terminationStatus == 0 {
                 return Shell.success(output.isEmpty ? "(no output)" : output,

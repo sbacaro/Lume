@@ -31,6 +31,10 @@ final class SSEParser: NSObject, URLSessionDataDelegate {
     private var task: URLSessionDataTask?
     private var continuation: AsyncThrowingStream<SSEEvent, Error>.Continuation?
 
+    deinit {
+        cancel()
+    }
+
     // MARK: - Async Stream API
 
     func stream(request: URLRequest) -> AsyncThrowingStream<SSEEvent, Error> {

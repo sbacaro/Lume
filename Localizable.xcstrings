@@ -35,9 +35,6 @@
         }
       }
     },
-    "%@ ▋" : {
-
-    },
     "%@!" : {
 
     },
@@ -337,6 +334,9 @@
 
     },
     "Buscar…" : {
+
+    },
+    "Cache limpo ✓" : {
 
     },
     "Cache semântico" : {
@@ -670,6 +670,9 @@
 
     },
     "Issues abertas (%lld)" : {
+
+    },
+    "Limpar cache" : {
 
     },
     "Limpar Cache" : {
@@ -1009,6 +1012,9 @@
 
     },
     "Resposta servida do cache semântico" : {
+
+    },
+    "Respostas repetidas vêm do cache. Limpe se vir respostas antigas/erradas." : {
 
     },
     "Restaurar" : {

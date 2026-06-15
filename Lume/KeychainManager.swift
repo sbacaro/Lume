@@ -34,20 +34,24 @@ actor KeychainManager {
     // MARK: - Paths
 
     private var storageURL: URL {
-        let appSupport = FileManager.default.urls(
+        guard let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
-        ).first!
+        ).first else {
+            fatalError("Unable to access Application Support directory")
+        }
         let dir = appSupport.appendingPathComponent("Lume", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent(".keys.enc")
     }
 
     private var masterKeyURL: URL {
-        let appSupport = FileManager.default.urls(
+        guard let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
-        ).first!
+        ).first else {
+            fatalError("Unable to access Application Support directory")
+        }
         let dir = appSupport.appendingPathComponent("Lume", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent(".master.key")

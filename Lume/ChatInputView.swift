@@ -122,6 +122,7 @@ struct ChatInputView: View {
                     .frame(minHeight: 36, maxHeight: 160)
                     .fixedSize(horizontal: false, vertical: true)
                     .scrollContentBackground(.hidden)
+                    .scrollIndicators(.never)   // esconde o scroller (o "sinal preto" à direita)
                     .background(Color.clear)
                     .focused($isFocused)
                     .foregroundStyle(composerVibrant ? Color.white : Color.primary)

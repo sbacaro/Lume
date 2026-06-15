@@ -137,6 +137,9 @@ final class GitHubService {
 
     private(set) var token: String = ""
     private(set) var user: GHUser?
+    /// Repositórios em cache (preenchidos no bootstrap/connect). Servem para
+    /// informar o modelo, via system prompt, do que existe — sem custo de tool call.
+    private(set) var repos: [GHRepo] = []
     var isValidating = false
     var lastError: String?
 
@@ -154,7 +157,10 @@ final class GitHubService {
         let stored = await KeychainManager.shared.retrieveAPIKey(for: Self.keychainID)
         guard !stored.isEmpty else { return }
         token = stored
-        do { user = try await fetchUser() }
+        do {
+            user = try await fetchUser()
+            repos = (try? await listRepos()) ?? []
+        }
         catch { user = nil; lastError = (error as? GHError)?.errorDescription }
     }
 
@@ -170,6 +176,7 @@ final class GitHubService {
         do {
             user = try await fetchUser()
             try? await KeychainManager.shared.saveAPIKey(t, for: Self.keychainID)
+            repos = (try? await listRepos()) ?? []
             return true
         } catch {
             user = nil
@@ -181,8 +188,27 @@ final class GitHubService {
     func disconnect() async {
         token = ""
         user = nil
+        repos = []
         lastError = nil
         try? await KeychainManager.shared.deleteAPIKey(for: Self.keychainID)
+    }
+
+    /// Bloco injetado no system prompt para que QUALQUER modelo/provider saiba que
+    /// o GitHub já está autenticado e use as ferramentas github_* sem pedir token.
+    func contextBlock() -> String? {
+        guard isConnected, let login = user?.login else { return nil }
+        var lines = [
+            "## GitHub",
+            "Conta conectada: @\(login). Você JÁ está autenticado no GitHub — NÃO peça token, chave, login ou senha ao usuário em hipótese alguma.",
+            "Para ações comuns use as ferramentas: github_list_repos, github_get_repo, github_list_issues, github_list_prs, github_create_issue, github_create_repo.",
+            "Para QUALQUER outra operação (releases, tags, push, gh CLI, curl à API, git) o token JÁ está disponível no ambiente do shell como $GITHUB_TOKEN e $GH_TOKEN. Use essas variáveis diretamente em scripts (ex.: `gh release create ...`, `curl -H \"Authorization: Bearer $GITHUB_TOKEN\" ...`) — nunca peça o valor do token ao usuário.",
+            "Repositórios podem ser referenciados como 'owner/repo' ou apenas 'repo' (assume @\(login) como owner)."
+        ]
+        if !repos.isEmpty {
+            let names = repos.prefix(40).map { $0.fullName }.joined(separator: ", ")
+            lines.append("Repositórios do usuário (\(repos.count)): \(names).")
+        }
+        return lines.joined(separator: "\n")
     }
 
     // MARK: - Requisição base
