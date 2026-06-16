@@ -61,31 +61,32 @@ INFOPLIST_KEY_SUScheduledCheckInterval = 86400
 
 ---
 
-## 4. Fluxo de cada release
+## 4. Fluxo de cada release (depois do setup, é um comando)
+
+Depois de concluir os passos 1–3 **uma vez**, cada release é só:
 
 ```bash
-# 1) Build no Xcode (Product → Archive ou ⌘B)
-# 2) Gera o .dmg (já existente)
-./build-dmg.sh                       # -> Lume-1.2.0.dmg
-
-# 3) Gera/atualiza e ASSINA o appcast (usa a chave privada do Keychain)
-./generate-appcast.sh Lume-1.2.0.dmg v1.2.0
-#    -> escreve/atualiza appcast.xml na raiz do repo
+./release.sh            # ou ./release.sh 1.3.4 para bumpar a versão
 ```
 
-`generate-appcast.sh` (incluído) localiza o `generate_appcast` do Sparkle, lê a versão
-de dentro do `.dmg`, calcula a assinatura EdDSA e monta o `appcast.xml` apontando o
-download para o asset do release no GitHub.
+O `release.sh` agora faz tudo, nesta ordem:
 
-```bash
-# 4) Publique:
-#    - anexe Lume-1.2.0.dmg como ASSET do release v1.2.0 no GitHub
-#    - commite o appcast.xml na branch main (é o SUFeedURL)
-git add appcast.xml && git commit -m "appcast v1.2.0" && git push
-```
+1. compila o app e gera o `Lume-<versão>.dmg` (com o `Lume.app` dentro);
+2. se o Sparkle estiver instalado, **gera e assina o `appcast.xml`** (acha o
+   `generate_appcast` no DerivedData, usa a chave privada do Keychain e aponta o
+   download para o asset do release);
+3. commita o que estiver pendente (incluindo o `appcast.xml`) e dá push na `main`
+   — e a `main` é justamente o `SUFeedURL`;
+4. cria a tag `vX.Y.Z` e o release no GitHub, **anexa o `.dmg`** e marca como *latest*.
 
-A partir daí, o app instalado verifica o `appcast.xml`, vê a versão nova, baixa o `.dmg`,
-instala e reinicia — tudo pela UI padrão do Sparkle.
+A partir daí, o app instalado lê o `appcast.xml`, vê a versão nova, baixa o `.dmg`,
+instala e reinicia — tudo pela UI padrão do Sparkle, sem navegador.
+
+> Enquanto o Sparkle **não** estiver instalado, o `release.sh` apenas pula a etapa do
+> appcast (sem quebrar) e avisa. A atualização automática só passa a valer depois do setup.
+
+O `generate-appcast.sh` continua disponível para rodar a etapa do appcast isoladamente,
+se você quiser.
 
 ---
 

@@ -216,7 +216,27 @@ OSA
     sync; hdiutil detach "$MOUNT" -quiet
     hdiutil convert "$RW" -format UDZO -imagekey zlib-level=9 -o "$OUT_DMG" -quiet
   fi
-  echo "DMG: $OUT_DMG ($(du -h "$OUT_DMG" | cut -f1))  — Lume.app esta dentro do DMG"
+  echo "DMG: $OUT_DMG ($(du -h "$OUT_DMG" | cut -f1))  - Lume.app esta dentro do DMG"
+fi
+
+# ---- 3b) Appcast do Sparkle (so se o pacote + chaves existirem) -----------
+# Se o Sparkle ja foi adicionado ao projeto (SETUP_SPARKLE.md), gera e assina o
+# appcast.xml apontando o download para o asset do release. Sem Sparkle, pula
+# sem abortar (a atualizacao automatica fica inativa ate concluir o setup).
+GEN="$(find "$HOME/Library/Developer/Xcode/DerivedData" -path '*/artifacts/sparkle/Sparkle/bin/generate_appcast' 2>/dev/null | head -1 || true)"
+if [ -n "$GEN" ]; then
+  echo "Gerando/assinando o appcast (Sparkle)..."
+  ACDIR="$WORK/appcast"; mkdir -p "$ACDIR"
+  cp "$OUT_DMG" "$ACDIR/"
+  [ -f appcast.xml ] && cp appcast.xml "$ACDIR/appcast.xml"
+  if "$GEN" "$ACDIR" --download-url-prefix "https://github.com/$OWNER/$REPO/releases/download/$TAG/"; then
+    cp "$ACDIR/appcast.xml" appcast.xml
+    echo "appcast.xml atualizado (sera commitado e enviado abaixo)."
+  else
+    echo "Aviso: generate_appcast falhou (gerou as chaves EdDSA? veja SETUP_SPARKLE.md). Seguindo sem appcast."
+  fi
+else
+  echo "Sparkle ainda nao instalado - pulando o appcast (auto-update fica inativo ate o setup; veja SETUP_SPARKLE.md)."
 fi
 
 # ---- 4) Commit + sincroniza + push ----------------------------------------

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7F2827D02FD9A4340055FF08 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 7F2827CF2FD9A4340055FF08 /* Localizable.xcstrings */; };
+		7FE994BF2FE1F07C00EE8DD3 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 7FE994BE2FE1F07C00EE8DD3 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,10 +30,10 @@
 
 /* Begin PBXFileReference section */
 		7F2827CF2FD9A4340055FF08 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		7FCAFE000000000000000001 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		7FBB9F4F2FD7C9F200DF7C52 /* Lume.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lume.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FBB9F5E2FD7C9F200DF7C52 /* LumeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FBB9F682FD7C9F200DF7C52 /* LumeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LumeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7FCAFE000000000000000001 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -58,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7FE994BF2FE1F07C00EE8DD3 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,6 +122,7 @@
 			);
 			name = Lume;
 			packageProductDependencies = (
+				7FE994BE2FE1F07C00EE8DD3 /* Sparkle */,
 			);
 			productName = Lume;
 			productReference = 7FBB9F4F2FD7C9F200DF7C52 /* Lume.app */;
@@ -204,6 +207,9 @@
 			);
 			mainGroup = 7FBB9F462FD7C9F200DF7C52;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7FE994BD2FE1F07C00EE8DD3 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7FBB9F502FD7C9F200DF7C52 /* Products */;
 			projectDirPath = "";
@@ -415,6 +421,10 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/sbacaro/Lume/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "17zKsHRjwKc9aIJfpS6cI07GM8YTQnafmPMr7agNXoI=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -446,6 +456,10 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/sbacaro/Lume/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "17zKsHRjwKc9aIJfpS6cI07GM8YTQnafmPMr7agNXoI=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -575,6 +589,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7FE994BD2FE1F07C00EE8DD3 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7FE994BE2FE1F07C00EE8DD3 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7FE994BD2FE1F07C00EE8DD3 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7FBB9F472FD7C9F200DF7C52 /* Project object */;
 }
