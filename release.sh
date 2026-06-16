@@ -2,113 +2,102 @@
 #
 # release.sh — Release do Lume em UM comando, fazendo TUDO sozinho:
 #
-#   1) Versão na FONTE ÚNICA (Version.xcconfig). Opcional: passar nova versão.
-#   2) Compila o app (xcodebuild, Release) → Lume.app
+#   1) Versao na FONTE UNICA (Version.xcconfig). Opcional: passar nova versao.
+#   2) Compila o app (xcodebuild, Release) -> Lume.app
 #   3) Gera o DMG custom com o Lume.app DENTRO (fundo no gradiente da marca +
 #      atalho do Applications para arrastar e soltar)
 #   4) Commit + push do que estiver pendente
 #   5) Cria e empurra a tag vX.Y.Z
 #   6) Cria/atualiza o release no GitHub, anexa o DMG e marca como "latest"
 #
-# Autocontido: NÃO depende de build-release.sh nem de publish-release.sh.
-# Sem Homebrew nem gh obrigatórios — usa o que já vem no macOS (git + python3).
-# Se o gh estiver instalado e autenticado, ele é usado.
+# Autocontido: NAO depende de outros scripts. Sem Homebrew nem gh obrigatorios
+# (usa git + python3 do macOS). Se o gh estiver instalado e autenticado, usa ele.
 #
 # Uso:
-#   ./release.sh                 # usa a versão atual do Version.xcconfig
-#   ./release.sh 1.3.4           # define nova versão (build = atual + 1) e publica
-#   ./release.sh 1.4.0 9         # nova versão e build explícitos
-#   ./release.sh --no-build      # reaproveita o DMG já gerado
-#   ./release.sh --draft         # cria como rascunho (não vira latest)
+#   ./release.sh                 # usa a versao atual do Version.xcconfig
+#   ./release.sh 1.3.4           # define nova versao (build = atual + 1) e publica
+#   ./release.sh 1.4.0 9         # nova versao e build explicitos
+#   ./release.sh --no-build      # reaproveita o DMG ja gerado
+#   ./release.sh --draft         # cria como rascunho (nao vira latest)
 #   ./release.sh --save-token    # salva/atualiza o token do GitHub no Keychain e sai
 #   ./release.sh --forget-token  # remove o token do Keychain
 #
-set -euo pipefail
+# Observacao: nao usamos `set -u` de proposito. O arquivo fica num Drive
+# sincronizado e variaveis sempre definidas (TAG, VERSION...) nao precisam de
+# nounset; evita abortos espurios de "unbound variable".
+set -eo pipefail
+cd "$(dirname "$0")"
+[ "$(uname)" = "Darwin" ] || { echo "Rode no macOS."; exit 1; }
 
-# Blindagem contra auto-modificação: este script é versionado e, mais adiante,
-# faz `git commit` / `git pull --rebase`, que reescrevem o próprio arquivo no
-# disco. Se o bash ainda estiver lendo o original, passa a ler lixo no meio da
-# execução ("unbound variable"). Por isso rodamos a partir de uma cópia em /tmp.
-if [[ "${LUME_RELEASE_REEXEC:-}" != "1" ]]; then
-  _src_dir="$(cd "$(dirname "$0")" && pwd)"
-  _tmp_self="$(mktemp /tmp/lume_release.XXXXXX.sh)"
-  cat "$0" > "$_tmp_self"
-  exec env LUME_RELEASE_REEXEC=1 LUME_REPO_DIR="$_src_dir" bash "$_tmp_self" "$@"
-fi
-
-cd "${LUME_REPO_DIR:?}"
-[[ "$(uname)" == "Darwin" ]] || { echo "✖ Rode no macOS."; exit 1; }
-
-# ── Configuração ─────────────────────────────────────────────────────────────
+# ---- Configuracao ----------------------------------------------------------
 APP_NAME="Lume"
 VOL_NAME="Lume"
 SCHEME="Lume"
 PROJECT="Lume.xcodeproj"
 CONFIG="Release"
-BUNDLE_ID="bacaro.Lume"
 CFG="Version.xcconfig"
 BUILD_DIR="$PWD/build"
-KC_SERVICE="lume-github-token"   # onde o token fica guardado no Keychain
-# DMG layout
+KC_SERVICE="lume-github-token"
 WIN_X=200; WIN_Y=120; WIN_W=660; WIN_H=420
 ICON_SIZE=128; APP_X=165; APP_Y=205; APPS_X=495; APPS_Y=205
-C1="236,140,142"; C2="240,152,129"; C3="244,164,116"   # LumeBrand.gradient 0–255
+C1="236,140,142"; C2="240,152,129"; C3="244,164,116"
 
-# ── Flags / argumentos ───────────────────────────────────────────────────────
+# ---- Flags / argumentos ----------------------------------------------------
 NO_BUILD=0; DRAFT=0; NEW_VER=""; NEW_BUILD=""
 for a in "$@"; do
   case "$a" in
     --no-build) NO_BUILD=1 ;;
     --draft)    DRAFT=1 ;;
     --save-token)
-        printf "🔑 Cole o token do GitHub (escopo repo): "; read -rs _T; echo
-        [[ -n "$_T" ]] && security add-generic-password -U -a "$USER" -s "$KC_SERVICE" -w "$_T" \
-          && echo "✔ Token salvo no Keychain." || echo "✖ Nada salvo."; exit 0 ;;
+        printf "Cole o token do GitHub (escopo repo): "; read -rs _T; echo
+        [ -n "$_T" ] && security add-generic-password -U -a "$USER" -s "$KC_SERVICE" -w "$_T" \
+          && echo "Token salvo no Keychain." || echo "Nada salvo."; exit 0 ;;
     --forget-token)
         security delete-generic-password -s "$KC_SERVICE" >/dev/null 2>&1 \
-          && echo "✔ Token removido." || echo "Nenhum token salvo."; exit 0 ;;
-    [0-9]*\.[0-9]*) if [[ -z "$NEW_VER" ]]; then NEW_VER="$a"; else NEW_BUILD="$a"; fi ;;
-    [0-9]*)         NEW_BUILD="$a" ;;
-    *) echo "✖ Argumento desconhecido: $a"; exit 1 ;;
+          && echo "Token removido." || echo "Nenhum token salvo."; exit 0 ;;
+    [0-9]*.[0-9]*) if [ -z "$NEW_VER" ]; then NEW_VER="$a"; else NEW_BUILD="$a"; fi ;;
+    [0-9]*)        NEW_BUILD="$a" ;;
+    *) echo "Argumento desconhecido: $a"; exit 1 ;;
   esac
 done
 
-[[ -f "$CFG" ]] || { echo "✖ $CFG não encontrado."; exit 1; }
+[ -f "$CFG" ] || { echo "$CFG nao encontrado."; exit 1; }
 read_kv() { grep -E "^$1" "$CFG" | sed -E 's/.*= *//' | tr -d ' '; }
 
-# ── 1) Versão (FONTE ÚNICA) ──────────────────────────────────────────────────
-if [[ -n "$NEW_VER" ]]; then
-  [[ "$NEW_VER" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo "✖ Versão inválida: '$NEW_VER'"; exit 1; }
+# ---- 1) Versao (FONTE UNICA) ----------------------------------------------
+if [ -n "$NEW_VER" ]; then
+  case "$NEW_VER" in
+    [0-9]*.[0-9]*) : ;;
+    *) echo "Versao invalida: '$NEW_VER'"; exit 1 ;;
+  esac
   CUR_BUILD="$(read_kv CURRENT_PROJECT_VERSION)"
-  NEW_BUILD="${NEW_BUILD:-$(( ${CUR_BUILD:-0} + 1 ))}"
+  [ -n "$NEW_BUILD" ] || NEW_BUILD=$(( ${CUR_BUILD:-0} + 1 ))
   sed -i '' -E "s/^MARKETING_VERSION = .*/MARKETING_VERSION = ${NEW_VER}/"               "$CFG"
   sed -i '' -E "s/^CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = ${NEW_BUILD}/" "$CFG"
-  echo "✔ Versão definida: ${NEW_VER} (build ${NEW_BUILD})"
+  echo "Versao definida: ${NEW_VER} (build ${NEW_BUILD})"
 fi
 
 VERSION="$(read_kv MARKETING_VERSION)"
 BUILD="$(read_kv CURRENT_PROJECT_VERSION)"
-[[ -n "$VERSION" ]] || { echo "✖ Não consegui ler a versão de $CFG."; exit 1; }
+[ -n "$VERSION" ] || { echo "Nao consegui ler a versao de $CFG."; exit 1; }
 TAG="v$VERSION"
 OUT_DMG="$PWD/${APP_NAME}-${VERSION}.dmg"
 APP="$BUILD_DIR/Build/Products/$CONFIG/$APP_NAME.app"
-# PKG foi descontinuado — o app vai DENTRO do DMG. Remove qualquer .pkg antigo
-# desta versão para que não seja re-anexado nem volte ao commit.
+# PKG descontinuado: o app vai DENTRO do DMG. Remove .pkg antigo desta versao.
 rm -f "$PWD/${APP_NAME}-${VERSION}.pkg"
 
-# Repo OWNER/REPO a partir do remoto git
 REMOTE="$(git remote get-url origin 2>/dev/null || echo "")"
 SLUG="$(echo "$REMOTE" | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##')"
-[[ -n "$SLUG" ]] || SLUG="sbacaro/Lume"
+[ -n "$SLUG" ] || SLUG="sbacaro/Lume"
 OWNER="${SLUG%%/*}"; REPO="${SLUG##*/}"
-echo "▶ Repo: $OWNER/$REPO   Versão: $VERSION (build $BUILD)   Tag: $TAG"
+echo "Repo: $OWNER/$REPO   Versao: $VERSION (build $BUILD)   Tag: $TAG"
 
-# ── 2) Compilar o app ────────────────────────────────────────────────────────
-if [[ "$NO_BUILD" == "1" && -d "$APP" ]]; then
-  echo "✔ Reaproveitando app: $APP"
+# ---- 2) Compilar o app -----------------------------------------------------
+if [ "$NO_BUILD" = "1" ] && [ -d "$APP" ]; then
+  echo "Reaproveitando app: $APP"
 else
-  command -v xcodebuild >/dev/null || { echo "✖ xcodebuild não encontrado (instale o Xcode)."; exit 1; }
-  echo "▶ Compilando ($CONFIG)… pode levar alguns minutos."
+  command -v xcodebuild >/dev/null || { echo "xcodebuild nao encontrado (instale o Xcode)."; exit 1; }
+  echo "Compilando ($CONFIG)... pode levar alguns minutos."
   rm -rf "$BUILD_DIR"
   xcodebuild \
     -project "$PROJECT" -scheme "$SCHEME" -configuration "$CONFIG" \
@@ -116,19 +105,19 @@ else
     clean build \
     CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES \
     | { command -v xcbeautify >/dev/null 2>&1 && xcbeautify || cat; }
-  [[ -d "$APP" ]] || { echo "✖ .app não encontrado em: $APP"; exit 1; }
-  echo "✔ App compilado: $APP"
+  [ -d "$APP" ] || { echo ".app nao encontrado em: $APP"; exit 1; }
+  echo "App compilado: $APP"
 fi
 
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 
-# ── 3) DMG ───────────────────────────────────────────────────────────────────
-if [[ "$NO_BUILD" == "1" && -f "$OUT_DMG" ]]; then
-  echo "✔ Reaproveitando DMG: $OUT_DMG"
+# ---- 3) DMG (com o Lume.app dentro) ----------------------------------------
+if [ "$NO_BUILD" = "1" ] && [ -f "$OUT_DMG" ]; then
+  echo "Reaproveitando DMG: $OUT_DMG"
 else
   rm -f "$OUT_DMG"
   BG_PNG="$WORK/background.png"
-  echo "▶ Gerando o fundo do DMG…"
+  echo "Gerando o fundo do DMG..."
   python3 - "$BG_PNG" "$WIN_W" "$WIN_H" "$C1" "$C2" "$C3" "$APP_Y" <<'PY'
 import sys, zlib, struct
 out, W, H = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
@@ -164,14 +153,14 @@ PY
   if command -v dmgbuild >/dev/null 2>&1; then
     DMGBUILD="dmgbuild"
   else
-    echo "▶ Preparando dmgbuild (venv temporário)…"
+    echo "Preparando dmgbuild (venv temporario)..."
     if python3 -m venv "$WORK/venv" >/dev/null 2>&1 \
        && "$WORK/venv/bin/pip" install --quiet --disable-pip-version-check dmgbuild >/dev/null 2>&1; then
       DMGBUILD="$WORK/venv/bin/dmgbuild"
     fi
   fi
 
-  if [[ -n "$DMGBUILD" ]]; then
+  if [ -n "$DMGBUILD" ]; then
     cat > "$WORK/settings.py" <<PYS
 # -*- coding: utf-8 -*-
 import os.path
@@ -193,10 +182,10 @@ icon_size = $ICON_SIZE
 text_size = 12
 window_rect = (($WIN_X, $WIN_Y), ($WIN_W, $WIN_H))
 PYS
-    echo "▶ Criando o DMG…"
+    echo "Criando o DMG..."
     "$DMGBUILD" -s "$WORK/settings.py" "$VOL_NAME" "$OUT_DMG"
   else
-    echo "▶ dmgbuild indisponível — método nativo (hdiutil + Finder)…"
+    echo "dmgbuild indisponivel — metodo nativo (hdiutil + Finder)..."
     STAGE="$WORK/stage"; MOUNT="$WORK/mnt"; RW="$WORK/rw.dmg"
     mkdir -p "$STAGE/.background" "$MOUNT"
     cp -R "$APP" "$STAGE/$APP_NAME.app"
@@ -227,68 +216,68 @@ OSA
     sync; hdiutil detach "$MOUNT" -quiet
     hdiutil convert "$RW" -format UDZO -imagekey zlib-level=9 -o "$OUT_DMG" -quiet
   fi
-  echo "✔ DMG: $OUT_DMG ($(du -h "$OUT_DMG" | cut -f1))  — Lume.app está dentro do DMG"
+  echo "DMG: $OUT_DMG ($(du -h "$OUT_DMG" | cut -f1))  — Lume.app esta dentro do DMG"
 fi
 
-# ── 5) Commit + sincroniza com o remoto + push ───────────────────────────────
-if [[ -n "$(git status --porcelain)" ]]; then
-  echo "▶ Commitando mudanças pendentes…"
+# ---- 4) Commit + sincroniza + push ----------------------------------------
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Commitando mudancas pendentes..."
   git add -A
   git commit -q -m "$TAG"
 fi
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-echo "▶ Sincronizando com o remoto (pull --rebase)…"
+echo "Sincronizando com o remoto (pull --rebase)..."
 if ! git pull --rebase --autostash origin "$BRANCH"; then
-  echo "✖ Conflito ao integrar mudanças do remoto. Resolva os conflitos e rode de novo: ./release.sh --no-build"
+  echo "Conflito ao integrar mudancas do remoto. Resolva e rode de novo: ./release.sh --no-build"
   exit 1
 fi
-echo "▶ git push…"
+echo "git push..."
 git push -q origin "$BRANCH"
 
-# ── 6) Tag vX.Y.Z ────────────────────────────────────────────────────────────
+# ---- 5) Tag vX.Y.Z ---------------------------------------------------------
 if git rev-parse "$TAG" >/dev/null 2>&1; then
-  echo "✔ Tag $TAG já existe."
+  echo "Tag $TAG ja existe."
 else
-  echo "▶ Criando e empurrando a tag $TAG…"
+  echo "Criando e empurrando a tag $TAG..."
   git tag -a "$TAG" -m "Lume $TAG"
   git push -q origin "$TAG"
 fi
 
-# ── 7) Notas: só a seção da versão atual (antes do histórico <details>) ───────
+# ---- 6) Notas: so a secao da versao atual (antes do historico <details>) ---
 NOTES="$WORK/notes.md"
-if [[ -f RELEASE_NOTES.md ]]; then
+if [ -f RELEASE_NOTES.md ]; then
   awk 'BEGIN{p=1} /^<details>/{p=0} p {print}' RELEASE_NOTES.md > "$NOTES"
 else
   echo "Lume $TAG" > "$NOTES"
 fi
-LATEST=$([[ "$DRAFT" == "1" ]] && echo 0 || echo 1)
+if [ "$DRAFT" = "1" ]; then LATEST=0; else LATEST=1; fi
 
-# ── 7a) Caminho rápido: gh, se instalado e autenticado ───────────────────────
+# ---- 6a) Caminho rapido: gh, se instalado e autenticado --------------------
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-  echo "▶ Publicando via GitHub CLI (gh)…"
-  FLAG=(--latest); [[ "$DRAFT" == "1" ]] && FLAG=(--draft)
+  echo "Publicando via GitHub CLI (gh)..."
+  if [ "$DRAFT" = "1" ]; then FLAG=(--draft); else FLAG=(--latest); fi
   if gh release view "$TAG" >/dev/null 2>&1; then
     gh release edit   "$TAG" --notes-file "$NOTES" "${FLAG[@]}"
     gh release upload "$TAG" "$OUT_DMG" --clobber
   else
     gh release create "$TAG" "$OUT_DMG" --title "Lume $TAG" --notes-file "$NOTES" "${FLAG[@]}"
   fi
-  echo "✅ Publicado: $(gh release view "$TAG" --json url -q .url)"
+  echo "Publicado: $(gh release view "$TAG" --json url -q .url)"
   exit 0
 fi
 
-# ── 7b) Sem gh: API do GitHub via python3 + token (env → Keychain → pergunta) ─
+# ---- 6b) Sem gh: API do GitHub via python3 + token -------------------------
 TOKEN="${GITHUB_TOKEN:-}"
-[[ -z "$TOKEN" ]] && TOKEN="$(security find-generic-password -s "$KC_SERVICE" -w 2>/dev/null || true)"
-if [[ -z "$TOKEN" ]]; then
-  printf "🔑 Personal Access Token do GitHub (escopo repo): "
+[ -n "$TOKEN" ] || TOKEN="$(security find-generic-password -s "$KC_SERVICE" -w 2>/dev/null || true)"
+if [ -z "$TOKEN" ]; then
+  printf "Personal Access Token do GitHub (escopo repo): "
   read -rs TOKEN; echo
-  if [[ -n "$TOKEN" ]]; then
+  if [ -n "$TOKEN" ]; then
     security add-generic-password -U -a "$USER" -s "$KC_SERVICE" -w "$TOKEN" 2>/dev/null \
-      && echo "✔ Token salvo no Keychain — nas próximas vezes não vai pedir."
+      && echo "Token salvo no Keychain — nas proximas vezes nao vai pedir."
   fi
 fi
-[[ -n "$TOKEN" ]] || { echo "✖ Token vazio."; exit 1; }
+[ -n "$TOKEN" ] || { echo "Token vazio."; exit 1; }
 
 GH_TOKEN="$TOKEN" python3 - "$OWNER" "$REPO" "$TAG" "$NOTES" "$LATEST" "$OUT_DMG" <<'PY'
 import os, sys, json, urllib.request, urllib.error
@@ -318,10 +307,9 @@ else:
         data=json.dumps({"tag_name": tag, "name": f"Lume {tag}", "body": notes,
                          "draft": latest == "0", "make_latest": mklatest}).encode())
     if st2 not in (200, 201):
-        print("✖ erro ao criar release:", st2, b2.decode()[:400]); sys.exit(1)
+        print("erro ao criar release:", st2, b2.decode()[:400]); sys.exit(1)
     rel = json.loads(b2); rid = rel["id"]
 
-# Remove assets antigos com o mesmo nome e sobe os novos
 st, b = req("GET", f"{API}/repos/{owner}/{repo}/releases/{rid}/assets")
 existing = {a["name"]: a["id"] for a in (json.loads(b) if st == 200 else [])}
 for path in assets:
@@ -334,8 +322,8 @@ for path in assets:
                 f"https://uploads.github.com/repos/{owner}/{repo}/releases/{rid}/assets?name={name}",
                 data=blob, ctype="application/octet-stream")
     if st not in (200, 201):
-        print(f"✖ erro no upload de {name}:", st, b.decode()[:300]); sys.exit(1)
-    print("  ↑", name)
+        print(f"erro no upload de {name}:", st, b.decode()[:300]); sys.exit(1)
+    print(" anexado:", name)
 
-print("✅ Publicado:", rel["html_url"])
+print("Publicado:", rel["html_url"])
 PY
