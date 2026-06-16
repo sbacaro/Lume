@@ -148,17 +148,43 @@ struct LumeApp: App {
         }
         .modelContainer(sharedModelContainer)
         .commands {
-            CommandGroup(replacing: .newItem) { }
-            CommandGroup(replacing: .appSettings) {
-                Button("Configurações…") {
-                    showSettings = true
-                }
-                .keyboardShortcut(",", modifiers: .command)
-            }
+            LumeMenuCommands(showSettings: $showSettings)
         }
         .defaultSize(width: 1300, height: 760)
         .restorationBehavior(.disabled)
         // ✅ Window("Novo Projeto") removida
+
+        // ── Janela "Sobre o Lume" ─────────────────────────────────
+        Window("Sobre o Lume", id: "about") {
+            AboutView()
+        }
+        .windowResizability(.contentSize)
+        .restorationBehavior(.disabled)
+        .defaultPosition(.center)
+    }
+}
+
+// MARK: - Comandos de menu
+
+/// Comandos do menu do app. Em um `Commands` dedicado conseguimos acessar
+/// `openWindow` via Environment para abrir a janela "Sobre o Lume".
+private struct LumeMenuCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+    @Binding var showSettings: Bool
+
+    var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("Sobre o Lume") {
+                openWindow(id: "about")
+            }
+        }
+        CommandGroup(replacing: .newItem) { }
+        CommandGroup(replacing: .appSettings) {
+            Button("Configurações…") {
+                showSettings = true
+            }
+            .keyboardShortcut(",", modifiers: .command)
+        }
     }
 }
 

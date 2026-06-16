@@ -273,7 +273,7 @@ struct MemorySettingsView: View {
                                 .textFieldStyle(.roundedBorder)
                                 .onSubmit { addMemory() }
                             Button("Adicionar") { addMemory() }
-                                .buttonStyle(.borderedProminent)
+                                .buttonStyle(.lumePrimaryCompact)
                                 .disabled(newText.trimmingCharacters(in: .whitespaces).isEmpty)
                         }
                     }
@@ -307,7 +307,7 @@ struct MemorySettingsView: View {
                 TextField("", text: $editingText)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { commitEdit(item) }
-                Button("OK") { commitEdit(item) }.controlSize(.small)
+                Button("OK") { commitEdit(item) }.buttonStyle(.lumePrimaryCompact)
             } else {
                 Text(item.content)
                     .font(.system(size: 12))
@@ -380,7 +380,7 @@ struct StyleSettingsView: View {
                         try? modelContext.save()
                         StyleSettingsView.syncDefaultProfile(profiles: [p])
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.lumePrimary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -576,7 +576,7 @@ struct MCPSettingsView: View {
             }
             Divider().opacity(0.4)
             HStack {
-                Button("Adicionar Conector") { showAdd = true }.buttonStyle(.borderedProminent)
+                Button("Adicionar Conector") { showAdd = true }.buttonStyle(.lumePrimary)
                 Spacer()
                 Link("Sobre MCP →", destination: URL(string: "https://modelcontextprotocol.io")!)
                     .font(.system(size: 11)).foregroundStyle(Color.accentColor)
@@ -624,14 +624,14 @@ struct AddMCPConnectorSheet: View {
                 TextField("URL", text: $url).textFieldStyle(.roundedBorder)
             }
             HStack {
-                Button("Cancelar", role: .cancel) { dismiss() }.buttonStyle(.plain).foregroundStyle(.secondary)
+                Button("Cancelar", role: .cancel) { dismiss() }.buttonStyle(.lumeSecondary)
                 Spacer()
                 Button("Adicionar") {
                     let c = MCPConnector(name: name, transport: transport, command: command, url: url)
                     modelContext.insert(c); try? modelContext.save(); dismiss()
                 }
                 .disabled(name.isEmpty || (transport == "stdio" ? command.isEmpty : url.isEmpty))
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.lumePrimary)
             }
         }
         .padding(24).frame(width: 420)
@@ -728,7 +728,6 @@ struct AdvancedSettingsView: View {
     @State private var showOnboarding = false
     @State private var showResetConfirmation = false
     @AppStorage("lume.messageFontScale") private var messageFontScale: Double = 1.0
-    @AppStorage(ThemeKeys.accent) private var accentRaw = AccentChoice.clay.rawValue
     @AppStorage(ThemeKeys.appearance) private var appearanceRaw = AppearanceChoice.system.rawValue
 
     var body: some View {
@@ -764,32 +763,6 @@ struct AdvancedSettingsView: View {
 
                 settingsSection("Tema") {
                     VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Cor de acento").font(.system(size: 12, weight: .medium))
-                            HStack(spacing: 10) {
-                                ForEach(AccentChoice.allCases) { choice in
-                                    Button { accentRaw = choice.rawValue } label: {
-                                        Circle()
-                                            .fill(choice.color)
-                                            .frame(width: 24, height: 24)
-                                            .overlay {
-                                                Circle().strokeBorder(
-                                                    Color.primary.opacity(accentRaw == choice.rawValue ? 0.8 : 0),
-                                                    lineWidth: 2)
-                                            }
-                                            .overlay {
-                                                if accentRaw == choice.rawValue {
-                                                    Image(systemName: "checkmark")
-                                                        .font(.system(size: 10, weight: .bold))
-                                                        .foregroundStyle(.white)
-                                                }
-                                            }
-                                    }
-                                    .buttonStyle(.plain).help(choice.label)
-                                }
-                            }
-                        }
-                        Divider().opacity(0.4)
                         HStack {
                             Text("Aparência").font(.system(size: 12, weight: .medium))
                             Spacer()
@@ -818,17 +791,9 @@ struct AdvancedSettingsView: View {
                                 URL(string: "x-apple.systempreferences:com.apple.Localization-Settings.extension")!
                             )
                         } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: "globe")
-                                    .font(.system(size: 11, weight: .semibold))
-                                Text("Abrir Preferências")
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(Color.accentColor, in: Capsule())
+                            Label("Abrir Preferências", systemImage: "globe")
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.lumePrimary)
                     }
                 }
 
@@ -896,7 +861,7 @@ struct AdvancedSettingsView: View {
                         Button("Revelar") {
                             NSWorkspace.shared.selectFile(LumeConfig.configFilePath, inFileViewerRootedAtPath: "")
                         }
-                        .font(.system(size: 11))
+                        .buttonStyle(.lumeSecondaryCompact)
                     }
                     .padding(10)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -916,15 +881,9 @@ struct AdvancedSettingsView: View {
                             UserDefaults.standard.set(false, forKey: "lume_onboarding_completed")
                             showOnboarding = true
                         } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: "sparkles").font(.system(size: 11, weight: .semibold))
-                                Text("Abrir").font(.system(size: 12, weight: .semibold))
-                            }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(Color.accentColor, in: Capsule())
+                            Label("Abrir", systemImage: "sparkles")
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.lumePrimary)
                     }
                 }
 
@@ -941,15 +900,9 @@ struct AdvancedSettingsView: View {
                         Button(role: .destructive) {
                             showResetConfirmation = true
                         } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: "trash").font(.system(size: 11, weight: .semibold))
-                                Text("Resetar").font(.system(size: 12, weight: .semibold))
-                            }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(Color.red, in: Capsule())
+                            Label("Resetar", systemImage: "trash")
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.lumeDestructive)
                     }
                 }
             }

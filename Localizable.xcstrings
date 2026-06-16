@@ -17,7 +17,14 @@
 
     },
     "· %lld linhas" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· %lld lines"
+          }
+        }
+      }
     },
     "(%lld)" : {
 
@@ -29,7 +36,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ · %2$lld/%3$lld"
           }
         }
@@ -42,14 +49,21 @@
 
     },
     "%lld conversas" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld conversations"
+          }
+        }
+      }
     },
     "%lld conversas · criado %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld conversas · criado %2$@"
+            "state" : "translated",
+            "value" : "%1$lld conversations · created %2$@"
           }
         }
       }
@@ -58,37 +72,58 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld de %2$lld concluídas"
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld completed"
           }
         }
       }
     },
     "%lld mensagens" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld messages"
+          }
+        }
+      }
     },
     "%lld mensagens · %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld mensagens · %2$@"
+            "state" : "translated",
+            "value" : "%1$lld messages · %2$@"
           }
         }
       }
     },
     "%lld modelos carregados do servidor." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld models loaded from the server."
+          }
+        }
+      }
     },
     "%lld modelos disponíveis" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld models available"
+          }
+        }
+      }
     },
     "%lld públicos · %lld privados" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld públicos · %2$lld privados"
+            "state" : "translated",
+            "value" : "%1$lld public · %2$lld private"
           }
         }
       }
@@ -97,8 +132,8 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld resultado%2$@"
+            "state" : "translated",
+            "value" : "%1$lld result%2$@"
           }
         }
       }
@@ -107,7 +142,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$lld steps · %2$@"
           }
         }
@@ -117,7 +152,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$lld tok/s · %2$lld tokens"
           }
         }
@@ -132,6 +167,9 @@
     "%lldk" : {
 
     },
+    "© %@ Samuel Bacaro · Distribuído sob licença MIT" : {
+
+    },
     "→ %@" : {
 
     },
@@ -139,7 +177,14 @@
 
     },
     "+ %lld arquivos" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+ %lld files"
+          }
+        }
+      }
     },
     "+%lld" : {
 
@@ -172,67 +217,207 @@
 
     },
     "A conversa será reiniciada a partir desta mensagem. A versão anterior fica salva em “Versões anteriores”." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The conversation will restart from this message. The previous version is saved in “Previous versions”."
+          }
+        }
+      }
     },
     "Aa" : {
 
     },
     "Abrir" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open"
+          }
+        }
+      }
     },
     "Abrir Configurações" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        }
+      }
     },
     "Abrir no Finder" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Finder"
+          }
+        }
+      }
     },
     "Abrir pasta do projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open project folder"
+          }
+        }
+      }
     },
     "Abrir Preferências" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Preferences"
+          }
+        }
+      }
     },
     "Adicionadas ao final do system prompt em todas as conversas." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appended to the end of the system prompt in all conversations."
+          }
+        }
+      }
     },
     "Adicionar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        }
+      }
     },
     "Adicionar ao Knowledge Base" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to Knowledge Base"
+          }
+        }
+      }
     },
     "Adicionar ao projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to project"
+          }
+        }
+      }
     },
     "Adicionar Conector" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Connector"
+          }
+        }
+      }
     },
     "Adicionar nota" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add note"
+          }
+        }
+      }
     },
     "Adicionar Novo Provider" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add New Provider"
+          }
+        }
+      }
     },
     "Adicionar Provider" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Provider"
+          }
+        }
+      }
     },
     "Adicione arquivos para contextualizar a conversa." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add files to give the conversation context."
+          }
+        }
+      }
     },
     "Adicione tom, formatação ou regras para orientar como o assistente funciona." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add tone, formatting, or rules to guide how the assistant works."
+          }
+        }
+      }
     },
     "Adicione um provider para começar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a provider to get started"
+          }
+        }
+      }
     },
     "Agente de Código" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code Agent"
+          }
+        }
+      }
     },
     "Agir" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Act"
+          }
+        }
+      }
     },
     "Agir sem perguntar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Act without asking"
+          }
+        }
+      }
     },
     "AIzaSy..." : {
 
@@ -241,385 +426,1202 @@
 
     },
     "Apaga conversas, projetos, tarefas e workflows. As configurações são preservadas." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deletes conversations, projects, tasks, and workflows. Settings are preserved."
+          }
+        }
+      }
     },
     "Apagar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
     },
     "Apagar \"%@\"?" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete \"%@\"?"
+          }
+        }
+      }
     },
     "Apagar projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete project"
+          }
+        }
+      }
     },
     "Apagar Projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Project"
+          }
+        }
+      }
     },
     "Aparência" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        }
+      }
     },
     "API Key" : {
 
     },
     "API Key (opcional para alguns servidores)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API Key (optional for some servers)"
+          }
+        }
+      }
     },
     "Aprovar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approve"
+          }
+        }
+      }
     },
     "Arquivar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archive"
+          }
+        }
+      }
     },
     "Artifacts" : {
 
     },
     "Assistente de configuração" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setup assistant"
+          }
+        }
+      }
     },
     "Ativa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        }
+      }
     },
     "Ativo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        }
+      }
     },
     "Atualização disponível" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update available"
+          }
+        }
+      }
+    },
+    "Atualizações" : {
 
     },
     "Atualizar lista" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh list"
+          }
+        }
+      }
     },
     "Autenticação de Administrador" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administrator Authentication"
+          }
+        }
+      }
     },
     "Autenticar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Authenticate"
+          }
+        }
+      }
     },
     "Auto" : {
 
     },
     "Baixar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download"
+          }
+        }
+      }
     },
     "Base URL" : {
 
     },
     "Base URL (ex: https://api.example.com/v1)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base URL (e.g. https://api.example.com/v1)"
+          }
+        }
+      }
     },
     "Bem-vindo ao Lume" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to Lume"
+          }
+        }
+      }
     },
     "Bloquear comandos shell perigosos" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Block dangerous shell commands"
+          }
+        }
+      }
     },
     "Busca Inteligente" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Search"
+          }
+        }
+      }
     },
     "Busca na Web" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web Search"
+          }
+        }
+      }
     },
     "Busca no Código" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code Search"
+          }
+        }
+      }
     },
     "Buscando…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Searching…"
+          }
+        }
+      }
     },
     "Buscar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        }
+      }
     },
     "Buscar conversas, mensagens ou ações…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search conversations, messages, or actions…"
+          }
+        }
+      }
     },
     "Buscar no código…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search in code…"
+          }
+        }
+      }
     },
     "Buscar…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search…"
+          }
+        }
+      }
     },
     "Cache limpo ✓" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache cleared ✓"
+          }
+        }
+      }
     },
     "Cache semântico" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semantic cache"
+          }
+        }
+      }
     },
     "Cancelar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
     },
     "Carregando git…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading git…"
+          }
+        }
+      }
     },
     "Carregando issues e PRs…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading issues and PRs…"
+          }
+        }
+      }
     },
     "Carregando log…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading log…"
+          }
+        }
+      }
     },
     "Carregando status…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading status…"
+          }
+        }
+      }
     },
     "Carregando…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading…"
+          }
+        }
+      }
     },
     "Carregar %lld mensagens anteriores" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load %lld earlier messages"
+          }
+        }
+      }
+    },
+    "Chat, projetos, código e agentes em um só lugar. O Lume conecta múltiplos provedores de IA com ferramentas, memória e automações — tudo nativo no macOS, com seus dados e chaves guardados localmente." : {
 
     },
     "clean" : {
 
     },
-    "Código" : {
+    "Cliente Nativo de IA para macOS" : {
 
+    },
+    "Clique para selecionar e copiar" : {
+
+    },
+    "Código" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        }
+      }
     },
     "Cole sua API Key aqui" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste your API Key here"
+          }
+        }
+      }
     },
     "Cole um Personal Access Token (classic ou fine-grained) com escopo `repo`." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste a Personal Access Token (classic or fine-grained) with `repo` scope."
+          }
+        }
+      }
     },
     "Comando" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command"
+          }
+        }
+      }
     },
     "Começar a usar o Lume" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start using Lume"
+          }
+        }
+      }
     },
     "Começar do zero" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start from scratch"
+          }
+        }
+      }
     },
     "Commit" : {
 
     },
     "Como configurar →" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to set up →"
+          }
+        }
+      }
     },
     "Como obter as chaves →" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to get the keys →"
+          }
+        }
+      }
     },
     "Como posso ajudar hoje?" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How can I help today?"
+          }
+        }
+      }
     },
     "Concluído" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
+          }
+        }
+      }
     },
     "Conectado" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected"
+          }
+        }
+      }
     },
     "Conectar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect"
+          }
+        }
+      }
     },
     "Conectar um Provider de IA" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect an AI Provider"
+          }
+        }
+      }
     },
     "Conecte o agente a ferramentas externas" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect the agent to external tools"
+          }
+        }
+      }
     },
     "Configurações" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
     },
     "Configurações…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings…"
+          }
+        }
+      }
     },
     "Configure conectores MCP em Configurações → MCP." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set up MCP connectors in Settings → MCP."
+          }
+        }
+      }
     },
     "Configure tarefas recorrentes para este projeto." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set up recurring tasks for this project."
+          }
+        }
+      }
     },
     "Copiado" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copied"
+          }
+        }
+      }
     },
     "Copiar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy"
+          }
+        }
+      }
     },
     "Copiar código" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy code"
+          }
+        }
+      }
     },
     "Copiar como Markdown" : {
-
-    },
-    "Cor de acento" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy as Markdown"
+          }
+        }
+      }
     },
     "Cowork" : {
 
     },
     "Criar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create"
+          }
+        }
+      }
     },
     "Criar issue" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create issue"
+          }
+        }
+      }
     },
     "Criar perfil padrão" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create default profile"
+          }
+        }
+      }
     },
     "Criar primeiro projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create first project"
+          }
+        }
+      }
     },
     "Criar projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create project"
+          }
+        }
+      }
     },
     "Criar Projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create Project"
+          }
+        }
+      }
     },
     "Criar um novo projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a new project"
+          }
+        }
+      }
     },
     "Criativo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creative"
+          }
+        }
+      }
     },
     "Crie um projeto para organizar conversas e manter contexto persistente." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a project to organize conversations and keep persistent context."
+          }
+        }
+      }
     },
     "Custom (OpenAI)" : {
 
     },
     "Deletar Conversa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Conversation"
+          }
+        }
+      }
     },
     "Depois" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        }
+      }
     },
     "Desafixar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unpin"
+          }
+        }
+      }
     },
     "Desarquivar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unarchive"
+          }
+        }
+      }
     },
     "Desativada" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabled"
+          }
+        }
+      }
     },
     "Desconectar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnect"
+          }
+        }
+      }
     },
     "Descrição (opcional)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description (optional)"
+          }
+        }
+      }
     },
     "Diferenciar maiúsculas/minúsculas" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Match case"
+          }
+        }
+      }
     },
     "Digite sua senha para executar comandos com privilégios elevados." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your password to run commands with elevated privileges."
+          }
+        }
+      }
     },
     "Ditado" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictation"
+          }
+        }
+      }
     },
     "DuckDuckGo ativo por padrão" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DuckDuckGo on by default"
+          }
+        }
+      }
     },
     "Editar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
     },
     "Editar mensagem" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit message"
+          }
+        }
+      }
     },
     "Editor de workflows em breve" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workflow editor coming soon"
+          }
+        }
+      }
     },
     "Enfileirar — envia ao terminar a resposta" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Queue — sends when the response finishes"
+          }
+        }
+      }
     },
     "Enviar (↩)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send (↩)"
+          }
+        }
+      }
     },
     "Erro no Ditado" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictation Error"
+          }
+        }
+      }
     },
     "esc" : {
 
     },
     "Escolha onde o Lume vai buscar inteligência." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose where Lume gets its intelligence."
+          }
+        }
+      }
     },
     "Escolha uma pasta onde os ícones\nserão salvos." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a folder where the icons\nwill be saved."
+          }
+        }
+      }
     },
     "Escolher pasta e gerar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose folder and generate"
+          }
+        }
+      }
     },
     "Escreva abaixo para começar a trabalhar neste projeto." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type below to start working on this project."
+          }
+        }
+      }
     },
     "Escreva, revise, debug e refatore com a IA como co-piloto.\nPara começar, selecione a pasta do seu projeto." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write, review, debug, and refactor with AI as your co-pilot.\nTo get started, select your project folder."
+          }
+        }
+      }
     },
     "Esta ação apagará todas as conversas, projetos, tarefas e workflows, mas manterá suas configurações de providers, segurança e preferências.\n\nEsta ação não pode ser desfeita." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This action will delete all conversations, projects, tasks, and workflows, but will keep your provider, security, and preference settings.\n\nThis action cannot be undone."
+          }
+        }
+      }
     },
     "Esta ação não pode ser desfeita. Todas as conversas do projeto serão apagadas." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This action cannot be undone. All conversations in the project will be deleted."
+          }
+        }
+      }
     },
     "Estas instruções são enviadas ao assistente no início de cada conversa neste projeto. Use-as para definir tom, formato ou regras de comportamento." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These instructions are sent to the assistant at the start of every conversation in this project. Use them to define tone, format, or behavior rules."
+          }
+        }
+      }
     },
     "Este texto será adicionado automaticamente ao system prompt:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This text will be automatically added to the system prompt:"
+          }
+        }
+      }
     },
     "Executando…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running…"
+          }
+        }
+      }
     },
     "Exigir workspace para operações de arquivo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Require a workspace for file operations"
+          }
+        }
+      }
     },
     "Exportar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export"
+          }
+        }
+      }
     },
     "Extra" : {
 
     },
     "Falhou" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed"
+          }
+        }
+      }
     },
     "Fatos que a IA deve lembrar em todas as conversas (ex.: \"Trabalho na Rumo Logística\", \"Prefiro respostas objetivas em português\")." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facts the AI should remember across all conversations (e.g., \"I work at Rumo Logística\", \"I prefer concise answers in Portuguese\")."
+          }
+        }
+      }
     },
     "Fechar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "Feito com ♥ e SwiftUI" : {
 
     },
     "Ferramentas" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tools"
+          }
+        }
+      }
     },
     "Fila" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Queue"
+          }
+        }
+      }
     },
     "Filtros" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filters"
+          }
+        }
+      }
     },
     "Fixar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pin"
+          }
+        }
+      }
     },
     "Fontes" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sources"
+          }
+        }
+      }
     },
     "Framework detectado:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Framework detected:"
+          }
+        }
+      }
     },
     "Gerador de Ícones" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Icon Generator"
+          }
+        }
+      }
     },
     "Gerando resposta" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generating response"
+          }
+        }
+      }
     },
     "Gerar token →" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate token →"
+          }
+        }
+      }
     },
     "ghp_… ou github_pat_…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ghp_… or github_pat_…"
+          }
+        }
+      }
     },
     "Git" : {
 
     },
     "Google configurado" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google configured"
+          }
+        }
+      }
     },
     "Google configurado!" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google configured!"
+          }
+        }
+      }
     },
     "Google Custom Search (opcional)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Custom Search (optional)"
+          }
+        }
+      }
     },
     "Grande" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large"
+          }
+        }
+      }
     },
     "Gravando…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording…"
+          }
+        }
+      }
     },
     "http://localhost:11434/v1" : {
 
@@ -631,22 +1633,64 @@
 
     },
     "Ícone" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Icon"
+          }
+        }
+      }
     },
     "Ícones gerados com sucesso!" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Icons generated successfully!"
+          }
+        }
+      }
     },
     "Idioma da Interface" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interface Language"
+          }
+        }
+      }
     },
     "Importar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import"
+          }
+        }
+      }
     },
     "Importar um projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import a project"
+          }
+        }
+      }
     },
     "Iniciar uma sessão" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a session"
+          }
+        }
+      }
     },
     "Input" : {
 
@@ -658,31 +1702,94 @@
 
     },
     "Instruções do Assistente" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assistant Instructions"
+          }
+        }
+      }
     },
     "Instruções do projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Project instructions"
+          }
+        }
+      }
     },
     "Instruções do Projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Project Instructions"
+          }
+        }
+      }
     },
     "Instruções para o assistente" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instructions for the assistant"
+          }
+        }
+      }
     },
     "Issues abertas (%lld)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open issues (%lld)"
+          }
+        }
+      }
     },
     "Limpar cache" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear cache"
+          }
+        }
+      }
     },
     "Limpar Cache" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Cache"
+          }
+        }
+      }
     },
     "Limpar dados do app" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear app data"
+          }
+        }
+      }
     },
     "Limpar Histórico" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear History"
+          }
+        }
+      }
     },
     "Lint" : {
 
@@ -700,10 +1807,24 @@
 
     },
     "Lume executa ações sem pedir aprovação" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lume runs actions without asking for approval"
+          }
+        }
+      }
     },
     "Lume pausa para você aprovar cada ação" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lume pauses for you to approve each action"
+          }
+        }
+      }
     },
     "Lume Terminal" : {
 
@@ -712,178 +1833,584 @@
 
     },
     "Mais opções" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More options"
+          }
+        }
+      }
     },
     "Markdown (arquivo)…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown (file)…"
+          }
+        }
+      }
     },
     "Máx. iterações do agente" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Max. agent iterations"
+          }
+        }
+      }
     },
     "MCP Conectores" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MCP Connectors"
+          }
+        }
+      }
     },
     "Memória" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memory"
+          }
+        }
+      }
     },
     "Memória persistente" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persistent memory"
+          }
+        }
+      }
     },
     "Mensagem do commit" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commit message"
+          }
+        }
+      }
     },
     "Meu Projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My Project"
+          }
+        }
+      }
     },
     "Modelo padrão" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default model"
+          }
+        }
+      }
     },
     "Mover para projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to project"
+          }
+        }
+      }
     },
     "Mudar o nome" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename"
+          }
+        }
+      }
     },
     "Na fila: %@" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In queue: %@"
+          }
+        }
+      }
     },
     "Nenhum conector configurado" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No connector configured"
+          }
+        }
+      }
     },
     "Nenhum conector MCP" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No MCP connector"
+          }
+        }
+      }
     },
     "Nenhum perfil de estilo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No style profile"
+          }
+        }
+      }
     },
     "Nenhum PR aberto." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No open PRs."
+          }
+        }
+      }
     },
     "Nenhum projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No projects"
+          }
+        }
+      }
     },
     "Nenhum projeto ainda" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No projects yet"
+          }
+        }
+      }
     },
     "Nenhum repositório." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No repositories."
+          }
+        }
+      }
     },
     "Nenhum resultado para \"%@\"" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No results for \"%@\""
+          }
+        }
+      }
     },
     "Nenhum resultado para “%@”" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No results for “%@”"
+          }
+        }
+      }
     },
     "Nenhum workflow" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No workflows"
+          }
+        }
+      }
     },
     "Nenhum workspace aberto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No workspace open"
+          }
+        }
+      }
     },
     "Nenhuma alteração pendente." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pending changes."
+          }
+        }
+      }
     },
     "Nenhuma conversa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conversations"
+          }
+        }
+      }
     },
     "Nenhuma conversa ainda" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conversations yet"
+          }
+        }
+      }
     },
     "Nenhuma conversa disponível" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conversations available"
+          }
+        }
+      }
     },
     "Nenhuma issue aberta." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No open issues."
+          }
+        }
+      }
     },
     "Nenhuma memória ainda. Você também pode salvar memórias direto de uma mensagem, no botão de cérebro." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No memories yet. You can also save memories directly from a message, using the brain button."
+          }
+        }
+      }
     },
     "Nenhuma sessão ainda" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sessions yet"
+          }
+        }
+      }
     },
     "Nenhuma tarefa agendada" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No scheduled tasks"
+          }
+        }
+      }
     },
     "Nenhuma versão arquivada" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No archived versions"
+          }
+        }
+      }
     },
     "No que você gostaria de trabalhar neste projeto?" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What would you like to work on in this project?"
+          }
+        }
+      }
     },
     "No seu computador" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On your computer"
+          }
+        }
+      }
     },
     "Nome" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
     },
     "Nome (ex: Meu ChatGPT, Llama Local)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name (e.g. My ChatGPT, Local Llama)"
+          }
+        }
+      }
     },
     "Nome da conversa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversation name"
+          }
+        }
+      }
     },
     "Nome do projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Project name"
+          }
+        }
+      }
     },
     "Nome do Projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Project Name"
+          }
+        }
+      }
     },
     "Nome do Provider" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provider Name"
+          }
+        }
+      }
     },
     "nome-do-repo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "repo-name"
+          }
+        }
+      }
     },
     "Nova conversa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New conversation"
+          }
+        }
+      }
     },
     "Nova Conversa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Conversation"
+          }
+        }
+      }
     },
     "Nova issue" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New issue"
+          }
+        }
+      }
     },
     "Nova memória…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New memory…"
+          }
+        }
+      }
     },
     "Nova tarefa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New task"
+          }
+        }
+      }
     },
     "Novo Conector MCP" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New MCP Connector"
+          }
+        }
+      }
     },
     "Novo Projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Project"
+          }
+        }
+      }
     },
     "O acesso é restrito à pasta selecionada.\nNenhum outro arquivo do seu computador é acessado." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Access is restricted to the selected folder.\nNo other files on your computer are accessed."
+          }
+        }
+      }
     },
     "O agente quer executar esta ação." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The agent wants to run this action."
+          }
+        }
+      }
     },
     "O idioma do Lume segue as preferências do sistema macOS." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lume’s language follows your macOS system preferences."
+          }
+        }
+      }
     },
     "O Lume está configurado e pronto para usar.\nVeja o que você pode fazer agora:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lume is set up and ready to use.\nHere’s what you can do now:"
+          }
+        }
+      }
     },
     "O progresso das tarefas aparecerá aqui\nautomaticamente conforme a IA avança." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Task progress will appear here\nautomatically as the AI makes progress."
+          }
+        }
+      }
     },
     "O que o agente pode fazer:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What the agent can do:"
+          }
+        }
+      }
     },
     "O que você pode fazer aqui:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What you can do here:"
+          }
+        }
+      }
     },
     "O que você quer fazer hoje?" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What do you want to do today?"
+          }
+        }
+      }
     },
     "Obter chave →" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get key →"
+          }
+        }
+      }
     },
     "Ocultar novidades" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide what’s new"
+          }
+        }
+      }
     },
     "OK" : {
 
@@ -892,7 +2419,14 @@
 
     },
     "Organize seu trabalho com projetos, contexto persistente\ne acompanhamento de progresso." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organize your work with projects, persistent context,\nand progress tracking."
+          }
+        }
+      }
     },
     "Output" : {
 
@@ -901,193 +2435,588 @@
 
     },
     "Padrão" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
+          }
+        }
+      }
     },
     "Parar (⌘.)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop (⌘.)"
+          }
+        }
+      }
     },
     "Parar gravação" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop recording"
+          }
+        }
+      }
     },
     "Passou" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passed"
+          }
+        }
+      }
     },
     "PDF…" : {
 
     },
     "Pensando…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thinking…"
+          }
+        }
+      }
     },
     "Pequeno" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Small"
+          }
+        }
+      }
     },
     "Perguntar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask"
+          }
+        }
+      }
     },
     "Perguntar antes de agir" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask before acting"
+          }
+        }
+      }
     },
     "Pesquisar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        }
+      }
     },
     "Pré-visualização" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview"
+          }
+        }
+      }
     },
     "Preciso" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Precise"
+          }
+        }
+      }
     },
     "Preview" : {
 
     },
     "Privado" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Private"
+          }
+        }
+      }
     },
     "Processando…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Processing…"
+          }
+        }
+      }
     },
     "Projetos" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projects"
+          }
+        }
+      }
     },
     "Projetos, tarefas e progresso" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projects, tasks, and progress"
+          }
+        }
+      }
     },
     "Prompt Caching (Anthropic)" : {
 
     },
     "Provider Ativo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active Provider"
+          }
+        }
+      }
     },
     "Provider salvo com sucesso!" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provider saved successfully!"
+          }
+        }
+      }
     },
     "Próximo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        }
+      }
     },
     "Pular" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        }
+      }
     },
     "Pular configuração" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip setup"
+          }
+        }
+      }
     },
     "Pull" : {
 
     },
     "Pull requests abertos (%lld)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open pull requests (%lld)"
+          }
+        }
+      }
     },
     "Push" : {
 
     },
     "Raciocínio interno" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Internal reasoning"
+          }
+        }
+      }
     },
     "RAG em documentos" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RAG on documents"
+          }
+        }
+      }
     },
     "Recarregar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reload"
+          }
+        }
+      }
     },
     "Recentes" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent"
+          }
+        }
+      }
     },
     "Reconectar pasta..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnect folder..."
+          }
+        }
+      }
     },
     "Reconfigure providers, busca na web e veja dicas do app." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconfigure providers, web search, and see app tips."
+          }
+        }
+      }
     },
     "Recusar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decline"
+          }
+        }
+      }
     },
     "Reenviar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resend"
+          }
+        }
+      }
     },
     "Remover workspace" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove workspace"
+          }
+        }
+      }
     },
     "Resetar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        }
+      }
     },
     "Resetar aplicação?" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset application?"
+          }
+        }
+      }
     },
     "Resposta servida do cache semântico" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Response served from semantic cache"
+          }
+        }
+      }
     },
     "Respostas repetidas vêm do cache. Limpe se vir respostas antigas/erradas." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeated answers come from the cache. Clear it if you see old/wrong answers."
+          }
+        }
+      }
     },
     "Restaurar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore"
+          }
+        }
+      }
     },
     "Revelar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reveal"
+          }
+        }
+      }
     },
     "Rodar Testes" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run Tests"
+          }
+        }
+      }
     },
     "Roteamento automático de modelos" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic model routing"
+          }
+        }
+      }
     },
     "Roteamento automático escolheu %@ para esta mensagem" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic routing chose %@ for this message"
+          }
+        }
+      }
     },
     "S:%lld" : {
 
     },
     "Saídas" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outputs"
+          }
+        }
+      }
     },
     "Salvar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
     },
     "Salve a API Key e clique em Atualizar para carregar os modelos." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save the API Key and click Refresh to load the models."
+          }
+        }
+      }
     },
     "Salvo!" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved!"
+          }
+        }
+      }
     },
     "Search Engine ID (cx)" : {
 
     },
     "Selecionar Conversa" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Conversation"
+          }
+        }
+      }
     },
     "Selecionar pasta do projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select project folder"
+          }
+        }
+      }
     },
     "Selecione uma conversa para importar como projeto. O histórico será salvo em **~/Lume/%@**." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select a conversation to import as a project. The history will be saved in **~/Lume/%@**."
+          }
+        }
+      }
     },
     "Selecione uma pasta em Code para buscar." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select a folder in Code to search."
+          }
+        }
+      }
     },
     "Sem configuração, sem chave — configurado por padrão." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No setup, no key — configured by default."
+          }
+        }
+      }
     },
     "Sem configuração, usa DuckDuckGo gratuitamente.\nPara usar o Google, obtenha as chaves em developers.google.com/custom-search" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No setup, uses DuckDuckGo for free.\nTo use Google, get the keys at developers.google.com/custom-search"
+          }
+        }
+      }
     },
     "Sem projeto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No project"
+          }
+        }
+      }
     },
     "Sem título" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untitled"
+          }
+        }
+      }
     },
     "Senha" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        }
+      }
     },
     "Sessões Recentes" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent Sessions"
+          }
+        }
+      }
     },
     "Seu cliente nativo de IA para macOS.\nChat inteligente, projetos, código e agentes — tudo em um só lugar." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your native AI client for macOS.\nSmart chat, projects, code, and agents — all in one place."
+          }
+        }
+      }
     },
     "Sobre MCP →" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About MCP →"
+          }
+        }
+      }
+    },
+    "Sobre o Lume" : {
 
     },
     "Solte para anexar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drop to attach"
+          }
+        }
+      }
     },
     "Stage All" : {
 
@@ -1099,10 +3028,24 @@
 
     },
     "Tamanho do texto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text size"
+          }
+        }
+      }
     },
     "Tente termos diferentes ou ajuste os filtros." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try different terms or adjust the filters."
+          }
+        }
+      }
     },
     "Terminal" : {
 
@@ -1111,77 +3054,230 @@
 
     },
     "Tipo de Provider" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provider Type"
+          }
+        }
+      }
     },
     "Tipos:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Types:"
+          }
+        }
+      }
     },
     "Título" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Title"
+          }
+        }
+      }
     },
     "Tokens máximos de contexto" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Max context tokens"
+          }
+        }
+      }
     },
     "Tokens usados nesta conversa e custo estimado (aproximado)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tokens used in this conversation and estimated cost (approximate)"
+          }
+        }
+      }
     },
     "Transporte" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transport"
+          }
+        }
+      }
     },
     "Trecho %lld de %lld · relevância %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Trecho %1$lld de %2$lld · relevância %3$@"
+            "state" : "translated",
+            "value" : "Excerpt %1$lld of %2$lld · relevance %3$@"
           }
         }
       }
     },
     "Trechos arquivados ao editar ou reiniciar a conversa. Restaurar substitui o trecho atual — de forma reversível, pois o estado de agora também é arquivado." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excerpts are archived when you edit or restart the conversation. Restoring replaces the current excerpt — reversibly, since the current state is also archived."
+          }
+        }
+      }
     },
     "Trocar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch"
+          }
+        }
+      }
     },
     "Tudo pronto! 🎉" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All set! 🎉"
+          }
+        }
+      }
     },
     "Um lugar dedicado para trabalho contínuo, onde o contexto se acumula ao longo do tempo. Arquivos e instruções ficam em uma pasta no seu computador." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A dedicated place for ongoing work, where context accumulates over time. Files and instructions live in a folder on your computer."
+          }
+        }
+      }
     },
     "Um perfil padrão será criado automaticamente." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A default profile will be created automatically."
+          }
+        }
+      }
     },
     "Uma pasta **~/Lume/%@** será criada no seu computador." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A folder **~/Lume/%@** will be created on your computer."
+          }
+        }
+      }
     },
     "URL" : {
 
     },
     "Usando DuckDuckGo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Using DuckDuckGo"
+          }
+        }
+      }
     },
     "Usar expressão regular" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use regular expression"
+          }
+        }
+      }
     },
     "Validando…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validating…"
+          }
+        }
+      }
     },
     "Validar e Salvar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validate and Save"
+          }
+        }
+      }
     },
     "Ver novidades" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See what’s new"
+          }
+        }
+      }
+    },
+    "Verificar" : {
 
+    },
+    "Versão %@ (build %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Versão %1$@ (build %2$@)"
+          }
+        }
+      }
     },
     "Versões anteriores" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous versions"
+          }
+        }
+      }
     },
     "Versões anteriores (%lld)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous versions (%lld)"
+          }
+        }
+      }
     },
     "Voltar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        }
+      }
     },
     "Working tree clean" : {
 

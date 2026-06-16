@@ -936,6 +936,7 @@ struct LumeWelcomeView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.windowBackgroundColor))
         .gesture(DragGesture(minimumDistance: 40).onEnded { v in
             if v.translation.width < -60, let n = WelcomeTab(rawValue: selectedTab.rawValue + 1) {
                 withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) { selectedTab = n }

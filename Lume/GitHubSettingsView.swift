@@ -89,7 +89,7 @@ struct GitHubSettingsView: View {
                                 repos = []; selectedRepo = nil; issues = []; prs = []
                             }
                         }
-                        .font(.system(size: 11))
+                        .buttonStyle(.lumeSecondaryCompact)
                     }
                 }
             } else {
@@ -108,7 +108,7 @@ struct GitHubSettingsView: View {
                                 Text("Conectar")
                             }
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.lumePrimary)
                         .disabled(tokenInput.trimmingCharacters(in: .whitespaces).isEmpty || gh.isValidating)
 
                         Spacer()
@@ -140,7 +140,7 @@ struct GitHubSettingsView: View {
                     Button(action: createRepo) {
                         if creatingRepo { ProgressView().controlSize(.small) } else { Text("Criar") }
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.lumePrimaryCompact)
                     .disabled(newRepoName.trimmingCharacters(in: .whitespaces).isEmpty || creatingRepo)
                     Spacer()
                 }
@@ -259,7 +259,7 @@ struct GitHubSettingsView: View {
                         Button(action: { createIssue(in: repo) }) {
                             if creatingIssue { ProgressView().controlSize(.small) } else { Text("Criar issue") }
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.lumePrimaryCompact)
                         .disabled(newIssueTitle.trimmingCharacters(in: .whitespaces).isEmpty || creatingIssue)
                         Spacer()
                         if let msg = statusMessage {

@@ -113,7 +113,7 @@ final class AnthropicProvider: AIProvider {
 
                     // Ferramentas: mesma fonte única usada pelos demais providers
                     // (AgentToolExecutor.availableTools), garantindo paridade total.
-                    let toolDefs = await AnthropicProvider.buildToolDefinitions()
+                    let toolDefs = AnthropicProvider.buildToolDefinitions()
                     var toolsEnabled = !toolDefs.isEmpty
 
                     // Loop combinado: cobre auto-continuação (stop_reason == "max_tokens")

@@ -13,26 +13,26 @@
   <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-5.9%2B-orange" alt="Swift 5.9+">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
-  <img src="https://img.shields.io/badge/version-1.0.1-brightgreen" alt="v1.0.1">
+  <img src="https://img.shields.io/badge/version-1.1.0-brightgreen" alt="v1.1.0">
 </p>
 
 ---
 
-## 🚀 What's New in v1.0.1 / O que há de novo em v1.0.1
+## 🚀 What's New in v1.1.0 / O que há de novo em v1.1.0
 
-### ✅ Critical Bug Fixes & Performance Improvements
-### ✅ Correções Críticas de Bugs e Melhorias de Desempenho
+### ✨ New "About" screen, consistent UI & fixes
+### ✨ Nova tela "Sobre", interface consistente e correções
 
-- **Memory Management**: Fixed streaming task retain cycles causing memory leaks
-- **Memory Management**: Corrigidos ciclos de retenção de tarefas de streaming que causavam vazamentos de memória
-- **Threading**: Added `@MainActor` for consistent UI thread access
-- **Threading**: Adicionado `@MainActor` para acesso consistente à thread da UI
-- **Safety**: Eliminated force unwrapping and enhanced error handling
-- **Segurança**: Eliminados force unwrapping e tratamento de erros aprimorado
-- **Performance**: 20-40% reduction in memory usage during extended sessions
-- **Performance**: Redução de 20-40% no uso de memória durante sessões estendidas
+- **About screen**: native "About Lume" window with version/build, links (repo, releases, issues, MIT license) and an update check
+- **Tela Sobre**: janela nativa "Sobre o Lume" com versão/build, links (repositório, releases, issues, licença MIT) e verificação de atualizações
+- **Unified buttons**: a single button-style system across Settings (primary/secondary/destructive)
+- **Botões unificados**: sistema único de estilos de botão nas Configurações (primário/secundário/destrutivo)
+- **Dark theme fix**: Chat, Cowork and Code now share the same background color
+- **Correção no tema escuro**: Chat, Cowork e Code agora usam a mesma cor de fundo
+- **Swift 6**: removed concurrency warnings in `ShellFunctions` and redundant `await` calls
+- **Swift 6**: removidos avisos de concorrência em `ShellFunctions` e `await` redundantes
 
-**Full changelog available**: [v1.0.1 Release](https://github.com/sbacaro/Lume/releases/tag/v1.0.1)
+**Full changelog available**: [v1.1.0 Release](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)
 
 ---
 
@@ -140,12 +140,19 @@ Pull requests são bem-vindos. Para mudanças grandes, abra uma issue primeiro p
 ### v1.0.0 (June 10, 2026)
 Initial release with core features. / Lançamento inicial com funcionalidades principais.
 
-### v1.0.1 (June 15, 2026) - **Current Version / Versão Atual**
+### v1.0.1 (June 15, 2026)
 Critical bug fixes and performance improvements. / Correções críticas de bugs e melhorias de desempenho.
 - Fixed memory leaks in streaming / Corrigidos vazamentos de memória no streaming
 - Enhanced thread safety / Segurança de threads aprimorada
 - Improved error handling / Tratamento de erros melhorado
 - Better overall stability / Melhor estabilidade geral
+
+### v1.1.0 (June 15, 2026) - **Current Version / Versão Atual**
+New "About" screen, consistent UI & fixes. / Nova tela "Sobre", interface consistente e correções.
+- Native "About Lume" window / Janela nativa "Sobre o Lume"
+- Unified Settings button system / Sistema unificado de botões nas Configurações
+- Dark theme background fix across Chat/Cowork/Code / Correção do fundo no tema escuro em Chat/Cowork/Code
+- Removed Swift 6 concurrency warnings / Removidos avisos de concorrência do Swift 6
 
 ---
 

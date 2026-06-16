@@ -68,21 +68,28 @@ enum Shell {
         idleTimeout: TimeInterval = Shell.idleTimeout,
         onOutput: (@Sendable (String) -> Void)? = nil
     ) -> (out: String, err: String, timedOut: Bool) {
+        // Estado mutável compartilhado entre os handlers concorrentes (readability
+        // handlers e watchdog). Encapsulado num tipo de referência protegido pelo
+        // `lock`, para que os closures @Sendable capturem uma referência constante
+        // em vez de mutar `var`s capturadas (erro no modo Swift 6).
+        final class DrainState: @unchecked Sendable {
+            var outData = Data()
+            var errData = Data()
+            var lastActivity = Date()
+            var lastEmit = Date.distantPast
+            var idleKilled = false
+        }
         let lock = NSLock()
-        var outData = Data()
-        var errData = Data()
-        var lastActivity = Date()
-        var lastEmit = Date.distantPast
-        var idleKilled = false
+        let state = DrainState()
         let cap = 200_000   // ~200 KB de texto já é mais que suficiente p/ o modelo
 
         // Emite ao vivo a última linha de saída (no máx. ~10x/s) para a UI acompanhar
         // o processo em tempo real, sem inundar a interface.
-        let emitLive: (Data) -> Void = { d in
+        let emitLive: @Sendable (Data) -> Void = { d in
             guard let onOutput else { return }
             lock.lock()
-            let due = Date().timeIntervalSince(lastEmit) >= 0.1
-            if due { lastEmit = Date() }
+            let due = Date().timeIntervalSince(state.lastEmit) >= 0.1
+            if due { state.lastEmit = Date() }
             lock.unlock()
             guard due, let s = String(data: d, encoding: .utf8) else { return }
             let lastLine = s.split(whereSeparator: { $0.isNewline }).last.map(String.init) ?? ""
@@ -97,13 +104,13 @@ enum Shell {
         stdout.fileHandleForReading.readabilityHandler = { handle in
             let d = handle.availableData
             guard !d.isEmpty else { return }
-            lock.lock(); outData.append(d); lastActivity = Date(); lock.unlock()
+            lock.lock(); state.outData.append(d); state.lastActivity = Date(); lock.unlock()
             emitLive(d)
         }
         stderr.fileHandleForReading.readabilityHandler = { handle in
             let d = handle.availableData
             guard !d.isEmpty else { return }
-            lock.lock(); errData.append(d); lastActivity = Date(); lock.unlock()
+            lock.lock(); state.errData.append(d); state.lastActivity = Date(); lock.unlock()
             emitLive(d)
         }
 
@@ -111,9 +118,9 @@ enum Shell {
         let timer = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "lume.shell.watchdog"))
         timer.schedule(deadline: .now() + 5, repeating: 5)
         timer.setEventHandler {
-            lock.lock(); let idle = Date().timeIntervalSince(lastActivity); lock.unlock()
+            lock.lock(); let idle = Date().timeIntervalSince(state.lastActivity); lock.unlock()
             if process.isRunning && idle > idleTimeout {
-                lock.lock(); idleKilled = true; lock.unlock()
+                lock.lock(); state.idleKilled = true; lock.unlock()
                 process.terminate()
             }
         }
@@ -134,8 +141,8 @@ enum Shell {
             return s
         }
         lock.lock()
-        outData.append(restOut); errData.append(restErr)
-        let o = text(outData); let e = text(errData); let killed = idleKilled
+        state.outData.append(restOut); state.errData.append(restErr)
+        let o = text(state.outData); let e = text(state.errData); let killed = state.idleKilled
         lock.unlock()
         return (o, e, killed)
     }

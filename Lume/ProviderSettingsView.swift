@@ -33,18 +33,9 @@ struct ProviderSettingsView: View {
                     Button {
                         showAddProvider = true
                     } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 11, weight: .semibold))
-                            Text("Adicionar")
-                                .font(.system(size: 12, weight: .medium))
-                        }
-                        .foregroundStyle(Color.accentColor)
-                        .padding(.horizontal, 12).padding(.vertical, 7)
-                        .background(Color.accentColor.opacity(0.10), in: Capsule())
-                        .overlay(Capsule().strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 1))
+                        Label("Adicionar", systemImage: "plus")
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.lumeSecondaryCompact)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -69,7 +60,7 @@ struct ProviderSettingsView: View {
                     Text("Adicione um provider para começar")
                         .foregroundStyle(.secondary)
                     Button("Adicionar Provider") { showAddProvider = true }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.lumePrimary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -230,14 +221,9 @@ struct ProviderDetailView: View {
                                         .font(.system(size: 12))
                                 }
                                 Text(isValidating ? "Validando…" : "Validar e Salvar")
-                                    .font(.system(size: 12, weight: .semibold))
                             }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(apiKey.isEmpty ? Color.secondary.opacity(0.4) : Color.accentColor,
-                                        in: Capsule())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.lumePrimary)
                         .disabled(apiKey.isEmpty || isValidating)
                     }
 
@@ -272,11 +258,9 @@ struct ProviderDetailView: View {
                                             .font(.system(size: 10))
                                     }
                                     Text(isFetchingModels ? "Buscando…" : "Atualizar lista")
-                                        .font(.system(size: 11))
                                 }
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .buttonStyle(.lumeSecondaryCompact)
                             .disabled(isFetchingModels || apiKey.isEmpty)
                         }
 
@@ -361,19 +345,16 @@ struct ProviderDetailView: View {
                         saveProvider()
                     } label: {
                         Label("Salvar", systemImage: "checkmark")
-                            .font(.system(size: 12, weight: .semibold))
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.lumePrimary)
                     .keyboardShortcut(.defaultAction)
 
                     Button(role: .destructive) {
                         deleteProvider()
                     } label: {
                         Image(systemName: "trash")
-                            .font(.system(size: 13))
                     }
-                    .buttonStyle(.bordered)
-                    .foregroundStyle(.red)
+                    .buttonStyle(.lumeDestructive)
                 }
             }
             .padding(20)
@@ -508,10 +489,10 @@ struct AddProviderView: View {
 
             HStack {
                 Button("Cancelar", role: .cancel) { dismiss() }
-                    .buttonStyle(.plain).foregroundStyle(.secondary)
+                    .buttonStyle(.lumeSecondary)
                 Spacer()
                 Button("Adicionar") { addProvider() }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.lumePrimary)
                     .disabled(providerName.isEmpty || (selectedType == "openai_custom" && baseURL.isEmpty))
                     .keyboardShortcut(.defaultAction)
             }

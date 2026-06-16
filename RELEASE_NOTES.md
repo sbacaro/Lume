@@ -1,60 +1,60 @@
-# 🎉 Lume v1.0.1 - Critical Bug Fixes Release
+# 🎉 Lume v1.1.0 — Tela "Sobre", interface consistente e correções
 
-## 🐛 Critical Bug Fixes & Performance Improvements
+Esta versão traz uma nova tela **Sobre o Lume**, um sistema unificado de botões nas
+Configurações, correções de consistência no tema escuro e a eliminação de avisos de
+concorrência do Swift 6.
 
-### ✅ Memory Management Fixes
-- **AIProviderManager**: Fixed streaming task retain cycles that caused memory leaks
-- **SSEParser**: Added proper delegate cleanup to prevent memory accumulation  
-- **ChatDetailView**: Optimized closure captures for better memory management
-- **TaskScheduler**: Resolved callback memory leaks
-
-### ✅ Threading & Concurrency
-- Added `@MainActor` to AIProviderManager for consistent UI thread access
-- Removed redundant threading operations for better performance
-- Improved streaming thread synchronization
-
-### ✅ Safety & Reliability  
-- **KeychainManager**: Eliminated force unwrapping, added safe validation
-- **FileManager**: Added proper error handling for file operations
-- Enhanced error handling throughout the application
-
-### ✅ UI & Performance
-- Optimized SwiftUI state management and view lifecycle
-- Reduced memory usage during long AI conversations
-- Improved app responsiveness and stability
-
-### 📊 Technical Details
-- **Files Modified**: 12 files
-- **Lines Added**: +507
-- **Lines Removed**: -98  
-- **Build Status**: ✅ SUCCESS
-- **Commit**: fec82c1
-
-### 🚀 Installation
-- **macOS 13+**: Universal binary (Intel/Apple Silicon)
-- **Size**: ~45MB
-- **Compatibility**: Full backward compatibility
-
-### 🎯 Impact
-- **Memory Usage**: 20-40% reduction during extended use
-- **Crash Rate**: Eliminated potential crashes during streaming
-- **Performance**: Significantly smoother long conversations
-- **Stability**: Production-ready stability improvements
-
-## 📱 Update Instructions
-
-### Automatic Update
-Users will receive automatic update notifications through the app's built-in update manager. Simply click "Update" when prompted.
-
-### Manual Update
-1. Download the latest version from GitHub Releases
-2. Drag Lume.app to Applications folder
-3. Launch and enjoy the improved stability!
+**Data de lançamento:** 2026-06-15
+**Versão:** v1.1.0 (build 3)
+**Tipo:** Funcionalidades + correções
 
 ---
 
-**Previous Issues Fixed**: All memory leaks, thread safety violations, and potential crash scenarios documented in commit fec82c1
+## ✨ Novidades
 
-**Release Date**: 2026-06-15  
-**Version**: v1.0.1  
-**Type**: Critical Bug Fix Release
+### Tela "Sobre o Lume"
+- Nova janela acessível pelo menu **Lume → Sobre o Lume**, no padrão de um app nativo do macOS
+- Mostra o ícone do app, **versão e número de build**, descrição e requisitos técnicos
+- Atalhos diretos para **Repositório no GitHub**, **Notas de versão**, **Reportar problema** e **Licença MIT**
+- Botão **Verificar atualizações** com status ao vivo, integrado ao sistema de releases
+
+### Interface mais consistente
+- **Sistema único de botões** nas Configurações: estilos primário, secundário e destrutivo com a mesma forma, tamanho e comportamento em todas as abas e sheets — fim da mistura de cantos redondos/quadrados e tamanhos diferentes
+
+---
+
+## 🔧 Alterações
+
+- A opção de **cor de acento** foi removida das Configurações; o app mantém apenas a escolha de **aparência** (Claro/Escuro/Sistema)
+
+---
+
+## 🐛 Correções
+
+- **Tema escuro consistente:** a tela inicial do modo **Chat** herdava um fundo diferente do das telas **Cowork** e **Code**. Agora as três usam a mesma cor de fundo
+- **Concorrência (Swift 6):** eliminados os avisos de mutação de variáveis capturadas em `ShellFunctions`, encapsulando o estado mutável num tipo de referência protegido por lock
+- Removidos `await` redundantes em chamadas não-assíncronas (`AIProviderManager`, `AnthropicProvider`)
+
+---
+
+## 📦 Instalação
+
+### Atualização automática
+O app verifica novas versões pelo GitHub Releases. Quando houver atualização, basta
+clicar em **Atualizar** na notificação (ou em **Verificar** na tela Sobre).
+
+### Atualização manual
+1. Baixe a versão mais recente em **GitHub Releases**
+2. Arraste **Lume.app** para a pasta Aplicativos
+3. Abra e aproveite
+
+---
+
+## 🖥️ Compatibilidade
+
+- **macOS 14+** — binário universal (Intel / Apple Silicon)
+- Totalmente retrocompatível com dados e configurações da v1.0.1
+
+---
+
+**Changelog completo:** veja [`CHANGELOG.md`](CHANGELOG.md) · [v1.1.0](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)

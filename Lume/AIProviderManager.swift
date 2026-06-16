@@ -263,7 +263,7 @@ final class AIProviderManager {
         // Informa a QUALQUER provider/modelo que o GitHub já está autenticado e
         // quais repositórios existem, para que use as ferramentas github_* em vez
         // de pedir token ao usuário ("ele não recebe a chave").
-        if let githubBlock = await GitHubService.shared.contextBlock() {
+        if let githubBlock = GitHubService.shared.contextBlock() {
             baseSystemPrompt += "\n\n" + githubBlock
         }
 

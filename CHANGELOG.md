@@ -5,9 +5,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
-## [1.2.0] — 2026-06-12
+## [1.1.0] — 2026-06-15
 
 ### Adicionado
+
+#### Sobre o app
+- Nova tela **"Sobre o Lume"** profissional, acessível pelo menu (Lume → Sobre o Lume): ícone do app, versão e número de build, descrição, requisitos técnicos e copyright
+- Atalhos diretos para **Repositório no GitHub**, **Notas de versão**, **Reportar problema** e **Licença MIT**
+- Botão **Verificar atualizações** com status ao vivo, integrado ao sistema de releases
 
 #### Renderização de mensagens
 - **Tabelas** markdown com cabeçalho, alinhamento por coluna (`:--`, `--:`, `:-:`), zebra e scroll horizontal
@@ -36,7 +41,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **Histórico de versões (branching)**: editar/reiniciar não destrói mais o trecho anterior — ele é arquivado e pode ser restaurado de forma reversível
 
 #### Tema
-- **Cor de acento** customizável (6 opções) e **aparência** Claro/Escuro/Sistema, aplicadas em todo o app
+- **Aparência** Claro/Escuro/Sistema, aplicada em todo o app
 
 #### Voz
 - **Leitura em voz alta (TTS)** das respostas via `AVSpeechSynthesizer`, com limpeza de markdown
@@ -46,10 +51,19 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - Export de conversa como **Markdown** (arquivo) e **PDF** paginado, além de copiar para a área de transferência
 
 ### Alterado
+- **Botões das Configurações padronizados** num único sistema de estilos (primário, secundário e destrutivo) com forma, tamanho e estados consistentes em todas as abas e sheets
 - Blocos de código agora **auto-expandem** quando curtos (≤40 linhas); longos continuam colapsados
 - Largura de leitura das respostas limitada (~760pt) para legibilidade em janelas largas
 - `RAGEngine` passou de busca puramente vetorial para **recuperação híbrida** com fontes rastreáveis
 - Títulos automáticos deixaram de usar as primeiras palavras do texto, passando a usar modelo on-device
+
+### Removido
+- **Cor de acento customizável**: a opção foi removida das Configurações; o app mantém apenas a escolha de aparência (Claro/Escuro/Sistema)
+
+### Corrigido
+- **Tema escuro consistente**: a tela inicial do modo Chat herdava um fundo diferente do das telas Cowork e Code; agora todas usam a mesma cor de fundo
+- **Concorrência (Swift 6)**: eliminados os avisos de mutação de variáveis capturadas em `ShellFunctions`, encapsulando o estado mutável num tipo de referência protegido por lock
+- Removidos `await` redundantes em chamadas não-assíncronas (`AIProviderManager`, `AnthropicProvider`)
 
 ---
 
@@ -132,6 +146,6 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - [ ] Histórico de versões de artifacts
 - [ ] Exportação de projetos
 - [ ] Ditado local com Whisper (WhisperKit) — abstração pronta, falta adicionar o pacote no Xcode
-- [x] Temas de cor customizáveis
+- [x] Modos de aparência (Claro/Escuro/Sistema)
 - [x] Memória persistente entre conversas
 - [x] Histórico de versões de conversas (branching)
