@@ -40,9 +40,9 @@ struct OnboardingView: View {
 
         var title: String {
             switch self {
-            case .welcome:  return "Bem-vindo ao Lume"
-            case .provider: return "Conectar IA"
-            case .search:   return "Busca na Web"
+            case .welcome:  return "Welcome to Lume"
+            case .provider: return String(localized: "Connect AI")
+            case .search:   return "Web Search"
             case .ready:    return "Tudo pronto!"
             }
         }
@@ -100,7 +100,7 @@ struct OnboardingView: View {
             switch self {
             case .openai:    return "sk-..."
             case .anthropic: return "sk-ant-..."
-            case .custom:    return "Opcional — deixe vazio se não precisar"
+            case .custom:    return String(localized: "Optional — leave empty if not needed")
             }
         }
 
@@ -243,11 +243,11 @@ struct OnboardingView: View {
                 .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1), value: animateIn)
 
                 VStack(spacing: 10) {
-                    Text("Bem-vindo ao Lume")
+                    Text("Welcome to Lume")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
 
-                    Text("Seu cliente nativo de IA para macOS.\nChat inteligente, projetos, código e agentes — tudo em um só lugar.")
+                    Text(String(localized: "Your native AI client for macOS.\nSmart chat, projects, code, and agents — all in one place."))
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -259,8 +259,8 @@ struct OnboardingView: View {
 
                 HStack(spacing: 10) {
                     featurePill(icon: "bubble.left.and.text.bubble.right", label: "Chat")
-                    featurePill(icon: "checklist", label: "Projetos")
-                    featurePill(icon: "chevron.left.forwardslash.chevron.right", label: "Código")
+                    featurePill(icon: "checklist", label: "Projects")
+                    featurePill(icon: "chevron.left.forwardslash.chevron.right", label: "Code")
                     featurePill(icon: "cpu", label: "Agentes")
                 }
                 .opacity(animateIn ? 1 : 0)
@@ -293,9 +293,9 @@ struct OnboardingView: View {
         ScrollView {
             VStack(spacing: 24) {
                 VStack(spacing: 6) {
-                    Text("Conectar um Provider de IA")
+                    Text("Connect an AI Provider")
                         .font(.system(size: 22, weight: .bold, design: .rounded))
-                    Text("Escolha onde o Lume vai buscar inteligência.")
+                    Text("Choose where Lume gets its intelligence.")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 }
@@ -315,7 +315,7 @@ struct OnboardingView: View {
                             .font(.system(size: 13, weight: .semibold))
                         Spacer()
                         if !selectedProvider.keyURL.isEmpty {
-                            Link("Obter chave →", destination: URL(string: selectedProvider.keyURL)!)
+                            Link("Get key →", destination: URL(string: selectedProvider.keyURL)!)
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.accentColor)
                         }
@@ -346,7 +346,7 @@ struct OnboardingView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1))
 
-                            Label("Modelo padrão", systemImage: "cpu")
+                            Label("Default model", systemImage: "cpu")
                                 .font(.system(size: 13, weight: .semibold))
                                 .padding(.top, 4)
                             TextField("llama3, mistral, phi3…", text: $customModelName)
@@ -369,7 +369,7 @@ struct OnboardingView: View {
                     }
 
                     if providerSaved {
-                        Label("Provider salvo com sucesso!", systemImage: "checkmark.circle.fill")
+                        Label("Provider saved successfully!", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.green)
                             .transition(.opacity.combined(with: .scale(scale: 0.9)))
@@ -472,7 +472,7 @@ struct OnboardingView: View {
                             .foregroundStyle(Color.blue)
                     }
 
-                    Text("Busca na Web")
+                    Text("Web Search")
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
@@ -485,9 +485,9 @@ struct OnboardingView: View {
                         .foregroundStyle(.green)
                         .font(.system(size: 16))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("DuckDuckGo ativo por padrão")
+                        Text("DuckDuckGo on by default")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Sem configuração, sem chave — configurado por padrão.")
+                        Text("No setup, no key — configured by default.")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                     }
@@ -501,10 +501,10 @@ struct OnboardingView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Label("Google Custom Search (opcional)", systemImage: "magnifyingglass.circle.fill")
+                        Label("Google Custom Search (optional)", systemImage: "magnifyingglass.circle.fill")
                             .font(.system(size: 13, weight: .semibold))
                         Spacer()
-                        Link("Como configurar →",
+                        Link("How to set up →",
                              destination: URL(string: "https://developers.google.com/custom-search/v1/introduction")!)
                             .font(.system(size: 11))
                             .foregroundStyle(Color.accentColor)
@@ -541,7 +541,7 @@ struct OnboardingView: View {
                     }
 
                     if !googleAPIKey.isEmpty && !googleCX.isEmpty {
-                        Label("Google configurado!", systemImage: "checkmark.circle.fill")
+                        Label("Google configured!", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.green)
                             .transition(.opacity.combined(with: .scale(scale: 0.9)))
@@ -587,9 +587,9 @@ struct OnboardingView: View {
                 }
 
                 VStack(spacing: 10) {
-                    Text("Tudo pronto! 🎉")
+                    Text("All set! 🎉")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                    Text("O Lume está configurado e pronto para usar.\nVeja o que você pode fazer agora:")
+                    Text(String(localized: "Lume is set up and ready to use.\nHere's what you can do now:"))
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -601,20 +601,20 @@ struct OnboardingView: View {
                     quickStartRow(
                         icon: "bubble.left.and.text.bubble.right",
                         color: Color.accentColor,
-                        title: "Iniciar um chat",
-                        subtitle: "Pergunte qualquer coisa na aba Chat"
+                        title: String(localized: "Start a chat"),
+                        subtitle: String(localized: "Ask anything in the Chat tab")
                     )
                     quickStartRow(
                         icon: "folder.badge.plus",
                         color: LumeTheme.clay,
-                        title: "Criar um projeto",
-                        subtitle: "Organize conversas com contexto e arquivos"
+                        title: String(localized: "Create a project"),
+                        subtitle: String(localized: "Organize conversations with context and files")
                     )
                     quickStartRow(
                         icon: "terminal",
                         color: LumeTheme.moss,
-                        title: "Usar o agente de código",
-                        subtitle: "Terminal, Git e análise de código na aba Code"
+                        title: String(localized: "Use the code agent"),
+                        subtitle: String(localized: "Terminal, Git, and code analysis in the Code tab")
                     )
                 }
             }
@@ -659,7 +659,7 @@ struct OnboardingView: View {
     private var navigationButtons: some View {
         HStack(spacing: 12) {
             if currentStep == .welcome {
-                Button("Pular configuração") {
+                Button("Skip setup") {
                     completeOnboarding()
                 }
                 .buttonStyle(.plain)
@@ -673,7 +673,7 @@ struct OnboardingView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left").font(.system(size: 11, weight: .semibold))
-                        Text("Voltar")
+                        Text("Back")
                     }
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
@@ -690,7 +690,7 @@ struct OnboardingView: View {
                     completeOnboarding()
                 } label: {
                     HStack(spacing: 6) {
-                        Text("Começar a usar o Lume")
+                        Text("Start using Lume")
                             .font(.system(size: 14, weight: .semibold))
                         Image(systemName: "arrow.right")
                             .font(.system(size: 12, weight: .bold))
@@ -715,7 +715,7 @@ struct OnboardingView: View {
                                     Image(systemName: providerSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
                                         .font(.system(size: 12, weight: .semibold))
                                 }
-                                Text(providerSaved ? "Salvo!" : "Salvar")
+                                Text(providerSaved ? "Saved!" : "Save")
                                     .font(.system(size: 13, weight: .semibold))
                             }
                             .foregroundStyle(providerSaved ? Color.green : Color.accentColor)
@@ -736,7 +736,7 @@ struct OnboardingView: View {
                         }
                     } label: {
                         HStack(spacing: 5) {
-                            Text(apiKey.isEmpty && selectedProvider != .custom ? "Pular" : "Próximo")
+                            Text(apiKey.isEmpty && selectedProvider != .custom ? "Skip" : "Next")
                                 .font(.system(size: 14, weight: .semibold))
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11, weight: .bold))
@@ -755,7 +755,7 @@ struct OnboardingView: View {
                     }
                 } label: {
                     HStack(spacing: 5) {
-                        Text("Próximo")
+                        Text("Next")
                             .font(.system(size: 14, weight: .semibold))
                         Image(systemName: "chevron.right")
                             .font(.system(size: 11, weight: .bold))
@@ -786,7 +786,7 @@ struct OnboardingView: View {
             : selectedProvider.defaultModel
 
         if selectedProvider != .custom && key.isEmpty {
-            validationError = "Insira a API Key para continuar."
+            validationError = String(localized: "Enter the API Key to continue.")
             isSavingProvider = false
             return
         }

@@ -17,7 +17,7 @@ struct ProjectInstructionsSheet: View {
                 Image(systemName: project.icon)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(LumeTheme.clay)
-                Text("Instruções do Projeto")
+                Text("Project Instructions")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                 Spacer()
                 Button { dismiss() } label: {
@@ -28,13 +28,13 @@ struct ProjectInstructionsSheet: View {
                 .buttonStyle(.plain)
             }
 
-            Text("Estas instruções são enviadas ao assistente no início de cada conversa neste projeto. Use-as para definir tom, formato ou regras de comportamento.")
+            Text("These instructions are sent to the assistant at the start of every conversation in this project. Use them to define tone, format, or behavior rules.")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Instruções do Assistente")
+                Text("Assistant Instructions")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
@@ -55,7 +55,7 @@ struct ProjectInstructionsSheet: View {
 
             HStack {
                 Spacer()
-                Button("Concluído") { dismiss() }
+                Button("Completed") { dismiss() }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
             }

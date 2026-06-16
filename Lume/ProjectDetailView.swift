@@ -50,14 +50,14 @@ struct ProjectDetailView: View {
             ProjectInstructionsSheet(project: project)
         }
         .confirmationDialog(
-            "Apagar \"\(project.name)\"?",
+            "Delete \"\(project.name)\"?",
             isPresented: $showDeleteConfirm,
             titleVisibility: .visible
         ) {
-            Button("Apagar Projeto", role: .destructive) { deleteProject() }
-            Button("Cancelar", role: .cancel) { }
+            Button("Delete Project", role: .destructive) { deleteProject() }
+            Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Esta ação não pode ser desfeita. Todas as conversas do projeto serão apagadas.")
+            Text("This action cannot be undone. All conversations in the project will be deleted.")
         }
         .fileImporter(
             isPresented: $showFileImporter,
@@ -107,13 +107,13 @@ struct ProjectDetailView: View {
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(LumeTheme.clay)
 
-                    TextField("Nome do projeto", text: $project.name)
+                    TextField("Project name", text: $project.name)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .textFieldStyle(.plain)
                         .foregroundStyle(.primary)
                 }
 
-                Text("\(project.conversations.count) conversas · criado \(project.updatedAt.formatted(.relative(presentation: .named)))")
+                Text("\(project.conversations.count) conversations · created \(project.updatedAt.formatted(.relative(presentation: .named)))")
                     .font(.system(size: 12))
                     .foregroundStyle(.tertiary)
             }
@@ -129,14 +129,14 @@ struct ProjectDetailView: View {
                                     in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
                 .buttonStyle(.plain)
-                .help("Instruções do projeto")
+                .help("Project instructions")
 
                 Menu {
-                    Button("Nova Conversa", action: createConversation)
+                    Button("New Conversation", action: createConversation)
                     Divider()
-                    Button("Adicionar ao Knowledge Base") { showFileImporter = true }
+                    Button("Add to Knowledge Base") { showFileImporter = true }
                     Divider()
-                    Button("Apagar Projeto", role: .destructive) { showDeleteConfirm = true }
+                    Button("Delete Project", role: .destructive) { showDeleteConfirm = true }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 13, weight: .medium))
@@ -146,7 +146,7 @@ struct ProjectDetailView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 30, height: 30)
-                .help("Mais opções")
+                .help("More options")
             }
         }
         .padding(.horizontal, 28)
@@ -162,7 +162,7 @@ struct ProjectDetailView: View {
                 if let latestConv = sortedConversations.first,
                    let lastMsg = latestConv.messages.last(where: { $0.role == .assistant }) {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Saídas")
+                        Text("Outputs")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 28)
@@ -190,7 +190,7 @@ struct ProjectDetailView: View {
 
                 if !sortedConversations.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Recentes")
+                        Text("Recent")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 28)
@@ -250,9 +250,9 @@ struct ProjectDetailView: View {
                             .buttonStyle(.plain)
                             .padding(.horizontal, 28)
                             .contextMenu {
-                                Button("Abrir") { selectedConversation = conv }
+                                Button("Open") { selectedConversation = conv }
                                 Divider()
-                                Button("Apagar", role: .destructive) {
+                                Button("Delete", role: .destructive) {
                                     modelContext.delete(conv)
                                     try? modelContext.save()
                                 }
@@ -264,10 +264,10 @@ struct ProjectDetailView: View {
                         Image(systemName: project.icon)
                             .font(.system(size: 32, weight: .light))
                             .foregroundStyle(.tertiary)
-                        Text("Nenhuma conversa ainda")
+                        Text("No conversations yet")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.secondary)
-                        Text("Escreva abaixo para começar a trabalhar neste projeto.")
+                        Text("Type below to start working on this project.")
                             .font(.system(size: 12))
                             .foregroundStyle(.tertiary)
                             .multilineTextAlignment(.center)
@@ -301,7 +301,7 @@ struct ProjectDetailView: View {
                             }
 
                         if messageText.isEmpty {
-                            Text("No que você gostaria de trabalhar neste projeto?")
+                            Text("What would you like to work on in this project?")
                                 .font(.system(size: 14))
                                 .foregroundStyle(Color(.placeholderTextColor))
                                 .padding(.top, 5)
@@ -410,13 +410,13 @@ struct ProjectDetailView: View {
         ScrollView {
             VStack(spacing: 1) {
                 RightPanelSection(
-                    title: "Instruções",
+                    title: String(localized: "Instructions"),
                     icon: "doc.text",
                     actionIcon: "paperclip",
                     onAction: { showInstructionsSheet = true }
                 ) {
                     if project.systemPrompt.isEmpty {
-                        Text("Adicione tom, formatação ou regras para orientar como o assistente funciona.")
+                        Text("Add tone, formatting, or rules to guide how the assistant works.")
                             .font(.system(size: 12))
                             .foregroundStyle(.tertiary)
                             .italic()
@@ -429,7 +429,7 @@ struct ProjectDetailView: View {
                 }
 
                 RightPanelSection(title: "Programado", icon: "clock", actionIcon: "plus", onAction: nil) {
-                    Text("Configure tarefas recorrentes para este projeto.")
+                    Text("Set up recurring tasks for this project.")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                         .italic()
@@ -442,7 +442,7 @@ struct ProjectDetailView: View {
                     onAction: { showFileImporter = true }
                 ) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("No seu computador")
+                        Text("On your computer")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.tertiary)
 
@@ -462,7 +462,7 @@ struct ProjectDetailView: View {
                         }
 
                         if !indexedFiles.isEmpty {
-                            Text("Memória")
+                            Text("Memory")
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.tertiary)
                                 .padding(.top, 4)
@@ -485,7 +485,7 @@ struct ProjectDetailView: View {
                 Spacer().frame(height: 20)
 
                 Button(role: .destructive) { showDeleteConfirm = true } label: {
-                    Label("Apagar Projeto", systemImage: "trash")
+                    Label("Delete Project", systemImage: "trash")
                         .font(.system(size: 12))
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity)
@@ -533,7 +533,7 @@ struct ProjectDetailView: View {
     private func createConversation() {
         let provider = providerManager.activeProvider
         let conv = Conversation(
-            title: "Nova Conversa",
+            title: "New Conversation",
             providerType: provider?.name == "Anthropic" ? "anthropic" : (providerManager.activeConfig?.providerType ?? "openai"),
             modelName: provider?.defaultModel ?? "gpt-4o",
             systemPrompt: project.systemPrompt

@@ -35,8 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard window.isVisible,
                   !window.isSheet,
                   window.styleMask.contains(.titled),
-                  window.title != "Configurações",
-                  window.title != "Novo Projeto",
+                  !["Settings", "Configurações", "New Project", "Novo Projeto"].contains(window.title),
                   !(window is NSPanel)
             else { continue }
 
@@ -152,10 +151,10 @@ struct LumeApp: App {
         }
         .defaultSize(width: 1300, height: 760)
         .restorationBehavior(.disabled)
-        // ✅ Window("Novo Projeto") removida
+        // ✅ Window("New Project") removida
 
-        // ── Janela "Sobre o Lume" ─────────────────────────────────
-        Window("Sobre o Lume", id: "about") {
+        // ── Janela String(localized: "About Lume") ─────────────────────────────────
+        Window(String(localized: "About Lume"), id: "about") {
             AboutView()
         }
         .windowResizability(.contentSize)
@@ -167,20 +166,20 @@ struct LumeApp: App {
 // MARK: - Comandos de menu
 
 /// Comandos do menu do app. Em um `Commands` dedicado conseguimos acessar
-/// `openWindow` via Environment para abrir a janela "Sobre o Lume".
+/// `openWindow` via Environment para abrir a janela String(localized: "About Lume").
 private struct LumeMenuCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     @Binding var showSettings: Bool
 
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
-            Button("Sobre o Lume") {
+            Button(String(localized: "About Lume")) {
                 openWindow(id: "about")
             }
         }
         CommandGroup(replacing: .newItem) { }
         CommandGroup(replacing: .appSettings) {
-            Button("Configurações…") {
+            Button("Settings…") {
                 showSettings = true
             }
             .keyboardShortcut(",", modifiers: .command)

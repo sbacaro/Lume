@@ -11,7 +11,7 @@ import SwiftUI
 struct AppIconExporter: View {
     @State private var exported = false
     @State private var progress: Double = 0
-    @State private var status = "Pronto para exportar"
+    @State private var status = String(localized: "Ready to export")
 
     private let specs: [(CGFloat, CGFloat, String)] = [
         (1024, 1, "AppIcon-1024"),
@@ -47,7 +47,7 @@ struct AppIconExporter: View {
             VStack(spacing: 6) {
                 Text("Lume — Icon Exporter")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                Text("Exporta para ~/Desktop/LumeIcons/")
+                Text(String(localized: "Exports to ~/Desktop/LumeIcons/"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
@@ -75,7 +75,7 @@ struct AppIconExporter: View {
                 .disabled(exported)
 
                 if exported {
-                    Button("Abrir pasta") {
+                    Button(String(localized: "Open folder")) {
                         NSWorkspace.shared.open(outputURL)
                     }
                     .buttonStyle(.bordered)
@@ -130,7 +130,7 @@ struct AppIconExporter: View {
 
             // AccentColor swatches
             VStack(alignment: .leading, spacing: 8) {
-                Text("ACCENTCOLOR — já aplicada no projeto")
+                Text(String(localized: "ACCENTCOLOR — already applied in the project"))
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.tertiary)
                     .tracking(0.8)
@@ -210,7 +210,7 @@ struct AppIconExporter: View {
             try? await Task.sleep(for: .milliseconds(30))
         }
 
-        status = "✓ \(specs.count) arquivos em ~/Desktop/LumeIcons/\nAgora copie-os para o Assets.xcassets"
+        status = String(localized: "✓ \(specs.count) files in ~/Desktop/LumeIcons/\nNow copy them to Assets.xcassets")
         exported = true
     }
 

@@ -158,9 +158,9 @@ final class AIProviderManager {
     static func deriveActivity(from text: String) -> String {
         let opens = occurrences(of: "<think>", in: text)
         let closes = occurrences(of: "</think>", in: text)
-        if opens > closes { return "Pensando…" }
-        if occurrences(of: "```", in: text) % 2 == 1 { return "Escrevendo código…" }
-        return "Escrevendo resposta…"
+        if opens > closes { return String(localized: "Thinking…") }
+        if occurrences(of: "```", in: text) % 2 == 1 { return String(localized: "Writing code…") }
+        return String(localized: "Writing response…")
     }
 
     // MARK: - Stream Message
@@ -168,13 +168,13 @@ final class AIProviderManager {
     @discardableResult
     func streamMessage(content: String, conversation: Conversation) async throws -> String {
         guard let provider = activeProvider else {
-            throw AIProviderError.unknown("Nenhum provider ativo. Configure em Configurações (⌘,).")
+            throw AIProviderError.unknown(String(localized: "No active provider. Configure it in Settings (⌘,)."))
         }
 
         isLoading = true
         streamingTokenCount = 0
         streamingStartTime = Date()
-        streamingActivity = "Pensando…"
+        streamingActivity = String(localized: "Thinking…")
         totalRequests += 1
         defer {
             isLoading = false
@@ -592,7 +592,8 @@ final class AIProviderManager {
     // MARK: - Auto Rename
 
     private func autoRenameConversation(_ conversation: Conversation, from content: String) {
-        let defaultTitles = ["Nova Conversa", "Sessão de Código", "Nova conversa"]
+        let defaultTitles = ["New Conversation", "Code Session", "New conversation",
+                             "Nova Conversa", "Sessão de Código", "Nova conversa"]
         let isFirstMessage = conversation.messages.filter { $0.role == .user }.count <= 1
         guard defaultTitles.contains(conversation.title) || isFirstMessage else { return }
 
@@ -642,7 +643,7 @@ final class AIProviderManager {
 
     private func buildWebSearchContext(for query: String) async -> String? {
         guard needsWebSearch(query: query) else { return nil }
-        streamingActivity = "Pesquisando na web…"
+        streamingActivity = String(localized: "Searching the web…")
         let searchQuery = extractSearchQuery(from: query)
         let result = await AgentToolExecutor.shared.webSearch(query: searchQuery, maxResults: 5)
         guard result.success, !result.output.isEmpty else { return nil }

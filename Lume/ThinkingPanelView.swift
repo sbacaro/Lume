@@ -24,8 +24,8 @@ struct ThinkingPanelView: View {
                     }
 
                     Text(isStreaming && tracker.isActive
-                         ? (tracker.currentLabel.isEmpty ? "Pensando…" : tracker.currentLabel)
-                         : "Processo de pensamento")
+                         ? (tracker.currentLabel.isEmpty ? "Thinking…" : tracker.currentLabel)
+                         : String(localized: "Thinking process"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
 

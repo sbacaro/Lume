@@ -73,13 +73,13 @@ struct MessageRowView: View {
     private var userActionBar: some View {
         HStack(spacing: 4) {
             HStack(spacing: 2) {
-                actionButton(icon: "arrow.counterclockwise", help: "Reiniciar conversa a partir daqui") {
+                actionButton(icon: "arrow.counterclockwise", help: String(localized: "Restart conversation from here")) {
                     onRestartFrom?()
                 }
-                actionButton(icon: "pencil", help: "Editar mensagem") {
+                actionButton(icon: "pencil", help: "Edit message") {
                     onEdit?(message.content)
                 }
-                actionButton(icon: savedMemory ? "checkmark" : "brain", help: "Salvar na memória") {
+                actionButton(icon: savedMemory ? "checkmark" : "brain", help: String(localized: "Save to memory")) {
                     MemoryStore.shared.add(message.content)
                     withAnimation(.easeInOut(duration: 0.15)) { savedMemory = true }
                     Task {
@@ -87,7 +87,7 @@ struct MessageRowView: View {
                         withAnimation(.easeInOut(duration: 0.15)) { savedMemory = false }
                     }
                 }
-                actionButton(icon: copied ? "checkmark" : "doc.on.doc", help: "Copiar mensagem") {
+                actionButton(icon: copied ? "checkmark" : "doc.on.doc", help: String(localized: "Copy message")) {
                     copyMessage()
                 }
             }
@@ -129,8 +129,8 @@ struct MessageRowView: View {
             return formatter.string(from: message.timestamp)
         } else {
             let hours = Int(elapsed / 3600)
-            if hours < 24 { return "há \(hours)h" }
-            return "há \(hours / 24)d"
+            if hours < 24 { return String(localized: "\(hours)h ago") }
+            return String(localized: "\(hours / 24)d ago")
         }
     }
 
@@ -207,14 +207,14 @@ struct MessageRowView: View {
             HStack(spacing: 2) {
                 actionButton(
                     icon: copied ? "checkmark" : "doc.on.doc",
-                    help: "Copiar resposta"
+                    help: String(localized: "Copy response")
                 ) {
                     copyMessage()
                 }
 
                 actionButton(
                     icon: isSpeaking ? "stop.circle" : "speaker.wave.2",
-                    help: isSpeaking ? "Parar leitura" : "Ler em voz alta"
+                    help: isSpeaking ? "Parar leitura" : String(localized: "Read aloud")
                 ) {
                     SpeechManager.shared.toggle(id: message.id, text: message.content)
                 }
@@ -274,7 +274,7 @@ struct MessageRowView: View {
 
     private var ragSourcesView: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Fontes")
+            Text("Sources")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.tertiary)
                 .tracking(0.6)
@@ -355,7 +355,7 @@ private struct RAGSourceChip: View {
         .popover(isPresented: $showPopover, arrowEdge: .bottom) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(source.document).font(.system(size: 12, weight: .semibold))
-                Text("Trecho \(source.chunkIndex + 1) de \(source.totalChunks) · relevância \(String(format: "%.0f%%", min(max(source.score, 0), 1) * 100))")
+                Text(String(localized: "Excerpt \(source.chunkIndex + 1) of \(source.totalChunks) · relevance \(String(format: "%.0f%%", min(max(source.score, 0), 1) * 100))"))
                     .font(.system(size: 10)).foregroundStyle(.secondary)
                 Divider()
                 ScrollView {

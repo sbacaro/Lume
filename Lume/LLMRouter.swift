@@ -31,11 +31,11 @@ struct RoutingDecision {
             switch self {
             case .simpleQuery:       return "Consulta simples"
             case .complexReasoning:  return "Raciocínio complexo"
-            case .codeGeneration:    return "Geração de código"
+            case .codeGeneration:    return String(localized: "Code generation")
             case .longContext:       return "Contexto longo"
             case .multimodal:        return "Multimodal"
             case .preferredModel:    return "Modelo preferido"
-            case .costOptimized:     return "Otimizado para custo"
+            case .costOptimized:     return String(localized: "Cost-optimized")
             }
         }
     }

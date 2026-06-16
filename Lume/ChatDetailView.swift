@@ -95,7 +95,7 @@ struct ChatDetailView: View {
                         .strokeBorder(Color.accentColor.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [8]))
                         .background(Color.accentColor.opacity(0.04))
                         .overlay(
-                            Label("Solte para anexar", systemImage: "photo.badge.plus")
+                            Label("Drop to attach", systemImage: "photo.badge.plus")
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(Color.accentColor)
                                 .padding(.horizontal, 14).padding(.vertical, 8)
@@ -186,7 +186,7 @@ struct ChatDetailView: View {
                 }
             }
         }
-        .alert("Erro no Ditado", isPresented: .constant(dictation.error != nil)) {
+        .alert("Dictation Error", isPresented: .constant(dictation.error != nil)) {
             Button("OK") { dictation.error = nil }
         } message: { Text(dictation.error ?? "") }
         .task { await AgentNotificationManager.shared.requestPermission() }
@@ -197,7 +197,7 @@ struct ChatDetailView: View {
     private var chatHeader: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                TextField("Sem título", text: $conversation.title)
+                TextField("Untitled", text: $conversation.title)
                     .font(.system(size: 13, weight: .semibold))
                     .textFieldStyle(.plain)
 
@@ -233,14 +233,14 @@ struct ChatDetailView: View {
                         Text("→ \(shortModelName(routed))")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(Color.accentColor)
-                            .help("Roteamento automático escolheu \(routed) para esta mensagem")
+                            .help(String(localized: "Automatic routing chose \(routed) for this message"))
                     }
 
                     if providerManager.lastCacheHit {
                         Image(systemName: "bolt.fill")
                             .font(.system(size: 9))
                             .foregroundStyle(.yellow)
-                            .help("Resposta servida do cache semântico")
+                            .help("Response served from semantic cache")
                     }
 
                     // Uso da conversa: tokens + custo estimado
@@ -251,7 +251,7 @@ struct ChatDetailView: View {
                         Text(usageLabel)
                             .font(.system(size: 11))
                             .foregroundStyle(.tertiary)
-                            .help("Tokens usados nesta conversa e custo estimado (aproximado)")
+                            .help("Tokens used in this conversation and estimated cost (approximate)")
                     }
                 }
             }
@@ -262,7 +262,7 @@ struct ChatDetailView: View {
                 HStack(spacing: 5) {
                     Circle().fill(Color.red).frame(width: 6, height: 6)
                         .shadow(color: .red.opacity(0.6), radius: 3)
-                    Text("Gravando…").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                    Text("Recording…").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(.ultraThinMaterial, in: Capsule())
@@ -302,20 +302,20 @@ struct ChatDetailView: View {
             }.help("Inspector")
 
             Menu {
-                Menu("Exportar") {
-                    Button("Markdown (arquivo)…") { ConversationExporter.saveMarkdown(conversation) }
+                Menu("Export") {
+                    Button("Markdown (file)…") { ConversationExporter.saveMarkdown(conversation) }
                     Button("PDF…") { ConversationExporter.savePDF(conversation) }
-                    Button("Copiar como Markdown") { ConversationExporter.copyMarkdown(conversation) }
+                    Button("Copy as Markdown") { ConversationExporter.copyMarkdown(conversation) }
                 }
                 Divider()
-                Button("Versões anteriores (\(conversation.versionBranches.count))") { showVersions = true }
+                Button(String(localized: "Previous versions (\(conversation.versionBranches.count))")) { showVersions = true }
                     .disabled(conversation.versionBranches.isEmpty)
                 Divider()
-                Button("Limpar Cache") { Task { await SemanticCache.shared.clear() } }
+                Button("Clear Cache") { Task { await SemanticCache.shared.clear() } }
                 Divider()
-                Button("Limpar Histórico", action: clearHistory)
+                Button("Clear History", action: clearHistory)
                 Divider()
-                Button("Deletar Conversa", role: .destructive, action: deleteConversation)
+                Button("Delete Conversation", role: .destructive, action: deleteConversation)
             } label: { headerButtonLabel(icon: "ellipsis", isActive: false) }
             .menuStyle(.borderlessButton)
             .fixedSize()
@@ -400,7 +400,7 @@ struct ChatDetailView: View {
         } label: {
             HStack {
                 ProgressView().scaleEffect(0.7)
-                Text("Carregar \(min(20, conversation.messages.count - displayedMessagesCount)) mensagens anteriores")
+                Text("Load \(min(20, conversation.messages.count - displayedMessagesCount)) earlier messages")
                     .font(.system(size: 12))
                 Spacer()
             }
@@ -511,7 +511,7 @@ struct ChatDetailView: View {
                     }
                 } else {
                     Button { editingNotes = true } label: {
-                        Label("Adicionar nota", systemImage: "note.text.badge.plus")
+                        Label("Add note", systemImage: "note.text.badge.plus")
                             .font(.system(size: 11)).foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 12).padding(.vertical, 6)
@@ -551,8 +551,8 @@ struct ChatDetailView: View {
                     }
                     .padding(.horizontal, 4)
                     Text(providerManager.isLoading
-                         ? "Processando…"
-                         : "O progresso das tarefas aparecerá aqui\nautomaticamente conforme a IA avança.")
+                         ? "Processing…"
+                         : String(localized: "Task progress will appear here\nautomatically as the AI makes progress."))
                         .font(.system(size: 11)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -561,10 +561,10 @@ struct ChatDetailView: View {
                 let total = conversation.tasks.count
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("\(done) de \(total) concluídas")
+                        Text(String(localized: "\(done) of \(total) completed"))
                             .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                         Spacer()
-                        Text("\(Int(Double(done) / Double(max(1, total)) * 100))%")
+                        Text((Double(done) / Double(max(1, total))).formatted(.percent.precision(.fractionLength(0))))
                             .font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary)
                     }
                     GeometryReader { geo in
@@ -610,7 +610,7 @@ struct ChatDetailView: View {
     private func projectFilesContent(_ project: Project) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             if !project.systemPrompt.isEmpty {
-                projectFileRow(icon: "doc.text.fill", name: "Instruções do projeto",
+                projectFileRow(icon: "doc.text.fill", name: "Project instructions",
                                color: LumeTheme.clay, action: nil)
             }
             if let localURL = project.localURL {
@@ -626,13 +626,13 @@ struct ChatDetailView: View {
                                    color: .secondary, action: { NSWorkspace.shared.open(url) })
                 }
                 if files.count > 12 {
-                    Text("+ \(files.count - 12) arquivos")
+                    Text("+ \(files.count - 12) files")
                         .font(.system(size: 10)).foregroundStyle(.tertiary)
                         .padding(.leading, 22).padding(.top, 2)
                 }
                 Divider().opacity(0.4).padding(.vertical, 4)
                 Button { NSWorkspace.shared.open(localURL) } label: {
-                    Label("Abrir pasta do projeto", systemImage: "folder")
+                    Label("Open project folder", systemImage: "folder")
                         .font(.system(size: 11)).foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
@@ -678,7 +678,7 @@ struct ChatDetailView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    Text("Adicione arquivos para contextualizar a conversa.")
+                    Text("Add files to give the conversation context.")
                         .font(.system(size: 10)).foregroundStyle(.tertiary)
                 }
             } else {
@@ -718,7 +718,7 @@ struct ChatDetailView: View {
                     }
                 }
                 Button { showFileImporter = true } label: {
-                    Label("Adicionar", systemImage: "plus")
+                    Label("Add", systemImage: "plus")
                         .font(.system(size: 11)).foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
@@ -737,7 +737,7 @@ struct ChatDetailView: View {
                     .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 HStack {
                     Spacer()
-                    Button("Salvar") { editingNotes = false; try? modelContext.save() }
+                    Button("Save") { editingNotes = false; try? modelContext.save() }
                         .font(.system(size: 11, weight: .semibold))
                         .buttonStyle(.borderedProminent).controlSize(.small)
                 }
@@ -746,7 +746,7 @@ struct ChatDetailView: View {
                     .font(.system(size: 11)).foregroundStyle(.secondary)
                     .onTapGesture { editingNotes = true }
                 Button { editingNotes = true } label: {
-                    Label("Editar", systemImage: "pencil")
+                    Label("Edit", systemImage: "pencil")
                         .font(.system(size: 10)).foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
@@ -823,7 +823,7 @@ struct ChatDetailView: View {
         if dictation.isRecording { return "Ouvindo…" }
         return attachedFiles.isEmpty
             ? "Mensagem para \(conversation.modelName)… (↩)"
-            : "Pergunte sobre os documentos… (↩)"
+            : String(localized: "Ask about the documents… (↩)")
     }
 
     private var latestArtifactInConversation: Artifact? {
@@ -906,7 +906,7 @@ struct ChatDetailView: View {
         guard let idx = conversation.messages.firstIndex(where: { $0.id == message.id }) else { return }
         let content = newContent ?? message.content
         // Branching: arquiva o trecho que será substituído (nada é perdido).
-        archiveBranch(fromIndex: idx, label: newContent != nil ? "Antes de editar" : "Antes de reiniciar")
+        archiveBranch(fromIndex: idx, label: newContent != nil ? String(localized: "Before editing") : String(localized: "Before restarting"))
         conversation.messages.removeSubrange(idx...)
         conversation.updatedAt = Date()
         try? modelContext.save()
@@ -947,7 +947,7 @@ struct ChatDetailView: View {
         providerManager.cancelStreaming()
         let idx = min(max(0, branch.fromIndex), conversation.messages.count)
         if idx < conversation.messages.count {
-            archiveBranch(fromIndex: idx, label: "Antes de restaurar")
+            archiveBranch(fromIndex: idx, label: String(localized: "Before restoring"))
             conversation.messages.removeSubrange(idx...)
         }
         for bm in branch.messages {
@@ -1148,12 +1148,12 @@ struct ChatDetailView: View {
             .padding(8)
             .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             HStack(spacing: 8) {
-                Text("O agente quer executar esta ação.")
+                Text("The agent wants to run this action.")
                     .font(.system(size: 11)).foregroundStyle(.tertiary)
                 Spacer()
-                Button("Recusar") { approval.resolve(false) }
+                Button("Decline") { approval.resolve(false) }
                     .buttonStyle(.bordered)
-                Button("Aprovar") { approval.resolve(true) }
+                Button("Approve") { approval.resolve(true) }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
             }
@@ -1180,7 +1180,7 @@ struct ChatDetailView: View {
         HStack(spacing: 8) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 11)).foregroundStyle(Color.accentColor)
-            Text("Na fila: \(text)")
+            Text("In queue: \(text)")
                 .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
             Spacer()
             Button { queuedMessage = nil } label: {
@@ -1234,19 +1234,19 @@ struct EditMessageSheet: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Editar mensagem").font(.system(size: 16, weight: .bold, design: .rounded))
+            Text("Edit message").font(.system(size: 16, weight: .bold, design: .rounded))
             TextEditor(text: $text)
                 .font(.system(size: 14)).frame(minHeight: 120, maxHeight: 300)
                 .scrollContentBackground(.hidden).padding(10)
                 .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1))
-            Text("A conversa será reiniciada a partir desta mensagem. A versão anterior fica salva em “Versões anteriores”.")
+            Text("The conversation will restart from this message. The previous version is saved in “Previous versions”.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
             HStack {
-                Button("Cancelar", role: .cancel) { onCancel() }.buttonStyle(.plain).foregroundStyle(.secondary)
+                Button("Cancel", role: .cancel) { onCancel() }.buttonStyle(.plain).foregroundStyle(.secondary)
                 Spacer()
-                Button("Reenviar") { onConfirm(text.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                Button("Resend") { onConfirm(text.trimmingCharacters(in: .whitespacesAndNewlines)) }
                     .buttonStyle(.borderedProminent)
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .keyboardShortcut(.defaultAction)
@@ -1267,7 +1267,7 @@ struct VersionHistorySheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("Versões anteriores")
+                Text("Previous versions")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                 Spacer()
                 Button { onClose() } label: {
@@ -1277,7 +1277,7 @@ struct VersionHistorySheet: View {
             }
             .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 10)
 
-            Text("Trechos arquivados ao editar ou reiniciar a conversa. Restaurar substitui o trecho atual — de forma reversível, pois o estado de agora também é arquivado.")
+            Text("Excerpts are archived when you edit or restart the conversation. Restoring replaces the current excerpt — reversibly, since the current state is also archived.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 20).padding(.bottom, 12)
@@ -1288,7 +1288,7 @@ struct VersionHistorySheet: View {
                 VStack(spacing: 8) {
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 28)).foregroundStyle(.tertiary)
-                    Text("Nenhuma versão arquivada")
+                    Text("No archived versions")
                         .font(.system(size: 13)).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1317,14 +1317,14 @@ struct VersionHistorySheet: View {
                 .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 8) {
-                Text("\(branch.messages.count) mensagens")
+                Text("\(branch.messages.count) messages")
                     .font(.system(size: 10)).foregroundStyle(.tertiary)
                 Spacer()
                 Button(role: .destructive) { onDelete(branch) } label: {
                     Image(systemName: "trash").font(.system(size: 11))
                 }.buttonStyle(.plain).foregroundStyle(.secondary)
                 Button { onRestore(branch) } label: {
-                    Text("Restaurar").font(.system(size: 11, weight: .semibold))
+                    Text("Restore").font(.system(size: 11, weight: .semibold))
                 }.buttonStyle(.borderedProminent).controlSize(.small)
             }
         }
@@ -1376,11 +1376,11 @@ struct EmptyStateView: View {
             Text(LumeTheme.greetingEmoji()).font(.system(size: 40))
             VStack(spacing: 6) {
                 Text("\(LumeTheme.greeting())!").font(.system(size: 22, weight: .semibold))
-                Text("Como posso ajudar hoje?").font(.system(size: 14)).foregroundStyle(.secondary)
+                Text("How can I help today?").font(.system(size: 14)).foregroundStyle(.secondary)
             }
             HStack(spacing: 8) {
-                SuggestionChip(icon: "globe", text: "Crie um site")
-                SuggestionChip(icon: "chevron.left.forwardslash.chevron.right", text: "Escreva código")
+                SuggestionChip(icon: "globe", text: String(localized: "Create a website"))
+                SuggestionChip(icon: "chevron.left.forwardslash.chevron.right", text: String(localized: "Write code"))
             }
             HStack(spacing: 8) {
                 SuggestionChip(icon: "doc.text", text: "Resuma documento")

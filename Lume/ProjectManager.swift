@@ -60,8 +60,8 @@ final class ProjectManager {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.message = "Selecione a pasta do projeto"
-        panel.prompt = "Usar esta pasta"
+        panel.message = String(localized: "Select the project folder")
+        panel.prompt = String(localized: "Use this folder")
         let response = await panel.beginSheetModal(for: NSApp.keyWindow ?? NSWindow())
         return response == .OK ? panel.url : nil
     }

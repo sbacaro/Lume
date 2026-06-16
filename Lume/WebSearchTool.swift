@@ -108,7 +108,7 @@ struct WebSearchTool: AgentTool {
         guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "https://html.duckduckgo.com/html/?q=\(encoded)")
         else {
-            return ToolResult(success: false, output: "Não foi possível construir URL.", metadata: [:])
+            return ToolResult(success: false, output: String(localized: "Could not build a URL."), metadata: [:])
         }
 
         var request = URLRequest(url: url)

@@ -7,10 +7,10 @@
 //  comportamento consistentes — no padrão de um app nativo do macOS.
 //
 //  Uso:
-//      Button("Revelar") { … }.buttonStyle(.lumeSecondary)
-//      Button { … } label: { Label("Abrir", systemImage: "sparkles") }
+//      Button("Reveal") { … }.buttonStyle(.lumeSecondary)
+//      Button { … } label: { Label("Open", systemImage: "sparkles") }
 //          .buttonStyle(.lumePrimary)
-//      Button("Resetar", role: .destructive) { … }.buttonStyle(.lumeDestructive)
+//      Button("Reset", role: .destructive) { … }.buttonStyle(.lumeDestructive)
 //
 
 import SwiftUI
@@ -26,8 +26,7 @@ struct LumeButtonStyle: ButtonStyle {
 
     @Environment(\.isEnabled) private var isEnabled
 
-    // Métricas únicas — a mesma forma e altura em todo o app.
-    private var corner: CGFloat { 8 }
+    // Métricas únicas — a mesma forma (cápsula) e altura em todo o app.
     private var hPadding: CGFloat { compact ? 11 : 14 }
     private var vPadding: CGFloat { compact ? 5 : 7 }
     private var fontSize: CGFloat { compact ? 11 : 12 }
@@ -42,13 +41,13 @@ struct LumeButtonStyle: ButtonStyle {
             .frame(minHeight: minHeight)
             .background(
                 background(pressed: configuration.isPressed),
-                in: RoundedRectangle(cornerRadius: corner, style: .continuous)
+                in: Capsule(style: .continuous)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: corner, style: .continuous)
+                Capsule(style: .continuous)
                     .strokeBorder(borderColor, lineWidth: 1)
             )
-            .contentShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+            .contentShape(Capsule(style: .continuous))
             .opacity(isEnabled ? 1 : 0.45)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)

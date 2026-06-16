@@ -5,6 +5,27 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.2.0] — 2026-06-16
+
+### Adicionado
+
+#### Internacionalização (i18n)
+- **Suporte completo a dois idiomas**: inglês (base) e **português (Brasil)**, com catálogo de strings (`Localizable.xcstrings`) cobrindo toda a interface
+- **Seletor de idioma no app** em Configurações → Avançado → **Idioma do App**: escolha entre **Sistema**, **English** e **Português (Brasil)**, com reinício automático para aplicar
+- Por padrão, o app passa a seguir o idioma do macOS (antes ficava preso em português)
+
+### Alterado
+
+- **Botões padronizados em formato pílula (cápsula)** em todo o app — fim da mistura de cantos arredondados e quadrados; o seletor Chat/Cowork/Code e os botões de ação agora compartilham a mesma forma
+- Base de código migrada para **inglês como idioma de origem**, com as traduções em português movidas para o catálogo de strings (em vez de textos fixos no código)
+
+### Corrigido
+
+- **Chave de IA cadastrada no onboarding** (e no "Setup assistant") não aparecia em Configurações, exigindo novo cadastro — causado pela falta de injeção do contexto de dados (`modelContext`) nos sheets de onboarding
+- Diversos textos que estavam fixos em português e não passavam pela tradução agora são localizáveis
+
+---
+
 ## [1.1.0] — 2026-06-15
 
 ### Adicionado

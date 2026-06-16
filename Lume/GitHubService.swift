@@ -119,7 +119,7 @@ enum GHError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notConnected:   return "GitHub não conectado. Adicione um token em Configurações → GitHub."
+        case .notConnected:   return String(localized: "GitHub not connected. Add a token in Settings → GitHub.")
         case .unauthorized:   return "Token inválido ou sem permissão (401). Verifique o token e seus escopos."
         case .invalidResponse: return "Resposta inválida do GitHub."
         case .api(let status, let message): return "GitHub (\(status)): \(message)"

@@ -14,7 +14,7 @@ struct AppIconGeneratorView: View {
         VStack(spacing: 20) {
             LumeLogo(size: 80)
 
-            Text("Gerador de Ícones")
+            Text("Icon Generator")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
 
             if generated {
@@ -22,24 +22,24 @@ struct AppIconGeneratorView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 40))
                         .foregroundStyle(.green)
-                    Text("Ícones gerados com sucesso!")
+                    Text("Icons generated successfully!")
                         .font(.headline)
                     Text(outputPath)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                    Button("Abrir no Finder") {
+                    Button("Open in Finder") {
                         NSWorkspace.shared.open(URL(fileURLWithPath: outputPath))
                     }
                     .buttonStyle(.borderedProminent)
                 }
             } else {
-                Text("Escolha uma pasta onde os ícones\nserão salvos.")
+                Text(String(localized: "Choose a folder where the icons\nwill be saved."))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
-                Button("Escolher pasta e gerar") {
+                Button("Choose folder and generate") {
                     pickFolderAndGenerate()
                 }
                 .buttonStyle(.borderedProminent)
@@ -56,8 +56,8 @@ struct AppIconGeneratorView: View {
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
-        panel.message = "Escolha onde salvar os ícones do Lume"
-        panel.prompt = "Salvar aqui"
+        panel.message = String(localized: "Choose where to save the Lume icons")
+        panel.prompt = String(localized: "Save here")
 
         guard panel.runModal() == .OK, let folder = panel.url else { return }
 

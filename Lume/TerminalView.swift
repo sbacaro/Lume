@@ -41,26 +41,26 @@ struct TerminalView: View {
                 .font(.system(size: 32))
                 .foregroundStyle(.orange)
 
-            Text("Autenticação de Administrador")
+            Text("Administrator Authentication")
                 .font(.system(size: 15, weight: .semibold))
 
-            Text("Digite sua senha para executar comandos com privilégios elevados.")
+            Text("Enter your password to run commands with elevated privileges.")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            SecureField("Senha", text: $passwordInput)
+            SecureField("Password", text: $passwordInput)
                 .textFieldStyle(.roundedBorder)
                 .focused($passwordFocused)
                 .onSubmit { submitPassword() }
 
             HStack(spacing: 12) {
-                Button("Cancelar", role: .cancel) {
+                Button("Cancel", role: .cancel) {
                     showPasswordPrompt = false
                     terminal.submitPassword(nil)
                 }
 
-                Button("Autenticar") {
+                Button("Authenticate") {
                     submitPassword()
                 }
                 .buttonStyle(.borderedProminent)

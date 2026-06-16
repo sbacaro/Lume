@@ -39,7 +39,7 @@ final class TerminalSession {
     var isWaitingForPassword = false
 
     init() {
-        appendLine("Lume Terminal — digite 'help' para comandos disponíveis", type: .system)
+        appendLine(String(localized: "Lume Terminal — type 'help' for available commands"), type: .system)
         loadHistory()
     }
 
@@ -228,7 +228,7 @@ final class TerminalSession {
         }
         sudoPassword = pwd
         isSudoSession = true
-        appendLine("[sudo] Credencial válida e armazenada em memória.", type: .sudo)
+        appendLine(String(localized: "[sudo] Credential valid and stored in memory."), type: .sudo)
         return true
     }
 

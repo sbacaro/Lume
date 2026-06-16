@@ -36,19 +36,19 @@ struct NewProjectSheet: View {
     private var chooseView: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Criar um novo projeto")
+                Text("Create a new project")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
-                Text("Um lugar dedicado para trabalho contínuo, onde o contexto se acumula ao longo do tempo. Arquivos e instruções ficam em uma pasta no seu computador.")
+                Text("A dedicated place for ongoing work, where context accumulates over time. Files and instructions live in a folder on your computer.")
                     .font(.system(size: 13)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             VStack(spacing: 10) {
-                projectOptionRow(icon: "plus", title: "Começar do zero",
-                    subtitle: "Configure uma nova pasta com instruções e arquivos.") { step = .fromScratch }
-                projectOptionRow(icon: "tray.and.arrow.down", title: "Importar um projeto",
-                    subtitle: "Traga um projeto que você criou no Chat para o Cowork.") { step = .importConversation }
-                projectOptionRow(icon: "folder", title: "Usar uma pasta existente",
-                    subtitle: "Dê ao Lume uma pasta da qual você já trabalha.") { importExisting() }
+                projectOptionRow(icon: "plus", title: "Start from scratch",
+                    subtitle: String(localized: "Set up a new folder with instructions and files.")) { step = .fromScratch }
+                projectOptionRow(icon: "tray.and.arrow.down", title: "Import a project",
+                    subtitle: String(localized: "Bring a project you created in Chat into Cowork.")) { step = .importConversation }
+                projectOptionRow(icon: "folder", title: String(localized: "Use an existing folder"),
+                    subtitle: String(localized: "Give Lume a folder you already work from.")) { importExisting() }
             }
         }
         .padding(28)
@@ -126,22 +126,22 @@ struct FromScratchView: View {
                     Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                Text("Começar do zero").font(.system(size: 18, weight: .bold, design: .rounded))
+                Text("Start from scratch").font(.system(size: 18, weight: .bold, design: .rounded))
             }
 
-            Text("Uma pasta **~/Lume/\(sanitizedName.isEmpty ? "nome-do-projeto" : sanitizedName)** será criada no seu computador.")
+            Text(String(localized: "A folder **~/Lume/\(sanitizedName.isEmpty ? "project-name" : sanitizedName)** will be created on your computer."))
                 .font(.system(size: 12)).foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Nome do Projeto").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                TextField("Meu Projeto", text: $name).textFieldStyle(.roundedBorder)
+                Text("Project Name").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                TextField("My Project", text: $name).textFieldStyle(.roundedBorder)
                 if !name.isEmpty {
                     Text("~/Lume/\(sanitizedName)").font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary)
                 }
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Ícone").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Text("Icon").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 36, maximum: 40), spacing: 6)], spacing: 6) {
                     ForEach(icons, id: \.self) { i in
                         Button { icon = i } label: {
@@ -158,7 +158,7 @@ struct FromScratchView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Instruções para o assistente").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Text("Instructions for the assistant").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 TextEditor(text: $systemPrompt)
                     .font(.system(size: 12)).frame(height: 72)
                     .scrollContentBackground(.hidden).padding(8)
@@ -170,14 +170,14 @@ struct FromScratchView: View {
             }
 
             HStack {
-                Button("Cancelar", role: .cancel) { onBack() }.buttonStyle(.plain).foregroundStyle(.secondary)
+                Button("Cancel", role: .cancel) { onBack() }.buttonStyle(.plain).foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     createProject()
                 } label: {
                     HStack(spacing: 6) {
                         if isCreating { ProgressView().scaleEffect(0.6) }
-                        Text("Criar Projeto")
+                        Text("Create Project")
                     }
                 }
                 .disabled(name.isEmpty || isCreating)
@@ -212,7 +212,7 @@ struct FromScratchView: View {
                 await indexProjectFiles(project)
                 onDone()
             } catch {
-                errorMessage = "Erro ao criar pasta: \(error.localizedDescription)"
+                errorMessage = String(localized: "Error creating folder: \(error.localizedDescription)")
                 isCreating = false
             }
         }
@@ -248,21 +248,21 @@ struct ImportConversationView: View {
                     Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                Text("Importar um projeto").font(.system(size: 18, weight: .bold, design: .rounded))
+                Text("Import a project").font(.system(size: 18, weight: .bold, design: .rounded))
             }
 
-            Text("Selecione uma conversa para importar como projeto. O histórico será salvo em **~/Lume/\(projectName.isEmpty ? "..." : projectName)**.")
+            Text(String(localized: "Select a conversation to import as a project. The history will be saved in **~/Lume/\(projectName.isEmpty ? "..." : projectName)**."))
                 .font(.system(size: 12)).foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Nome do Projeto").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                TextField("Nome", text: $projectName).textFieldStyle(.roundedBorder)
+                Text("Project Name").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                TextField("Name", text: $projectName).textFieldStyle(.roundedBorder)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Selecionar Conversa").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Text("Select Conversation").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 if conversations.isEmpty {
-                    Text("Nenhuma conversa disponível").font(.system(size: 12)).foregroundStyle(.tertiary)
+                    Text("No conversations available").font(.system(size: 12)).foregroundStyle(.tertiary)
                         .frame(maxWidth: .infinity).padding(16)
                         .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
                 } else {
@@ -285,14 +285,14 @@ struct ImportConversationView: View {
             }
 
             HStack {
-                Button("Cancelar", role: .cancel) { onBack() }.buttonStyle(.plain).foregroundStyle(.secondary)
+                Button("Cancel", role: .cancel) { onBack() }.buttonStyle(.plain).foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     importProject()
                 } label: {
                     HStack(spacing: 6) {
                         if isImporting { ProgressView().scaleEffect(0.6) }
-                        Text("Importar")
+                        Text("Import")
                     }
                 }
                 .disabled(selectedConversationID == nil || projectName.isEmpty || isImporting)
@@ -321,7 +321,7 @@ struct ImportConversationView: View {
                 AIProviderManager.saveBookmark(for: url, projectID: project.id)
                 onDone()
             } catch {
-                errorMessage = "Erro ao importar: \(error.localizedDescription)"
+                errorMessage = String(localized: "Error importing: \(error.localizedDescription)")
                 isImporting = false
             }
         }
@@ -343,7 +343,7 @@ private struct ConversationRowButton: View {
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(conv.title).font(.system(size: 13)).lineLimit(1).foregroundStyle(.primary)
-                    Text("\(conv.messages.count) mensagens · \(conv.updatedAt.formatted(.relative(presentation: .named)))")
+                    Text("\(conv.messages.count) messages · \(conv.updatedAt.formatted(.relative(presentation: .named)))")
                         .font(.system(size: 10)).foregroundStyle(.secondary)
                 }
                 Spacer()

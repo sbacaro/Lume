@@ -253,7 +253,7 @@ enum Shell {
             }
             // -128 = usuário cancelou o diálogo de autenticação.
             if output.contains("-128") || output.lowercased().contains("user canceled") {
-                return Shell.failure("Autenticação de administrador cancelada pelo usuário.")
+                return Shell.failure(String(localized: "Administrator authentication cancelled by the user."))
             }
             return Shell.failure("Exit \(process.terminationStatus): \(output)")
         } catch {

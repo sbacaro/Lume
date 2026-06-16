@@ -14,14 +14,29 @@ struct SettingsView: View {
 
     enum SettingsTab: String, CaseIterable {
         case providers  = "Providers"
-        case agent      = "Agente"
+        case agent      = "Agent"
         case github     = "GitHub"
-        case style      = "Estilo"
-        case memory     = "Memória"
+        case style      = "Style"
+        case memory     = "Memory"
         case mcp        = "MCP"
         case workflows  = "Workflows"
-        case tasks      = "Tarefas"
-        case advanced   = "Avançado"
+        case tasks      = "Tasks"
+        case advanced   = "Advanced"
+
+        /// Localized display title (rawValue stays a stable English identifier).
+        var title: LocalizedStringKey {
+            switch self {
+            case .providers: return "Providers"
+            case .agent:     return "Agent"
+            case .github:    return "GitHub"
+            case .style:     return "Style"
+            case .memory:    return "Memory"
+            case .mcp:       return "MCP"
+            case .workflows: return "Workflows"
+            case .tasks:     return "Tasks"
+            case .advanced:  return "Advanced"
+            }
+        }
 
         var icon: String {
             switch self {
@@ -43,7 +58,7 @@ struct SettingsView: View {
             // ── Sidebar esquerda ─────────────────────────────────
             VStack(spacing: 2) {
                 HStack {
-                    Text("Configurações")
+                    Text("Settings")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                     Spacer()
                 }
@@ -58,7 +73,7 @@ struct SettingsView: View {
                                 .font(.system(size: 13, weight: .medium))
                                 .frame(width: 20)
                                 .foregroundStyle(selectedTab == tab ? Color.accentColor : Color.secondary)
-                            Text(tab.rawValue)
+                            Text(tab.title)
                                 .font(.system(size: 13))
                                 .foregroundStyle(selectedTab == tab ? Color.primary : Color.secondary)
                             Spacer()
@@ -88,7 +103,7 @@ struct SettingsView: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
-                        Text("Fechar")
+                        Text("Close")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -136,7 +151,7 @@ struct AgentSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                settingsSection("Modo de Aprovação") {
+                settingsSection(String(localized: "Approval Mode")) {
                     ForEach(ApprovalMode.allCases, id: \.self) { mode in
                         Button {
                             config.approvalMode = mode
@@ -186,7 +201,7 @@ struct AgentSettingsView: View {
 
                 settingsSection("Limites") {
                     HStack {
-                        Text("Máx. iterações do agente")
+                        Text("Max. agent iterations")
                         Spacer()
                         Stepper("\(config.maxAgentIterations)", value: $config.maxAgentIterations, in: 1...50)
                             .onChange(of: config.maxAgentIterations) { _, _ in config.save() }
@@ -194,7 +209,7 @@ struct AgentSettingsView: View {
                     .font(.system(size: 13))
                     Divider().opacity(0.4)
                     HStack {
-                        Text("Tokens máximos de contexto")
+                        Text("Max context tokens")
                         Spacer()
                         Picker("", selection: $config.maxContextTokens) {
                             Text("8k").tag(8_000)
@@ -208,14 +223,14 @@ struct AgentSettingsView: View {
                     .font(.system(size: 13))
                 }
 
-                settingsSection("Otimizações") {
-                    Toggle("Roteamento automático de modelos", isOn: $config.enableModelRouting)
+                settingsSection(String(localized: "Optimizations")) {
+                    Toggle("Automatic model routing", isOn: $config.enableModelRouting)
                         .onChange(of: config.enableModelRouting) { _, _ in config.save() }
                     Divider().opacity(0.4)
-                    Toggle("Cache semântico", isOn: $config.enableSemanticCache)
+                    Toggle("Semantic cache", isOn: $config.enableSemanticCache)
                         .onChange(of: config.enableSemanticCache) { _, _ in config.save() }
                     HStack {
-                        Text("Respostas repetidas vêm do cache. Limpe se vir respostas antigas/erradas.")
+                        Text("Repeated answers come from the cache. Clear it if you see old/wrong answers.")
                             .font(.system(size: 11)).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer()
@@ -223,19 +238,19 @@ struct AgentSettingsView: View {
                             Task { await SemanticCache.shared.clear() }
                             cacheCleared = true
                         } label: {
-                            Label(cacheCleared ? "Cache limpo ✓" : "Limpar cache", systemImage: "trash")
+                            Label(cacheCleared ? "Cache cleared ✓" : "Clear cache", systemImage: "trash")
                                 .font(.system(size: 11))
                         }
                         .disabled(cacheCleared)
                     }
                     Divider().opacity(0.4)
-                    Toggle("RAG em documentos", isOn: $config.enableRAG)
+                    Toggle("RAG on documents", isOn: $config.enableRAG)
                         .onChange(of: config.enableRAG) { _, _ in config.save() }
                     Divider().opacity(0.4)
                     Toggle("Prompt Caching (Anthropic)", isOn: $config.enablePromptCaching)
                         .onChange(of: config.enablePromptCaching) { _, _ in config.save() }
                     Divider().opacity(0.4)
-                    Toggle("Memória persistente", isOn: $config.enableMemory)
+                    Toggle("Persistent memory", isOn: $config.enableMemory)
                         .onChange(of: config.enableMemory) { _, _ in config.save() }
                 }
                 .font(.system(size: 13))
@@ -257,9 +272,9 @@ struct MemorySettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                settingsSection("Adicionar memória") {
+                settingsSection(String(localized: "Add memory")) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Fatos que a IA deve lembrar em todas as conversas (ex.: \"Trabalho na Rumo Logística\", \"Prefiro respostas objetivas em português\").")
+                        Text(String(localized: "Facts the AI should remember across all conversations (e.g., \"I work at Rumo Logística\", \"I prefer concise answers in Portuguese\")."))
                             .font(.system(size: 11)).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         HStack(spacing: 8) {
@@ -269,19 +284,19 @@ struct MemorySettingsView: View {
                                 }
                             }
                             .labelsHidden().frame(width: 150)
-                            TextField("Nova memória…", text: $newText)
+                            TextField("New memory…", text: $newText)
                                 .textFieldStyle(.roundedBorder)
                                 .onSubmit { addMemory() }
-                            Button("Adicionar") { addMemory() }
+                            Button("Add") { addMemory() }
                                 .buttonStyle(.lumePrimaryCompact)
                                 .disabled(newText.trimmingCharacters(in: .whitespaces).isEmpty)
                         }
                     }
                 }
 
-                settingsSection("Memórias (\(store.items.count))") {
+                settingsSection(String(localized: "Memories (\(store.items.count))")) {
                     if store.items.isEmpty {
-                        Text("Nenhuma memória ainda. Você também pode salvar memórias direto de uma mensagem, no botão de cérebro.")
+                        Text("No memories yet. You can also save memories directly from a message, using the brain button.")
                             .font(.system(size: 12)).foregroundStyle(.tertiary)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
@@ -319,12 +334,12 @@ struct MemorySettingsView: View {
 
             Toggle("", isOn: Binding(get: { item.isEnabled }, set: { _ in store.toggle(item) }))
                 .labelsHidden().controlSize(.mini)
-                .help(item.isEnabled ? "Ativa" : "Desativada")
+                .help(item.isEnabled ? "Active" : "Disabled")
 
             Button { store.delete(item) } label: {
                 Image(systemName: "trash").font(.system(size: 11)).foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain).help("Apagar")
+            .buttonStyle(.plain).help("Delete")
         }
         .padding(.vertical, 4)
     }
@@ -362,14 +377,14 @@ struct StyleSettingsView: View {
                         .font(.system(size: 36))
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
-                    Text("Nenhum perfil de estilo")
+                    Text("No style profile")
                         .font(.system(size: 15, weight: .semibold))
-                    Text("Um perfil padrão será criado automaticamente.")
+                    Text("A default profile will be created automatically.")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
-                    Button("Criar perfil padrão") {
+                    Button("Create default profile") {
                         let p = StyleProfile(
-                            name: "Padrão",
+                            name: "Default",
                             tone: "balanced",
                             verbosity: "balanced",
                             language: "pt-BR",
@@ -388,7 +403,7 @@ struct StyleSettingsView: View {
         .onAppear {
             if profiles.isEmpty {
                 let p = StyleProfile(
-                    name: "Padrão",
+                    name: "Default",
                     tone: "balanced",
                     verbosity: "balanced",
                     language: "pt-BR",
@@ -420,14 +435,14 @@ struct StyleProfileDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
 
-                settingsSection("Tom de Resposta") {
+                settingsSection(String(localized: "Response Tone")) {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                         ForEach([
-                            ("formal",    "Formal",      "briefcase",           "Profissional e objetivo"),
-                            ("casual",    "Casual",      "bubble.left",         "Amigável e descontraído"),
-                            ("technical", "Técnico",     "terminal",            "Preciso e especializado"),
-                            ("creative",  "Criativo",    "paintbrush",          "Expressivo e original"),
-                            ("balanced",  "Balanceado",  "slider.horizontal.3", "Neutro e adaptável"),
+                            ("formal",    String(localized: "Formal"),      "briefcase",           String(localized: "Professional and objective")),
+                            ("casual",    String(localized: "Casual"),      "bubble.left",         String(localized: "Friendly and relaxed")),
+                            ("technical", String(localized: "Technical"),     "terminal",            String(localized: "Precise and specialized")),
+                            ("creative",  "Creative",    "paintbrush",          String(localized: "Expressive and original")),
+                            ("balanced",  String(localized: "Balanced"),  "slider.horizontal.3", String(localized: "Neutral and adaptable")),
                         ], id: \.0) { value, label, icon, desc in
                             Button {
                                 profile.tone = value
@@ -467,12 +482,12 @@ struct StyleProfileDetailView: View {
                     }
                 }
 
-                settingsSection("Verbosidade") {
+                settingsSection(String(localized: "Verbosity")) {
                     HStack(spacing: 8) {
                         ForEach([
-                            ("concise",  "Conciso",     "Respostas curtas"),
-                            ("balanced", "Equilibrado", "Tamanho adequado"),
-                            ("detailed", "Detalhado",   "Explicações completas"),
+                            ("concise",  String(localized: "Concise"),     String(localized: "Short answers")),
+                            ("balanced", String(localized: "Balanced"), String(localized: "Appropriate length")),
+                            ("detailed", String(localized: "Detailed"),   String(localized: "Full explanations")),
                         ], id: \.0) { value, label, desc in
                             Button {
                                 profile.verbosity = value
@@ -503,9 +518,9 @@ struct StyleProfileDetailView: View {
                     }
                 }
 
-                settingsSection("Instruções Personalizadas") {
+                settingsSection(String(localized: "Custom Instructions")) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Adicionadas ao final do system prompt em todas as conversas.")
+                        Text("Appended to the end of the system prompt in all conversations.")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                         TextEditor(text: $profile.customInstructions)
@@ -523,9 +538,9 @@ struct StyleProfileDetailView: View {
                 }
 
                 if !profile.systemPromptSuffix.isEmpty {
-                    settingsSection("Preview do System Prompt") {
+                    settingsSection(String(localized: "System Prompt Preview")) {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Este texto será adicionado automaticamente ao system prompt:")
+                            Text("This text will be automatically added to the system prompt:")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                             Text(profile.systemPromptSuffix)
@@ -569,16 +584,16 @@ struct MCPSettingsView: View {
                 if connectors.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "puzzlepiece.extension.fill").font(.system(size: 32)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
-                        Text("Nenhum conector MCP").font(.system(size: 13, weight: .medium))
-                        Text("Conecte o agente a ferramentas externas").font(.system(size: 11)).foregroundStyle(.tertiary)
+                        Text("No MCP connector").font(.system(size: 13, weight: .medium))
+                        Text("Connect the agent to external tools").font(.system(size: 11)).foregroundStyle(.tertiary)
                     }
                 }
             }
             Divider().opacity(0.4)
             HStack {
-                Button("Adicionar Conector") { showAdd = true }.buttonStyle(.lumePrimary)
+                Button("Add Connector") { showAdd = true }.buttonStyle(.lumePrimary)
                 Spacer()
-                Link("Sobre MCP →", destination: URL(string: "https://modelcontextprotocol.io")!)
+                Link("About MCP →", destination: URL(string: "https://modelcontextprotocol.io")!)
                     .font(.system(size: 11)).foregroundStyle(Color.accentColor)
             }
             .padding()
@@ -613,20 +628,20 @@ struct AddMCPConnectorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Novo Conector MCP").font(.system(size: 18, weight: .bold, design: .rounded))
-            TextField("Nome", text: $name).textFieldStyle(.roundedBorder)
-            Picker("Transporte", selection: $transport) {
+            Text("New MCP Connector").font(.system(size: 18, weight: .bold, design: .rounded))
+            TextField("Name", text: $name).textFieldStyle(.roundedBorder)
+            Picker("Transport", selection: $transport) {
                 Text("stdio").tag("stdio"); Text("HTTP/SSE").tag("http")
             }.pickerStyle(.segmented)
             if transport == "stdio" {
-                TextField("Comando", text: $command).textFieldStyle(.roundedBorder).font(.system(size: 12, design: .monospaced))
+                TextField("Command", text: $command).textFieldStyle(.roundedBorder).font(.system(size: 12, design: .monospaced))
             } else {
                 TextField("URL", text: $url).textFieldStyle(.roundedBorder)
             }
             HStack {
-                Button("Cancelar", role: .cancel) { dismiss() }.buttonStyle(.lumeSecondary)
+                Button("Cancel", role: .cancel) { dismiss() }.buttonStyle(.lumeSecondary)
                 Spacer()
-                Button("Adicionar") {
+                Button("Add") {
                     let c = MCPConnector(name: name, transport: transport, command: command, url: url)
                     modelContext.insert(c); try? modelContext.save(); dismiss()
                 }
@@ -655,13 +670,13 @@ struct WorkflowSettingsView: View {
                 if workflows.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "arrow.triangle.branch").font(.system(size: 28)).foregroundStyle(.tertiary)
-                        Text("Nenhum workflow").foregroundStyle(.secondary)
+                        Text("No workflows").foregroundStyle(.secondary)
                     }
                 }
             }
             Divider().opacity(0.4)
             HStack {
-                Text("Editor de workflows em breve").font(.system(size: 11)).foregroundStyle(.tertiary)
+                Text("Workflow editor coming soon").font(.system(size: 11)).foregroundStyle(.tertiary)
                 Spacer()
             }.padding()
         }
@@ -711,7 +726,7 @@ struct TaskSettingsView: View {
             if tasks.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "calendar.badge.clock").font(.system(size: 28)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
-                    Text("Nenhuma tarefa agendada").foregroundStyle(.secondary)
+                    Text("No scheduled tasks").foregroundStyle(.secondary)
                 }
             }
         }
@@ -734,25 +749,25 @@ struct AdvancedSettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
 
-                settingsSection("Aparência das Mensagens") {
+                settingsSection(String(localized: "Message Appearance")) {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Text("Tamanho do texto")
+                            Text("Text size")
                                 .font(.system(size: 13, weight: .medium))
                             Spacer()
                             Picker("", selection: $messageFontScale) {
-                                Text("Pequeno").tag(0.85)
-                                Text("Padrão").tag(1.0)
-                                Text("Grande").tag(1.15)
+                                Text("Small").tag(0.85)
+                                Text("Default").tag(1.0)
+                                Text("Large").tag(1.15)
                                 Text("Extra").tag(1.3)
                             }
                             .pickerStyle(.segmented)
                             .frame(width: 280)
                         }
-                        Text("Pré-visualização")
+                        Text("Preview")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(.tertiary)
-                        MarkdownTextView(text: "O **Lume** renderiza tabelas, listas e código.\n\n| Modelo | Janela |\n|---|---:|\n| Opus 4.8 | 200k |\n| GPT-4o | 128k |\n\n- [x] Tabelas\n- [ ] Mais temas")
+                        MarkdownTextView(text: String(localized: "The **Lume** renders tables, lists, and code.\n\n| Model | Window |\n|---|---:|\n| Opus 4.8 | 200k |\n| GPT-4o | 128k |\n\n- [x] Tables\n- [ ] More themes"))
                             .environment(\.markdownFontScale, CGFloat(messageFontScale))
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -761,10 +776,10 @@ struct AdvancedSettingsView: View {
                     }
                 }
 
-                settingsSection("Tema") {
+                settingsSection(String(localized: "Theme")) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("Aparência").font(.system(size: 12, weight: .medium))
+                            Text("Appearance").font(.system(size: 12, weight: .medium))
                             Spacer()
                             Picker("", selection: $appearanceRaw) {
                                 ForEach(AppearanceChoice.allCases) { c in
@@ -776,33 +791,14 @@ struct AdvancedSettingsView: View {
                     }
                 }
 
-                settingsSection("Idioma do App") {
-                    HStack(spacing: 14) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Idioma da Interface")
-                                .font(.system(size: 13, weight: .medium))
-                            Text("O idioma do Lume segue as preferências do sistema macOS.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button {
-                            NSWorkspace.shared.open(
-                                URL(string: "x-apple.systempreferences:com.apple.Localization-Settings.extension")!
-                            )
-                        } label: {
-                            Label("Abrir Preferências", systemImage: "globe")
-                        }
-                        .buttonStyle(.lumePrimary)
-                    }
-                }
+                LanguageSettingsSection()
 
-                settingsSection("Busca na Web") {
+                settingsSection("Web Search") {
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Google Custom Search (opcional)")
+                            Text("Google Custom Search (optional)")
                                 .font(.system(size: 12, weight: .semibold))
-                            Text("Sem configuração, usa DuckDuckGo gratuitamente.\nPara usar o Google, obtenha as chaves em developers.google.com/custom-search")
+                            Text(String(localized: "No setup, uses DuckDuckGo for free.\nTo use Google, get the keys at developers.google.com/custom-search"))
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -825,16 +821,16 @@ struct AdvancedSettingsView: View {
                         }
                         HStack {
                             if !googleAPIKey.isEmpty && !googleCX.isEmpty {
-                                Label("Google configurado", systemImage: "checkmark.circle.fill")
+                                Label("Google configured", systemImage: "checkmark.circle.fill")
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundStyle(Color.green)
                             } else {
-                                Label("Usando DuckDuckGo", systemImage: "info.circle")
+                                Label("Using DuckDuckGo", systemImage: "info.circle")
                                     .font(.system(size: 11))
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Link("Como obter as chaves →",
+                            Link("How to get the keys →",
                                  destination: URL(string: "https://developers.google.com/custom-search/v1/introduction")!)
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.accentColor)
@@ -843,22 +839,22 @@ struct AdvancedSettingsView: View {
                 }
                 .font(.system(size: 13))
 
-                settingsSection("Segurança") {
-                    Toggle("Bloquear comandos shell perigosos", isOn: $config.blockDangerousShellCommands)
+                settingsSection(String(localized: "Security")) {
+                    Toggle("Block dangerous shell commands", isOn: $config.blockDangerousShellCommands)
                         .onChange(of: config.blockDangerousShellCommands) { _, _ in config.save() }
                     Divider().opacity(0.4)
-                    Toggle("Exigir workspace para operações de arquivo", isOn: $config.requireWorkspaceForFileOps)
+                    Toggle("Require a workspace for file operations", isOn: $config.requireWorkspaceForFileOps)
                         .onChange(of: config.requireWorkspaceForFileOps) { _, _ in config.save() }
                 }
                 .font(.system(size: 13))
 
-                settingsSection("Arquivo de Configuração") {
+                settingsSection(String(localized: "Configuration File")) {
                     HStack {
                         Text(LumeConfig.configFilePath)
                             .font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
                             .lineLimit(1).truncationMode(.middle)
                         Spacer()
-                        Button("Revelar") {
+                        Button("Reveal") {
                             NSWorkspace.shared.selectFile(LumeConfig.configFilePath, inFileViewerRootedAtPath: "")
                         }
                         .buttonStyle(.lumeSecondaryCompact)
@@ -867,12 +863,12 @@ struct AdvancedSettingsView: View {
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
 
-                settingsSection("Primeiros Passos") {
+                settingsSection(String(localized: "Getting Started")) {
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Assistente de configuração")
+                            Text("Setup assistant")
                                 .font(.system(size: 13, weight: .medium))
-                            Text("Reconfigure providers, busca na web e veja dicas do app.")
+                            Text("Reconfigure providers, web search, and see app tips.")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                         }
@@ -881,7 +877,7 @@ struct AdvancedSettingsView: View {
                             UserDefaults.standard.set(false, forKey: "lume_onboarding_completed")
                             showOnboarding = true
                         } label: {
-                            Label("Abrir", systemImage: "sparkles")
+                            Label("Open", systemImage: "sparkles")
                         }
                         .buttonStyle(.lumePrimary)
                     }
@@ -890,9 +886,9 @@ struct AdvancedSettingsView: View {
                 settingsSection("Reset") {
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Limpar dados do app")
+                            Text("Clear app data")
                                 .font(.system(size: 13, weight: .medium))
-                            Text("Apaga conversas, projetos, tarefas e workflows. As configurações são preservadas.")
+                            Text("Deletes conversations, projects, tasks, and workflows. Settings are preserved.")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                         }
@@ -900,7 +896,7 @@ struct AdvancedSettingsView: View {
                         Button(role: .destructive) {
                             showResetConfirmation = true
                         } label: {
-                            Label("Resetar", systemImage: "trash")
+                            Label("Reset", systemImage: "trash")
                         }
                         .buttonStyle(.lumeDestructive)
                     }
@@ -908,14 +904,16 @@ struct AdvancedSettingsView: View {
             }
             .padding(24)
         }
-        .sheet(isPresented: $showOnboarding) { OnboardingView() }
-        .alert("Resetar aplicação?", isPresented: $showResetConfirmation) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Resetar", role: .destructive) {
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView().environment(\.modelContext, modelContext)
+        }
+        .alert("Reset application?", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
                 resetAppData()
             }
         } message: {
-            Text("Esta ação apagará todas as conversas, projetos, tarefas e workflows, mas manterá suas configurações de providers, segurança e preferências.\n\nEsta ação não pode ser desfeita.")
+            Text(String(localized: "This action will delete all conversations, projects, tasks, and workflows, but will keep your provider, security, and preference settings.\n\nThis action cannot be undone."))
         }
     }
 
@@ -995,5 +993,104 @@ private func settingsRow<Content: View>(
         Text(label).font(.system(size: 13))
         Spacer()
         trailing()
+    }
+}
+
+// MARK: - In-app language selection
+
+/// Available interface languages. `system` follows macOS; others force a per-app language.
+enum AppLanguage: String, CaseIterable, Identifiable {
+    case system
+    case english = "en"
+    case portuguese = "pt-BR"
+
+    var id: String { rawValue }
+
+    var label: LocalizedStringKey {
+        switch self {
+        case .system:     return "System"
+        case .english:    return "English"
+        case .portuguese: return "Portuguese (Brazil)"
+        }
+    }
+
+    /// The language code currently applied via `AppleLanguages`, mapped back to a case.
+    static var current: AppLanguage {
+        guard let langs = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
+              let first = langs.first else { return .system }
+        if first.hasPrefix("pt") { return .portuguese }
+        if first.hasPrefix("en") { return .english }
+        return .system
+    }
+
+    /// Applies the language by writing `AppleLanguages`, then relaunches the app.
+    func applyAndRestart() {
+        let defaults = UserDefaults.standard
+        switch self {
+        case .system:
+            defaults.removeObject(forKey: "AppleLanguages")
+        case .english, .portuguese:
+            defaults.set([rawValue], forKey: "AppleLanguages")
+        }
+        defaults.synchronize()
+
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
+        }
+    }
+}
+
+struct LanguageSettingsSection: View {
+    @AppStorage("app_language") private var stored = AppLanguage.current.rawValue
+    @State private var selection = AppLanguage.current
+    @State private var showRestartConfirm = false
+
+    var body: some View {
+        settingsSection(String(localized: "App Language")) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Interface Language")
+                            .font(.system(size: 13, weight: .medium))
+                        Text("Choose the app language. Lume restarts to apply the change.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Picker("", selection: $selection) {
+                        ForEach(AppLanguage.allCases) { lang in
+                            Text(lang.label).tag(lang)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 200)
+                }
+
+                if selection != AppLanguage.current {
+                    HStack {
+                        Spacer()
+                        Button {
+                            showRestartConfirm = true
+                        } label: {
+                            Label("Apply and Restart", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.lumePrimary)
+                    }
+                }
+            }
+        }
+        .confirmationDialog(
+            "Restart Lume to apply the new language?",
+            isPresented: $showRestartConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Restart") {
+                stored = selection.rawValue
+                selection.applyAndRestart()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
     }
 }

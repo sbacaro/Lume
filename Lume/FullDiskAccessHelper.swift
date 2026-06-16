@@ -34,17 +34,17 @@ enum FullDiskAccessHelper {
         guard !hasFullDiskAccess else { return }
 
         let alert = NSAlert()
-        alert.messageText = "Lume precisa de Acesso Total ao Disco"
+        alert.messageText = String(localized: "Lume needs Full Disk Access")
         alert.informativeText = """
         Para que o agente de código possa ler, editar e analisar os arquivos do seu projeto, o Lume precisa de permissão de Acesso Total ao Disco (Full Disk Access).
 
-        Clique em "Abrir Configurações" e adicione o Lume na lista de apps com acesso total ao disco.
+        Clique em "Open Settings" e adicione o Lume na lista de apps com acesso total ao disco.
 
         Após conceder a permissão, reinicie o Lume.
         """
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Abrir Configurações")
-        alert.addButton(withTitle: "Depois")
+        alert.addButton(withTitle: "Open Settings")
+        alert.addButton(withTitle: "Later")
 
         if let window = NSApp.keyWindow {
             alert.beginSheetModal(for: window) { response in

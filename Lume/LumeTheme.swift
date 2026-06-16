@@ -27,10 +27,10 @@ enum LumeTheme {
     static func greeting() -> String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12:  return "Bom dia"
-        case 12..<18: return "Boa tarde"
-        case 18..<22: return "Boa noite"
-        default:      return "Olá"
+        case 5..<12:  return String(localized: "Good morning")
+        case 12..<18: return String(localized: "Good afternoon")
+        case 18..<22: return String(localized: "Good evening")
+        default:      return String(localized: "Hello")
         }
     }
 

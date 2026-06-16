@@ -470,7 +470,7 @@ struct ThinkingBlockView: View {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                             .font(.system(size: 10, weight: .medium))
                     }
-                    Text(isStreaming ? "Pensando…" : "Raciocínio interno")
+                    Text(isStreaming ? "Thinking…" : "Internal reasoning")
                         .font(.system(size: 11, weight: .medium))
                     Spacer()
                 }
@@ -514,9 +514,9 @@ struct ProcessTimelineView: View {
             }
         }
         var parts: [String] = []
-        if thoughts > 0 { parts.append("Raciocínio") }
-        if searches > 0 { parts.append("\(searches) busca\(searches > 1 ? "s" : "")") }
-        if pages > 0 { parts.append("\(pages) página\(pages > 1 ? "s" : "")") }
+        if thoughts > 0 { parts.append(String(localized: "Reasoning")) }
+        if searches > 0 { parts.append("\(searches) search\(searches > 1 ? "es" : "")") }
+        if pages > 0 { parts.append("\(pages) page\(pages > 1 ? "s" : "")") }
         return parts.isEmpty ? "Processo" : parts.joined(separator: " · ")
     }
 
@@ -527,7 +527,7 @@ struct ProcessTimelineView: View {
             } label: {
                 HStack(spacing: 7) {
                     Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.secondary)
-                    Text(isStreaming ? "Pensando…" : summary)
+                    Text(isStreaming ? "Thinking…" : summary)
                         .font(.system(size: 11 * scale, weight: .medium)).foregroundStyle(.secondary)
                     Image(systemName: expanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 8 * scale, weight: .semibold)).foregroundStyle(.tertiary)
@@ -698,11 +698,11 @@ struct ToolGroupView: View {
         let shells   = count(["run_shell"])
         let files    = count(["read_file", "write_file", "list_directory", "create_directory"])
         var parts: [String] = []
-        if searches > 0 { parts.append("\(searches) busca\(searches > 1 ? "s" : "")") }
-        if pages > 0    { parts.append("\(pages) página\(pages > 1 ? "s" : "")") }
-        if shells > 0   { parts.append("\(shells) comando\(shells > 1 ? "s" : "")") }
-        if files > 0    { parts.append("\(files) arquivo\(files > 1 ? "s" : "")") }
-        return parts.isEmpty ? "\(calls.count) ações" : parts.joined(separator: " · ")
+        if searches > 0 { parts.append("\(searches) search\(searches > 1 ? "es" : "")") }
+        if pages > 0    { parts.append("\(pages) page\(pages > 1 ? "s" : "")") }
+        if shells > 0   { parts.append("\(shells) command\(shells > 1 ? "s" : "")") }
+        if files > 0    { parts.append("\(files) file\(files > 1 ? "s" : "")") }
+        return parts.isEmpty ? String(localized: "\(calls.count) actions") : parts.joined(separator: " · ")
     }
 
     private var icon: String {
@@ -796,12 +796,12 @@ struct ToolGroupView: View {
     static func timelineLabel(_ name: String) -> String {
         switch name {
         case "web_search":       return "Pesquisou na web"
-        case "web_fetch":        return "Acessou página"
+        case "web_fetch":        return String(localized: "Accessed page")
         case "run_shell":        return "Executou comando"
-        case "read_file":        return "Leu arquivo"
-        case "write_file":       return "Escreveu arquivo"
-        case "list_directory":   return "Listou diretório"
-        case "create_directory": return "Criou diretório"
+        case "read_file":        return String(localized: "Read file")
+        case "write_file":       return String(localized: "Wrote file")
+        case "list_directory":   return String(localized: "Listed directory")
+        case "create_directory": return String(localized: "Created directory")
         default:                 return name
         }
     }
@@ -934,7 +934,7 @@ struct ToolCallBlockView: View {
                 .components(separatedBy: "\"").first ?? input
             return "Listou \(URL(fileURLWithPath: path).lastPathComponent)"
         case "create_directory":
-            return "Criou diretório"
+            return String(localized: "Created directory")
         case "web_search":
             let query = input.components(separatedBy: "\"query\":\"").last?
                 .components(separatedBy: "\"").first ?? input
@@ -1344,11 +1344,11 @@ struct CodeBlockView: View {
                     Image(systemName: languageIcon)
                         .font(.system(size: 10))
                         .foregroundStyle(languageColor)
-                    Text(language ?? "código")
+                    Text(language ?? String(localized: "code"))
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundStyle(languageColor)
                     if !isExpanded {
-                        Text("· \(lineCount) linhas")
+                        Text("· \(lineCount) lines")
                             .font(.system(size: 11))
                             .foregroundStyle(.tertiary)
                     }
@@ -1357,7 +1357,7 @@ struct CodeBlockView: View {
                     Button(action: copyCode) {
                         HStack(spacing: 4) {
                             Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.system(size: 10))
-                            Text(copied ? "Copiado" : "Copiar").font(.system(size: 11))
+                            Text(copied ? "Copied" : "Copy").font(.system(size: 11))
                         }
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 7).padding(.vertical, 3)

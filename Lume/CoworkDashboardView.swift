@@ -53,7 +53,7 @@ struct CoworkDashboardView: View {
                 VStack(spacing: 8) {
                     Text("Cowork")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text("Organize seu trabalho com projetos, contexto persistente\ne acompanhamento de progresso.")
+                    Text(String(localized: "Organize your work with projects, persistent context,\nand progress tracking."))
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -62,7 +62,7 @@ struct CoworkDashboardView: View {
 
                 // O que você pode fazer
                 VStack(spacing: 8) {
-                    Text("O que você pode fazer aqui:")
+                    Text("What you can do here:")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.tertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -71,27 +71,27 @@ struct CoworkDashboardView: View {
                         coworkFeatureRow(
                             icon: "folder.fill",
                             color: LumeTheme.clay,
-                            text: "Criar projetos com arquivos e instruções persistentes"
+                            text: String(localized: "Create projects with persistent files and instructions")
                         )
                         coworkFeatureRow(
                             icon: "bubble.left.and.text.bubble.right",
                             color: .accentColor,
-                            text: "Organizar conversas relacionadas a um mesmo objetivo"
+                            text: String(localized: "Organize conversations around a single goal")
                         )
                         coworkFeatureRow(
                             icon: "checkmark.circle",
                             color: .green,
-                            text: "Acompanhar tarefas e progresso em tempo real"
+                            text: String(localized: "Track tasks and progress in real time")
                         )
                         coworkFeatureRow(
                             icon: "calendar.badge.clock",
                             color: .orange,
-                            text: "Agendar tarefas recorrentes para o agente executar"
+                            text: String(localized: "Schedule recurring tasks for the agent to run")
                         )
                         coworkFeatureRow(
                             icon: "doc.text.fill",
                             color: .purple,
-                            text: "Manter contexto entre sessões com documentos do projeto"
+                            text: String(localized: "Keep context across sessions with project documents")
                         )
                     }
                     .padding(14)
@@ -106,7 +106,7 @@ struct CoworkDashboardView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "folder.badge.plus")
                                 .font(.system(size: 14, weight: .semibold))
-                            Text("Criar projeto")
+                            Text("Create project")
                                 .font(.system(size: 14, weight: .semibold))
                         }
                         .foregroundStyle(.white)
@@ -120,7 +120,7 @@ struct CoworkDashboardView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.bubble")
                                 .font(.system(size: 14, weight: .semibold))
-                            Text("Nova conversa")
+                            Text("New conversation")
                                 .font(.system(size: 14, weight: .semibold))
                         }
                         .foregroundStyle(LumeTheme.clay)
@@ -165,12 +165,12 @@ struct CoworkDashboardView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Cowork")
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                        Text("Projetos, tarefas e progresso")
+                        Text("Projects, tasks, and progress")
                             .font(.system(size: 13)).foregroundStyle(.secondary)
                     }
                     Spacer()
                     Button(action: onNewConversation) {
-                        Label("Nova tarefa", systemImage: "plus")
+                        Label("New task", systemImage: "plus")
                             .font(.system(size: 12, weight: .medium))
                     }
                     .buttonStyle(.borderedProminent)
@@ -178,17 +178,17 @@ struct CoworkDashboardView: View {
 
                 // Stats row
                 HStack(spacing: 12) {
-                    statCard(value: "\(projects.count)", label: "Projetos", icon: "folder.fill", color: LumeTheme.clay)
-                    statCard(value: "\(conversations.count)", label: "Conversas", icon: "bubble.left.fill", color: .accentColor)
-                    statCard(value: "\(tasks.filter { !$0.isCompleted }.count)", label: "Pendentes", icon: "clock.fill", color: .orange)
-                    statCard(value: "\(conversations.flatMap { $0.messages }.count)", label: "Mensagens", icon: "text.bubble.fill", color: .purple)
+                    statCard(value: "\(projects.count)", label: "Projects", icon: "folder.fill", color: LumeTheme.clay)
+                    statCard(value: "\(conversations.count)", label: String(localized: "Conversations"), icon: "bubble.left.fill", color: .accentColor)
+                    statCard(value: "\(tasks.filter { !$0.isCompleted }.count)", label: String(localized: "Pending"), icon: "clock.fill", color: .orange)
+                    statCard(value: "\(conversations.flatMap { $0.messages }.count)", label: String(localized: "Messages"), icon: "text.bubble.fill", color: .purple)
                 }
 
                 // Projetos
                 if !projects.isEmpty {
-                    dashSection("Projetos", icon: "folder") {
+                    dashSection("Projects", icon: "folder") {
                         Button(action: onNewProject) {
-                            Label("Novo Projeto", systemImage: "plus")
+                            Label("New Project", systemImage: "plus")
                                 .font(.system(size: 11)).foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
@@ -201,7 +201,7 @@ struct CoworkDashboardView: View {
                         Button(action: onNewProject) {
                             VStack(spacing: 8) {
                                 Image(systemName: "plus").font(.system(size: 20)).foregroundStyle(.tertiary)
-                                Text("Novo Projeto").font(.system(size: 12)).foregroundStyle(.tertiary)
+                                Text("New Project").font(.system(size: 12)).foregroundStyle(.tertiary)
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 90)
@@ -216,10 +216,10 @@ struct CoworkDashboardView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "folder.badge.plus").font(.system(size: 36)).foregroundStyle(.tertiary)
                             .symbolRenderingMode(.hierarchical)
-                        Text("Nenhum projeto ainda").font(.system(size: 14, weight: .medium))
-                        Text("Crie um projeto para organizar conversas e manter contexto persistente.")
+                        Text("No projects yet").font(.system(size: 14, weight: .medium))
+                        Text("Create a project to organize conversations and keep persistent context.")
                             .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                        Button("Criar primeiro projeto", action: onNewProject).buttonStyle(.borderedProminent)
+                        Button("Create first project", action: onNewProject).buttonStyle(.borderedProminent)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(32)
@@ -228,7 +228,7 @@ struct CoworkDashboardView: View {
 
                 // Tarefas agendadas
                 if !tasks.isEmpty {
-                    dashSection("Tarefas Agendadas", icon: "calendar.badge.clock") { EmptyView() }
+                    dashSection(String(localized: "Scheduled Tasks"), icon: "calendar.badge.clock") { EmptyView() }
 
                     VStack(spacing: 6) {
                         ForEach(tasks.filter { !$0.isCompleted }.prefix(5)) { task in
@@ -253,7 +253,7 @@ struct CoworkDashboardView: View {
 
                 // Atividade recente
                 if !conversations.isEmpty {
-                    dashSection("Atividade Recente", icon: "clock.arrow.circlepath") { EmptyView() }
+                    dashSection(String(localized: "Recent Activity"), icon: "clock.arrow.circlepath") { EmptyView() }
 
                     VStack(spacing: 4) {
                         ForEach(conversations.prefix(8)) { conv in

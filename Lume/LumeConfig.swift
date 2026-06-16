@@ -71,17 +71,17 @@ enum ApprovalMode: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .autonomous: return "Autônomo"
-        case .supervised: return "Supervisionado"
-        case .strict:     return "Estrito"
+        case .autonomous: return String(localized: "Autonomous")
+        case .supervised: return String(localized: "Supervised")
+        case .strict:     return String(localized: "Strict")
         }
     }
 
     var description: String {
         switch self {
-        case .autonomous: return "O agente executa todas as ações automaticamente."
-        case .supervised: return "Pede aprovação para operações que modificam arquivos ou executam código."
-        case .strict:     return "Cada ação requer sua aprovação explícita."
+        case .autonomous: return String(localized: "The agent runs all actions automatically.")
+        case .supervised: return String(localized: "Asks for approval on operations that modify files or run code.")
+        case .strict:     return String(localized: "Each action requires your explicit approval.")
         }
     }
 

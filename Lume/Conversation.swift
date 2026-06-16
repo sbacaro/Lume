@@ -11,7 +11,7 @@ import SwiftData
 @Model
 final class Conversation {
     var id: String = UUID().uuidString
-    var title: String = "Nova Conversa"
+    var title: String = String(localized: "New Conversation")
     var providerType: String = "openai"
     var modelName: String = "gpt-4o"
     var systemPrompt: String = ""
@@ -40,7 +40,7 @@ final class Conversation {
     var project: Project?
 
     init(
-        title: String = "Nova Conversa",
+        title: String = String(localized: "New Conversation"),
         providerType: String = "openai",
         modelName: String = "gpt-4o",
         systemPrompt: String = ""

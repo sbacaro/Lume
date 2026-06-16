@@ -74,7 +74,9 @@ struct ContentView: View {
             RenameConversationSheet(conversation: conv, initialName: conv.title) { renamingConversation = nil }
         }
         .sheet(isPresented: $showOnboarding) {
-            OnboardingView().onDisappear { Task { await loadActiveProvider() } }
+            OnboardingView()
+                .environment(\.modelContext, modelContext)
+                .onDisappear { Task { await loadActiveProvider() } }
         }
         // ✅ Sheet de Novo Projeto com modelContext correto
         .sheet(isPresented: $showNewProject) {
@@ -139,7 +141,7 @@ struct ContentView: View {
             if showSearch {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.tertiary)
-                    TextField("Pesquisar", text: $searchText).font(.system(size: 13)).textFieldStyle(.plain)
+                    TextField("Search", text: $searchText).font(.system(size: 13)).textFieldStyle(.plain)
                     if !searchText.isEmpty {
                         Button { searchText = "" } label: {
                             Image(systemName: "xmark.circle.fill").font(.system(size: 11)).foregroundStyle(.tertiary)
@@ -181,14 +183,14 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
                     .background(
                         sidebarMode == mode ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color.clear),
-                        in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        in: Capsule(style: .continuous)
                     )
-                    .contentShape(Rectangle())
+                    .contentShape(Capsule(style: .continuous))
                 }.buttonStyle(.plain)
             }
         }
         .padding(3)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Color.primary.opacity(0.06), in: Capsule(style: .continuous))
         .frame(minWidth: 240)
     }
 
@@ -199,7 +201,7 @@ struct ContentView: View {
             Button(action: createNewConversation) {
                 HStack(spacing: 10) {
                     Image(systemName: "plus").font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary)
-                    Text("Nova Conversa").font(.system(size: 13)).foregroundStyle(.primary)
+                    Text("New Conversation").font(.system(size: 13)).foregroundStyle(.primary)
                     Spacer()
                 }
                 .padding(.vertical, 2).contentShape(Rectangle())
@@ -217,7 +219,7 @@ struct ContentView: View {
                     .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                     .contextMenu { chatConversationContextMenu(conv) }
                 }
-            } header: { sectionHeader("Recentes", action: nil) }
+            } header: { sectionHeader("Recent", action: nil) }
         }
         .listStyle(.sidebar).scrollContentBackground(.hidden)
     }
@@ -227,7 +229,7 @@ struct ContentView: View {
     private var coworkSidebar: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                sidebarNavItem(icon: "plus.bubble", label: "Nova Conversa") {
+                sidebarNavItem(icon: "plus.bubble", label: "New Conversation") {
                     if let existing = allConversations.first(where: {
                         $0.project == nil && !$0.isArchived && $0.messages.isEmpty
                     }) {
@@ -246,7 +248,7 @@ struct ContentView: View {
                     selectedProject = nil
                     sidebarMode = .cowork
                 }
-                sidebarNavItem(icon: "folder.badge.plus", label: "Novo Projeto") {
+                sidebarNavItem(icon: "folder.badge.plus", label: "New Project") {
                     showNewProject = true
                 }
                 sidebarNavItem(icon: "calendar.badge.clock", label: "Agendadas") { }
@@ -258,7 +260,7 @@ struct ContentView: View {
                 }
                 Divider().padding(.vertical, 8).padding(.horizontal, 12)
                 HStack {
-                    Text("Projetos").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                    Text("Projects").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
                     Spacer()
                     Button { showNewProject = true } label: {
                         Image(systemName: "plus").font(.system(size: 10)).foregroundStyle(.tertiary)
@@ -266,7 +268,7 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 14).padding(.bottom, 4)
                 if projects.isEmpty {
-                    Text("Nenhum projeto").font(.system(size: 12)).foregroundStyle(.tertiary)
+                    Text("No projects").font(.system(size: 12)).foregroundStyle(.tertiary)
                         .padding(.horizontal, 14).padding(.bottom, 8)
                 } else {
                     ForEach(projects) { project in projectDisclosureRow(project) }
@@ -311,7 +313,7 @@ struct ContentView: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(project.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
                                 .foregroundStyle(isProjectSelected ? Color.accentColor : .primary)
-                            Text("\(sortedConvs.count) conversas").font(.system(size: 10)).foregroundStyle(.tertiary)
+                            Text("\(sortedConvs.count) conversations").font(.system(size: 10)).foregroundStyle(.tertiary)
                         }
                         Spacer()
                     }
@@ -320,14 +322,14 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .contextMenu {
                     Button { openNewProjectConversation(for: project) } label: {
-                        Label("Nova conversa", systemImage: "plus.bubble")
+                        Label("New conversation", systemImage: "plus.bubble")
                     }
                     Button { reconnectProjectFolder(project) } label: {
-                        Label("Reconectar pasta...", systemImage: "folder.badge.gear")
+                        Label("Reconnect folder...", systemImage: "folder.badge.gear")
                     }
                     Divider()
                     Button(role: .destructive) { deleteProject(project) } label: {
-                        Label("Apagar projeto", systemImage: "trash")
+                        Label("Delete project", systemImage: "trash")
                     }
                 }
             }
@@ -338,7 +340,7 @@ struct ContentView: View {
             if isExpanded {
                 VStack(spacing: 1) {
                     if sortedConvs.isEmpty {
-                        Text("Nenhuma conversa").font(.system(size: 11)).foregroundStyle(.tertiary)
+                        Text("No conversations").font(.system(size: 11)).foregroundStyle(.tertiary)
                             .padding(.leading, 40).padding(.vertical, 6).frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         ForEach(sortedConvs) { conv in
@@ -375,7 +377,7 @@ struct ContentView: View {
                         HStack(spacing: 6) {
                             Spacer().frame(width: 22)
                             Image(systemName: "plus").font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary)
-                            Text("Nova conversa").font(.system(size: 11)).foregroundStyle(.tertiary)
+                            Text("New conversation").font(.system(size: 11)).foregroundStyle(.tertiary)
                             Spacer()
                         }
                         .padding(.vertical, 5).padding(.leading, 6).contentShape(Rectangle())
@@ -392,7 +394,7 @@ struct ContentView: View {
 
     private func openNewProjectConversation(for project: Project) {
         let conv = Conversation(
-            title: "Nova Conversa",
+            title: "New Conversation",
             providerType: activeConfig?.providerType ?? "openai",
             modelName: activeConfig?.defaultModel ?? "gpt-4o",
             systemPrompt: buildProjectSystemPrompt(for: project)
@@ -412,7 +414,7 @@ struct ContentView: View {
             panel.canChooseFiles = false
             panel.canChooseDirectories = true
             panel.allowsMultipleSelection = false
-            panel.message = "Selecione a pasta do projeto \"\(project.name)\""
+            panel.message = String(localized: "Select the folder for project \"\(project.name)\"")
             panel.prompt = "Reconectar"
             let response: NSApplication.ModalResponse
             if let window = NSApp.keyWindow {
@@ -460,9 +462,9 @@ struct ContentView: View {
     @ViewBuilder
     private func chatConversationContextMenu(_ conv: Conversation) -> some View {
         Button { conv.isPinned.toggle(); try? modelContext.save() } label: {
-            Label(conv.isPinned ? "Desafixar" : "Fixar", systemImage: conv.isPinned ? "pin.slash" : "pin")
+            Label(conv.isPinned ? "Unpin" : "Pin", systemImage: conv.isPinned ? "pin.slash" : "pin")
         }
-        Button { renamingConversation = conv } label: { Label("Mudar o nome", systemImage: "pencil") }
+        Button { renamingConversation = conv } label: { Label("Rename", systemImage: "pencil") }
         if !projects.isEmpty {
             Menu {
                 ForEach(projects) { project in
@@ -474,12 +476,12 @@ struct ContentView: View {
                         else { Label(project.name, systemImage: project.icon) }
                     }
                 }
-            } label: { Label("Adicionar ao projeto", systemImage: "folder.badge.plus") }
+            } label: { Label("Add to project", systemImage: "folder.badge.plus") }
         } else {
-            Button { showNewProject = true } label: { Label("Adicionar ao projeto", systemImage: "folder.badge.plus") }
+            Button { showNewProject = true } label: { Label("Add to project", systemImage: "folder.badge.plus") }
         }
         Divider()
-        Button(role: .destructive) { deleteConversation(conv) } label: { Label("Apagar", systemImage: "trash") }
+        Button(role: .destructive) { deleteConversation(conv) } label: { Label("Delete", systemImage: "trash") }
     }
 
     @ViewBuilder
@@ -492,23 +494,23 @@ struct ContentView: View {
                 }
             }
             if !projects.isEmpty { Divider() }
-            Button("Sem projeto") { conv.project = nil; try? modelContext.save() }
-        } label: { Label("Mover para projeto", systemImage: "tray.and.arrow.right") }
+            Button("No project") { conv.project = nil; try? modelContext.save() }
+        } label: { Label("Move to project", systemImage: "tray.and.arrow.right") }
         Divider()
         Button { conv.isPinned.toggle(); try? modelContext.save() } label: {
-            Label(conv.isPinned ? "Desafixar" : "Fixar", systemImage: conv.isPinned ? "pin.slash" : "pin")
+            Label(conv.isPinned ? "Unpin" : "Pin", systemImage: conv.isPinned ? "pin.slash" : "pin")
         }
-        Button { renamingConversation = conv } label: { Label("Mudar o nome", systemImage: "pencil") }
+        Button { renamingConversation = conv } label: { Label("Rename", systemImage: "pencil") }
         Divider()
         Button {
             conv.isArchived.toggle()
             if conv.isArchived && selectedConversation?.id == conv.id { selectedConversation = nil }
             try? modelContext.save()
         } label: {
-            Label(conv.isArchived ? "Desarquivar" : "Arquivar",
+            Label(conv.isArchived ? "Unarchive" : "Archive",
                   systemImage: conv.isArchived ? "tray.and.arrow.up" : "archivebox")
         }
-        Button(role: .destructive) { deleteConversation(conv) } label: { Label("Apagar", systemImage: "trash") }
+        Button(role: .destructive) { deleteConversation(conv) } label: { Label("Delete", systemImage: "trash") }
     }
 
     // MARK: - Code Sidebar
@@ -523,14 +525,14 @@ struct ContentView: View {
                 }
                 .padding(.top, 4)
 
-                sidebarNavItem(icon: "chevron.left.forwardslash.chevron.right", label: "Nova sessão de código") {
+                sidebarNavItem(icon: "chevron.left.forwardslash.chevron.right", label: String(localized: "New code session")) {
                     createNewCodeConversation()
                 }
 
                 Divider().padding(.vertical, 8).padding(.horizontal, 12)
 
                 HStack {
-                    Text("Ferramentas").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                    Text("Tools").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
                     Spacer()
                 }.padding(.horizontal, 14).padding(.bottom, 4)
 
@@ -540,10 +542,10 @@ struct ContentView: View {
                 sidebarNavItem(icon: "arrow.triangle.branch", label: "Git") {
                     NotificationCenter.default.post(name: .openGitPanel, object: nil)
                 }
-                sidebarNavItem(icon: "doc.text.magnifyingglass", label: "Busca no código") {
+                sidebarNavItem(icon: "doc.text.magnifyingglass", label: String(localized: "Code search")) {
                     NotificationCenter.default.post(name: .openCodeSearch, object: nil)
                 }
-                sidebarNavItem(icon: "testtube.2", label: "Testes & Lint") {
+                sidebarNavItem(icon: "testtube.2", label: String(localized: "Tests & Lint")) {
                     NotificationCenter.default.post(name: .openTestRunner, object: nil)
                 }
                 sidebarNavItem(icon: "puzzlepiece.extension", label: "MCP Connectors") {
@@ -553,12 +555,12 @@ struct ContentView: View {
                 Divider().padding(.vertical, 8).padding(.horizontal, 12)
 
                 HStack {
-                    Text("Sessões Recentes").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                    Text("Recent Sessions").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
                     Spacer()
                 }.padding(.horizontal, 14).padding(.bottom, 4)
 
                 if filteredCodeConversations.isEmpty {
-                    Text("Nenhuma sessão ainda")
+                    Text("No sessions yet")
                         .font(.system(size: 11)).foregroundStyle(.tertiary)
                         .padding(.horizontal, 14).padding(.bottom, 8)
                 } else {
@@ -588,7 +590,7 @@ struct ContentView: View {
                 Button { } label: {
                     HStack(spacing: 4) {
                         Circle().fill(Color.accentColor).frame(width: 5, height: 5)
-                        Text("Atualização disponível").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                        Text("Update available").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, 7).padding(.vertical, 3).background(.ultraThinMaterial, in: Capsule())
                 }.buttonStyle(.plain)
@@ -679,7 +681,7 @@ struct ContentView: View {
     private func startConversation(text: String, mode: SidebarMode) {
         let words = text.components(separatedBy: .whitespaces).filter { !$0.isEmpty }.prefix(6).joined(separator: " ")
         let conv = Conversation(
-            title: String(words.prefix(50)).isEmpty ? "Nova Conversa" : String(words.prefix(50)),
+            title: String(words.prefix(50)).isEmpty ? "New Conversation" : String(words.prefix(50)),
             providerType: activeConfig?.providerType ?? "openai",
             modelName: activeConfig?.defaultModel ?? "gpt-4o"
         )
@@ -771,7 +773,7 @@ struct ContentView: View {
             selectedConversation = existing; selectedProject = nil; sidebarMode = .code; return
         }
         let conv = Conversation(
-            title: "Sessão de Código",
+            title: String(localized: "Code Session"),
             providerType: activeConfig?.providerType ?? "openai",
             modelName: activeConfig?.defaultModel ?? "gpt-4o"
         )
@@ -842,33 +844,33 @@ struct LumeWelcomeView: View {
     }
 
     private let chatItems: [(icon: String, title: String, subtitle: String, prompt: String)] = [
-        ("text.bubble",              "Tirar uma dúvida",   "Pergunte qualquer coisa",        "Olá! Tenho uma dúvida sobre"),
-        ("doc.text.magnifyingglass", "Resumir um texto",   "Cole um artigo ou documento",    "Por favor, resuma o seguinte texto:\n\n"),
-        ("translate",                "Traduzir conteúdo",  "Entre idiomas",                  "Traduza o seguinte para inglês:\n\n"),
-        ("lightbulb",                "Brainstorm",         "Explore possibilidades",         "Me ajude a gerar ideias para"),
-        ("pencil.and.outline",       "Escrever algo",      "Emails, posts, criativos",       "Escreva para mim:"),
-        ("questionmark.circle",      "Explorar um tema",   "Aprenda sobre qualquer assunto", "Me explique de forma simples:"),
+        ("text.bubble",              String(localized: "Ask a question"),   String(localized: "Ask anything"),        String(localized: "Hi! I have a question about")),
+        ("doc.text.magnifyingglass", String(localized: "Summarize a text"),   String(localized: "Paste an article or document"),    String(localized: "Please summarize the following text:\n\n")),
+        ("translate",                String(localized: "Translate content"),  String(localized: "Between languages"),                  "Translate the following to English:\n\n"),
+        ("lightbulb",                "Brainstorm",         String(localized: "Explore possibilities"),         String(localized: "Help me generate ideas for")),
+        ("pencil.and.outline",       String(localized: "Write something"),      String(localized: "Emails, posts, creative writing"),       String(localized: "Write for me:")),
+        ("questionmark.circle",      String(localized: "Explore a topic"),   String(localized: "Learn about anything"), String(localized: "Explain it to me simply:")),
     ]
     private let coworkItems: [(icon: String, title: String, subtitle: String, prompt: String)] = [
-        ("folder.badge.plus",     "Criar um projeto",      "Organize conversas por tema",  ""),
-        ("list.bullet.clipboard", "Planejar tarefas",      "Quebre objetivos em passos",   "Me ajude a planejar as tarefas para:"),
-        ("arrow.triangle.branch", "Gerenciar entregas",    "Acompanhe progresso",          "Crie um plano de entrega para:"),
-        ("person.2",              "Preparar apresentação", "Estruture suas ideias",        "Estruture uma apresentação sobre:"),
-        ("doc.richtext",          "Redigir documento",     "Relatórios, propostas, specs", "Ajude-me a redigir um documento sobre:"),
-        ("calendar.badge.clock",  "Agendar uma tarefa",    "Lembretes com IA",             ""),
+        ("folder.badge.plus",     String(localized: "Create a project"),      String(localized: "Organize conversations by topic"),  ""),
+        ("list.bullet.clipboard", String(localized: "Plan tasks"),      String(localized: "Break goals into steps"),   String(localized: "Help me plan the tasks for:")),
+        ("arrow.triangle.branch", String(localized: "Manage deliveries"),    String(localized: "Track progress"),          String(localized: "Create a delivery plan for:")),
+        ("person.2",              String(localized: "Prepare a presentation"), String(localized: "Structure your ideas"),        String(localized: "Outline a presentation about:")),
+        ("doc.richtext",          String(localized: "Draft a document"),     String(localized: "Reports, proposals, specs"), String(localized: "Help me draft a document about:")),
+        ("calendar.badge.clock",  String(localized: "Schedule a task"),    String(localized: "AI reminders"),             ""),
     ]
     private let codeItems: [(icon: String, title: String, subtitle: String, prompt: String)] = [
-        ("chevron.left.forwardslash.chevron.right", "Escrever código", "Em qualquer linguagem", "Escreva um código que"),
-        ("ant.circle",               "Debug de erro",    "Encontre e corrija bugs",          "Tenho um erro. Pode ajudar?\n\n"),
-        ("arrow.2.squarepath",       "Refatorar código", "Melhore qualidade e legibilidade", "Refatore este código:\n\n"),
-        ("doc.text.magnifyingglass", "Revisar código",   "Revisão com sugestões",            "Revise este código:\n\n"),
-        ("testtube.2",               "Escrever testes",  "Unit tests e cobertura",           "Escreva testes unitários para:\n\n"),
-        ("terminal",                 "Criar script",     "Shell, Python, automações",        "Crie um script que"),
+        ("chevron.left.forwardslash.chevron.right", String(localized: "Write code"), String(localized: "In any language"), String(localized: "Write code that")),
+        ("ant.circle",               String(localized: "Debug an error"),    String(localized: "Find and fix bugs"),          String(localized: "I have an error. Can you help?\n\n")),
+        ("arrow.2.squarepath",       String(localized: "Refactor code"), String(localized: "Improve quality and readability"), "Refactor this code:\n\n"),
+        ("doc.text.magnifyingglass", String(localized: "Review code"),   String(localized: "Review with suggestions"),            "Review this code:\n\n"),
+        ("testtube.2",               String(localized: "Write tests"),  String(localized: "Unit tests and coverage"),           "Write unit tests for:\n\n"),
+        ("terminal",                 String(localized: "Create script"),     String(localized: "Shell, Python, automations"),        String(localized: "Create a script that")),
     ]
 
     private func greeting() -> String {
         let h = Calendar.current.component(.hour, from: Date())
-        switch h { case 5..<12: return "Bom dia"; case 12..<18: return "Boa tarde"; default: return "Boa noite" }
+        switch h { case 5..<12: return String(localized: "Good morning"); case 12..<18: return String(localized: "Good afternoon"); default: return String(localized: "Good evening") }
     }
 
     var body: some View {
@@ -880,7 +882,7 @@ struct LumeWelcomeView: View {
                     Text(greeting())
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
-                    Text("O que você quer fazer hoje?")
+                    Text("What do you want to do today?")
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
                 }
@@ -996,12 +998,12 @@ struct RenameConversationSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Mudar o nome").font(.system(size: 18, weight: .bold, design: .rounded))
-            TextField("Nome da conversa", text: $name).textFieldStyle(.roundedBorder).onSubmit { save() }
+            Text("Rename").font(.system(size: 18, weight: .bold, design: .rounded))
+            TextField("Conversation name", text: $name).textFieldStyle(.roundedBorder).onSubmit { save() }
             HStack {
-                Button("Cancelar", role: .cancel) { onDone() }.buttonStyle(.plain).foregroundStyle(.secondary)
+                Button("Cancel", role: .cancel) { onDone() }.buttonStyle(.plain).foregroundStyle(.secondary)
                 Spacer()
-                Button("Salvar") { save() }.buttonStyle(.borderedProminent)
+                Button("Save") { save() }.buttonStyle(.borderedProminent)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                     .keyboardShortcut(.defaultAction)
             }
@@ -1116,7 +1118,7 @@ struct GitStatusRow: View {
                     if !status.modified.isEmpty { Text("M:\(status.modified.count)").font(.system(size: 9)).foregroundStyle(.orange) }
                 }.padding(.horizontal, 14).padding(.vertical, 4)
             } else {
-                Text("Carregando git…").font(.system(size: 10)).foregroundStyle(.tertiary).padding(.horizontal, 14)
+                Text("Loading git…").font(.system(size: 10)).foregroundStyle(.tertiary).padding(.horizontal, 14)
             }
         }
         .task { status = await GitManager.shared.status(at: workspacePath) }

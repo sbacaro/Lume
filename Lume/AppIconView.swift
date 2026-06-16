@@ -259,7 +259,7 @@ struct AppIconView: View {
     .background(Color(white: 0.15))
 }
 
-#Preview("Grid — todos os tamanhos") {
+#Preview(String(localized: "Grid — all sizes")) {
     VStack(spacing: 24) {
         HStack(spacing: 20) {
             AppIconView(size: 1024).frame(width: 128, height: 128).scaleEffect(128/1024)

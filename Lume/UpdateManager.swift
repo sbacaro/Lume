@@ -24,7 +24,7 @@ struct AppRelease: Sendable {
 final class UpdateManager {
     static let shared = UpdateManager()
 
-    private let githubOwner = "samuelbacaro"
+    private let githubOwner = "sbacaro"
     private let githubRepo  = "Lume"
 
     var availableRelease: AppRelease? = nil
@@ -140,7 +140,7 @@ enum UpdateError: LocalizedError {
         case .invalidResponse:  return "Resposta inválida do GitHub"
         case .noReleasesFound:  return "Nenhuma versão publicada encontrada"
         case .httpError(let c): return "Erro HTTP \(c) ao verificar atualizações"
-        case .noDownloadAsset:  return "Arquivo de download não encontrado no release"
+        case .noDownloadAsset:  return String(localized: "Download file not found in the release")
         }
     }
 }

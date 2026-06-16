@@ -75,15 +75,15 @@ struct GitHubSettingsView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(user.name ?? user.login).font(.system(size: 14, weight: .semibold))
                         Text("@\(user.login)").font(.system(size: 12)).foregroundStyle(.secondary)
-                        Text("\(user.publicRepos ?? 0) públicos · \(user.privateReposOwned ?? 0) privados")
+                        Text(String(localized: "\(user.publicRepos ?? 0) public · \(user.privateReposOwned ?? 0) private"))
                             .font(.system(size: 11)).foregroundStyle(.tertiary)
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 6) {
-                        Label("Conectado", systemImage: "checkmark.circle.fill")
+                        Label("Connected", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(Color.green)
-                        Button("Desconectar") {
+                        Button("Disconnect") {
                             Task {
                                 await gh.disconnect()
                                 repos = []; selectedRepo = nil; issues = []; prs = []
@@ -94,10 +94,10 @@ struct GitHubSettingsView: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Cole um Personal Access Token (classic ou fine-grained) com escopo `repo`.")
+                    Text("Paste a Personal Access Token (classic or fine-grained) with `repo` scope.")
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    SecureField("ghp_… ou github_pat_…", text: $tokenInput)
+                    SecureField("ghp_… or github_pat_…", text: $tokenInput)
                         .textFieldStyle(.roundedBorder)
                         .onSubmit { connect() }
                     HStack {
@@ -105,14 +105,14 @@ struct GitHubSettingsView: View {
                             if gh.isValidating {
                                 ProgressView().controlSize(.small)
                             } else {
-                                Text("Conectar")
+                                Text("Connect")
                             }
                         }
                         .buttonStyle(.lumePrimary)
                         .disabled(tokenInput.trimmingCharacters(in: .whitespaces).isEmpty || gh.isValidating)
 
                         Spacer()
-                        Link("Gerar token →",
+                        Link("Generate token →",
                              destination: URL(string: "https://github.com/settings/tokens/new?scopes=repo&description=Lume")!)
                             .font(.system(size: 11))
                             .foregroundStyle(Color.accentColor)
@@ -131,14 +131,14 @@ struct GitHubSettingsView: View {
     // MARK: - Criar repositório
 
     private var createRepoSection: some View {
-        settingsSection("Criar repositório") {
+        settingsSection(String(localized: "Create repository")) {
             VStack(alignment: .leading, spacing: 8) {
-                TextField("nome-do-repo", text: $newRepoName).textFieldStyle(.roundedBorder)
-                TextField("Descrição (opcional)", text: $newRepoDesc).textFieldStyle(.roundedBorder)
-                Toggle("Privado", isOn: $newRepoPrivate)
+                TextField("repo-name", text: $newRepoName).textFieldStyle(.roundedBorder)
+                TextField("Description (optional)", text: $newRepoDesc).textFieldStyle(.roundedBorder)
+                Toggle("Private", isOn: $newRepoPrivate)
                 HStack {
                     Button(action: createRepo) {
-                        if creatingRepo { ProgressView().controlSize(.small) } else { Text("Criar") }
+                        if creatingRepo { ProgressView().controlSize(.small) } else { Text("Create") }
                     }
                     .buttonStyle(.lumePrimaryCompact)
                     .disabled(newRepoName.trimmingCharacters(in: .whitespaces).isEmpty || creatingRepo)
@@ -152,11 +152,11 @@ struct GitHubSettingsView: View {
     // MARK: - Lista de repositórios
 
     private var reposSection: some View {
-        settingsSection("Repositórios (\(repos.count))") {
+        settingsSection(String(localized: "Repositories (\(repos.count))")) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary).font(.system(size: 11))
-                    TextField("Buscar…", text: $repoSearch).textFieldStyle(.plain)
+                    TextField("Search…", text: $repoSearch).textFieldStyle(.plain)
                     Button { Task { await loadRepos() } } label: {
                         Image(systemName: "arrow.clockwise").font(.system(size: 11))
                     }.buttonStyle(.plain).foregroundStyle(.secondary)
@@ -165,9 +165,9 @@ struct GitHubSettingsView: View {
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                 if loadingRepos {
-                    HStack { ProgressView().controlSize(.small); Text("Carregando…").font(.system(size: 12)).foregroundStyle(.secondary) }
+                    HStack { ProgressView().controlSize(.small); Text("Loading…").font(.system(size: 12)).foregroundStyle(.secondary) }
                 } else if filteredRepos.isEmpty {
-                    Text("Nenhum repositório.").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text("No repositories.").font(.system(size: 12)).foregroundStyle(.secondary)
                 } else {
                     VStack(spacing: 0) {
                         ForEach(filteredRepos.prefix(40)) { repo in
@@ -218,12 +218,12 @@ struct GitHubSettingsView: View {
         settingsSection(repo.fullName) {
             VStack(alignment: .leading, spacing: 12) {
                 if loadingDetail {
-                    HStack { ProgressView().controlSize(.small); Text("Carregando issues e PRs…").font(.system(size: 12)).foregroundStyle(.secondary) }
+                    HStack { ProgressView().controlSize(.small); Text("Loading issues and PRs…").font(.system(size: 12)).foregroundStyle(.secondary) }
                 } else {
                     // Issues
                     Text("Issues abertas (\(issues.count))").font(.system(size: 12, weight: .semibold))
                     if issues.isEmpty {
-                        Text("Nenhuma issue aberta.").font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text("No open issues.").font(.system(size: 11)).foregroundStyle(.secondary)
                     } else {
                         ForEach(issues.prefix(15)) { issue in
                             itemRow(symbol: "smallcircle.filled.circle", tint: .green,
@@ -238,7 +238,7 @@ struct GitHubSettingsView: View {
                     // PRs
                     Text("Pull requests abertos (\(prs.count))").font(.system(size: 12, weight: .semibold))
                     if prs.isEmpty {
-                        Text("Nenhum PR aberto.").font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text("No open PRs.").font(.system(size: 11)).foregroundStyle(.secondary)
                     } else {
                         ForEach(prs.prefix(15)) { pr in
                             itemRow(symbol: "arrow.triangle.branch", tint: .purple,
@@ -251,13 +251,13 @@ struct GitHubSettingsView: View {
                     Divider().opacity(0.3)
 
                     // Nova issue
-                    Text("Nova issue").font(.system(size: 12, weight: .semibold))
-                    TextField("Título", text: $newIssueTitle).textFieldStyle(.roundedBorder)
-                    TextField("Descrição (opcional)", text: $newIssueBody, axis: .vertical)
+                    Text("New issue").font(.system(size: 12, weight: .semibold))
+                    TextField("Title", text: $newIssueTitle).textFieldStyle(.roundedBorder)
+                    TextField("Description (optional)", text: $newIssueBody, axis: .vertical)
                         .lineLimit(2...5).textFieldStyle(.roundedBorder)
                     HStack {
                         Button(action: { createIssue(in: repo) }) {
-                            if creatingIssue { ProgressView().controlSize(.small) } else { Text("Criar issue") }
+                            if creatingIssue { ProgressView().controlSize(.small) } else { Text("Create issue") }
                         }
                         .buttonStyle(.lumePrimaryCompact)
                         .disabled(newIssueTitle.trimmingCharacters(in: .whitespaces).isEmpty || creatingIssue)

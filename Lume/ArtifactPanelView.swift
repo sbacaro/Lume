@@ -59,11 +59,11 @@ struct ArtifactPanelView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("Recarregar")
+            .help("Reload")
 
             Picker("", selection: $selectedTab) {
                 Text("Preview").tag(ArtifactTab.preview)
-                Text("Código").tag(ArtifactTab.source)
+                Text("Code").tag(ArtifactTab.source)
             }
             .pickerStyle(.segmented)
             .frame(width: 130)
@@ -74,7 +74,7 @@ struct ArtifactPanelView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("Copiar código")
+            .help("Copy code")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

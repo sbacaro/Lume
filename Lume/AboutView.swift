@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  Lume
 //
-//  Tela "Sobre o Lume" — janela de identidade do app no padrão profissional do
+//  Tela String(localized: "About Lume") — janela de identidade do app no padrão profissional do
 //  macOS: ícone, nome, versão/build, descrição, atalhos para repositório,
 //  notas de versão, licença e verificação de atualizações.
 //
@@ -57,18 +57,18 @@ struct AboutView: View {
             VStack(spacing: 3) {
                 Text("Lume")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
-                Text("Cliente Nativo de IA para macOS")
+                Text(String(localized: "Native AI Client for macOS"))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
             }
 
-            Text("Versão \(version) (build \(build))")
+            Text(String(localized: "Version \(version) (build \(build))"))
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 10).padding(.vertical, 4)
                 .background(Color.primary.opacity(0.06), in: Capsule())
                 .textSelection(.enabled)
-                .help("Clique para selecionar e copiar")
+                .help(String(localized: "Click to select and copy"))
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 28)
@@ -90,7 +90,7 @@ struct AboutView: View {
     // MARK: - Descrição
 
     private var descriptionBlock: some View {
-        Text("Chat, projetos, código e agentes em um só lugar. O Lume conecta múltiplos provedores de IA com ferramentas, memória e automações — tudo nativo no macOS, com seus dados e chaves guardados localmente.")
+        Text(String(localized: "Chat, projects, code, and agents in one place. Lume connects multiple AI providers with tools, memory, and automations — all native to macOS, with your data and keys stored locally."))
             .font(.system(size: 13))
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
@@ -102,7 +102,7 @@ struct AboutView: View {
     private var updateBlock: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Atualizações")
+                Text(String(localized: "Updates"))
                     .font(.system(size: 12, weight: .semibold))
                 Text(updateStatusText)
                     .font(.system(size: 11))
@@ -119,7 +119,7 @@ struct AboutView: View {
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.system(size: 11, weight: .semibold))
                     }
-                    Text("Verificar").font(.system(size: 12, weight: .semibold))
+                    Text("Check").font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14).padding(.vertical, 7)
@@ -134,26 +134,26 @@ struct AboutView: View {
     }
 
     private var updateStatusText: String {
-        if updater.isChecking { return "Procurando novas versões…" }
+        if updater.isChecking { return String(localized: "Checking for new versions…") }
         if let rel = updater.availableRelease {
-            return "Nova versão disponível: \(rel.version)"
+            return String(localized: "New version available: \(rel.version)")
         }
-        if let err = updater.error { return "Erro: \(err)" }
-        if updater.lastChecked != nil { return "Você está na versão mais recente." }
-        return "Verifique se há uma nova versão."
+        if let err = updater.error { return String(localized: "Error: \(err)") }
+        if updater.lastChecked != nil { return String(localized: "You're on the latest version.") }
+        return String(localized: "Check for a new version.")
     }
 
     // MARK: - Links
 
     private var linksBlock: some View {
         VStack(spacing: 0) {
-            linkRow("Repositório no GitHub", systemImage: "chevron.left.forwardslash.chevron.right", url: repoURL)
+            linkRow(String(localized: "GitHub Repository"), systemImage: "chevron.left.forwardslash.chevron.right", url: repoURL)
             Divider().opacity(0.35)
-            linkRow("Notas de versão", systemImage: "doc.text", url: releasesURL)
+            linkRow(String(localized: "Release Notes"), systemImage: "doc.text", url: releasesURL)
             Divider().opacity(0.35)
-            linkRow("Reportar um problema", systemImage: "ladybug", url: issuesURL)
+            linkRow(String(localized: "Report an issue"), systemImage: "ladybug", url: issuesURL)
             Divider().opacity(0.35)
-            linkRow("Licença MIT", systemImage: "checkmark.seal", url: licenseURL)
+            linkRow(String(localized: "MIT License"), systemImage: "checkmark.seal", url: licenseURL)
         }
         .background(Color.primary.opacity(0.04),
                     in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -211,10 +211,10 @@ struct AboutView: View {
 
     private var footer: some View {
         VStack(spacing: 3) {
-            Text("© \(copyrightYear) Samuel Bacaro · Distribuído sob licença MIT")
+            Text(String(localized: "© \(copyrightYear) Samuel Bacaro · Distributed under the MIT license"))
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
-            Text("Feito com ♥ e SwiftUI")
+            Text(String(localized: "Made with ♥ and SwiftUI"))
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
         }

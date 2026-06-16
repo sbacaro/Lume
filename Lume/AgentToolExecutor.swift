@@ -39,7 +39,7 @@ final class AgentToolExecutor {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.message = "Escolha uma pasta para o agente trabalhar"
+        panel.message = String(localized: "Choose a folder for the agent to work in")
         panel.prompt = "Permitir Acesso"
         let response = await panel.beginSheetModal(for: NSApp.keyWindow ?? NSWindow())
         if response == .OK, let url = panel.url {
@@ -102,7 +102,7 @@ final class AgentToolExecutor {
         if isDeletion {
             let approved = await ApprovalCoordinator.shared.requestApproval(
                 toolName: "delete_file",
-                summary: "Apagar arquivo(s) — vai para a Lixeira",
+                summary: String(localized: "Delete file(s) — moves to Trash"),
                 detail: command,
                 isDestructive: true
             )
@@ -132,7 +132,7 @@ final class AgentToolExecutor {
 
     func readFile(at path: String) async -> ToolResult {
         guard await approveIfNeeded(toolName: "read_file",
-                                    summary: "Ler arquivo",
+                                    summary: String(localized: "Read file"),
                                     detail: path, isDestructive: false)
         else { return cancelledResult("read_file") }
         return await Task.detached { Shell.readFile(at: path) }.value
@@ -140,7 +140,7 @@ final class AgentToolExecutor {
 
     func writeFile(at path: String, content: String) async -> ToolResult {
         guard await approveIfNeeded(toolName: "write_file",
-                                    summary: "Escrever arquivo",
+                                    summary: String(localized: "Write file"),
                                     detail: path + "\n\n" + String(content.prefix(500)),
                                     isDestructive: true)
         else { return cancelledResult("write_file") }
@@ -157,7 +157,7 @@ final class AgentToolExecutor {
 
     func createDirectory(at path: String) async -> ToolResult {
         guard await approveIfNeeded(toolName: "create_directory",
-                                    summary: "Criar diretório",
+                                    summary: String(localized: "Create directory"),
                                     detail: path, isDestructive: true)
         else { return cancelledResult("create_directory") }
         return await Task.detached { Shell.createDirectory(at: path) }.value
@@ -238,7 +238,7 @@ final class AgentToolExecutor {
             return ToolResult(success: false, output: "Formato inválido. Use 'owner/repo'.", metadata: [:])
         }
         guard await approveIfNeeded(toolName: "github_create_issue",
-                                    summary: "Criar issue no GitHub",
+                                    summary: String(localized: "Create GitHub issue"),
                                     detail: "\(owner)/\(name): \(title)", isDestructive: true)
         else { return cancelledResult("github_create_issue") }
         do {
@@ -251,7 +251,7 @@ final class AgentToolExecutor {
 
     func githubCreateRepo(name: String, description: String?, isPrivate: Bool) async -> ToolResult {
         guard await approveIfNeeded(toolName: "github_create_repo",
-                                    summary: "Criar repositório no GitHub",
+                                    summary: String(localized: "Create GitHub repository"),
                                     detail: "\(name)\(isPrivate ? " (privado)" : " (público)")", isDestructive: true)
         else { return cancelledResult("github_create_repo") }
         do {

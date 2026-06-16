@@ -41,6 +41,7 @@ struct CommandPaletteView: View {
 
     private var showNewAction: Bool {
         trimmedQuery.isEmpty || "nova conversa".localizedCaseInsensitiveContains(trimmedQuery)
+            || "new conversation".localizedCaseInsensitiveContains(trimmedQuery)
     }
     private var showSettingsAction: Bool {
         trimmedQuery.isEmpty || "configurações".localizedCaseInsensitiveContains(trimmedQuery)
@@ -54,7 +55,7 @@ struct CommandPaletteView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 15))
                     .foregroundStyle(.secondary)
-                TextField("Buscar conversas, mensagens ou ações…", text: $query)
+                TextField("Search conversations, messages, or actions…", text: $query)
                     .textFieldStyle(.plain)
                     .font(.system(size: 16))
                     .focused($focused)
@@ -72,26 +73,26 @@ struct CommandPaletteView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 2) {
                     if showNewAction || showSettingsAction {
-                        sectionLabel("Ações")
+                        sectionLabel(String(localized: "Actions"))
                         if showNewAction {
-                            actionRow(icon: "plus.bubble", title: "Nova conversa", shortcut: "⌘N") {
+                            actionRow(icon: "plus.bubble", title: "New conversation", shortcut: "⌘N") {
                                 onNewConversation(); dismiss()
                             }
                         }
                         if showSettingsAction {
-                            actionRow(icon: "gearshape", title: "Configurações", shortcut: "⌘,") {
+                            actionRow(icon: "gearshape", title: "Settings", shortcut: "⌘,") {
                                 onOpenSettings(); dismiss()
                             }
                         }
                     }
 
                     if !results.isEmpty {
-                        sectionLabel("Conversas")
+                        sectionLabel(String(localized: "Conversations"))
                         ForEach(results) { conv in
                             conversationRow(conv)
                         }
                     } else if !trimmedQuery.isEmpty {
-                        Text("Nenhum resultado para “\(trimmedQuery)”")
+                        Text("No results for “\(trimmedQuery)”")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)

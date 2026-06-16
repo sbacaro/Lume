@@ -56,7 +56,7 @@ struct WebFetchTool: AgentTool {
         // Detecta encoding
         let encoding = detectEncoding(from: response as? HTTPURLResponse, data: data)
         guard let html = String(data: data, encoding: encoding) ?? String(data: data, encoding: .utf8) else {
-            return ToolResult(success: false, output: "Não foi possível decodificar o conteúdo.", metadata: [:])
+            return ToolResult(success: false, output: String(localized: "Could not decode the content."), metadata: [:])
         }
 
         let text = extractText(from: html, url: url)

@@ -99,23 +99,23 @@ struct CodeDashboardView: View {
                 }
 
                 VStack(spacing: 8) {
-                    Text("Agente de Código")
+                    Text("Code Agent")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text("Escreva, revise, debug e refatore com a IA como co-piloto.\nPara começar, selecione a pasta do seu projeto.")
+                    Text(String(localized: "Write, review, debug, and refactor with AI as your co-pilot.\nTo get started, select your project folder."))
                         .font(.system(size: 14)).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center).lineSpacing(3)
                 }
 
                 VStack(spacing: 8) {
-                    Text("O que o agente pode fazer:")
+                    Text("What the agent can do:")
                         .font(.system(size: 12, weight: .semibold)).foregroundStyle(.tertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(spacing: 6) {
-                        featureRow(icon: "chevron.left.forwardslash.chevron.right", color: Color(red: 0.20, green: 0.60, blue: 1.0), text: "Ler e editar arquivos do seu projeto")
+                        featureRow(icon: "chevron.left.forwardslash.chevron.right", color: Color(red: 0.20, green: 0.60, blue: 1.0), text: String(localized: "Read and edit your project's files"))
                         featureRow(icon: "ant.circle.fill",       color: .red,    text: "Encontrar e corrigir bugs automaticamente")
-                        featureRow(icon: "arrow.2.squarepath",    color: .orange, text: "Refatorar e melhorar a qualidade do código")
-                        featureRow(icon: "testtube.2",            color: .purple, text: "Escrever e executar testes")
-                        featureRow(icon: "arrow.triangle.branch", color: .orange, text: "Ver status do Git e fazer commits")
+                        featureRow(icon: "arrow.2.squarepath",    color: .orange, text: String(localized: "Refactor and improve code quality"))
+                        featureRow(icon: "testtube.2",            color: .purple, text: String(localized: "Write and run tests"))
+                        featureRow(icon: "arrow.triangle.branch", color: .orange, text: String(localized: "View Git status and make commits"))
                         featureRow(icon: "terminal.fill",         color: .green,  text: "Executar comandos no terminal integrado")
                     }
                     .padding(14)
@@ -134,7 +134,7 @@ struct CodeDashboardView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "folder.badge.plus").font(.system(size: 14, weight: .semibold))
-                        Text("Selecionar pasta do projeto").font(.system(size: 14, weight: .semibold))
+                        Text("Select project folder").font(.system(size: 14, weight: .semibold))
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 24).padding(.vertical, 12)
@@ -149,7 +149,7 @@ struct CodeDashboardView: View {
                 }
                 .buttonStyle(.plain)
 
-                Text("O acesso é restrito à pasta selecionada.\nNenhum outro arquivo do seu computador é acessado.")
+                Text(String(localized: "Access is restricted to the selected folder.\nNo other files on your computer are accessed."))
                     .font(.system(size: 11)).foregroundStyle(.tertiary).multilineTextAlignment(.center)
             }
             .frame(maxWidth: 480)
@@ -206,9 +206,9 @@ struct CodeDashboardView: View {
             Spacer()
             HStack(spacing: 6) {
                 Circle().fill(Color.green).frame(width: 6, height: 6).shadow(color: .green.opacity(0.5), radius: 2)
-                Text("Ativo").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("Active").font(.system(size: 11)).foregroundStyle(.secondary)
             }
-            Button("Trocar") {
+            Button("Switch") {
                 Task {
                     if let newURL = await AgentToolExecutor.shared.requestDirectoryAccess() {
                         persistWorkspace(newURL)
@@ -224,7 +224,7 @@ struct CodeDashboardView: View {
             } label: {
                 Image(systemName: "xmark.circle").font(.system(size: 13)).foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain).help("Remover workspace")
+            .buttonStyle(.plain).help("Remove workspace")
         }
         .padding(12)
         .background(LumeTheme.moss.opacity(0.05), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -251,27 +251,27 @@ struct CodeDashboardView: View {
 
     private var sessionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Iniciar uma sessão")
+            Text("Start a session")
                 .font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                sessionCard(icon: "chevron.left.forwardslash.chevron.right", title: "Escrever código",     subtitle: "Novo recurso, função ou componente", color: Color(red: 0.20, green: 0.60, blue: 1.0))
-                sessionCard(icon: "ant.circle.fill",          title: "Debug de erro",      subtitle: "Encontrar e corrigir bugs",          color: .red)
+                sessionCard(icon: "chevron.left.forwardslash.chevron.right", title: String(localized: "Write code"),     subtitle: String(localized: "New feature, function, or component"), color: Color(red: 0.20, green: 0.60, blue: 1.0))
+                sessionCard(icon: "ant.circle.fill",          title: String(localized: "Debug an error"),      subtitle: "Encontrar e corrigir bugs",          color: .red)
                 sessionCard(icon: "arrow.2.squarepath",       title: "Refatorar",          subtitle: "Melhorar qualidade e legibilidade",  color: .orange)
-                sessionCard(icon: "testtube.2",               title: "Escrever testes",    subtitle: "Unit tests e cobertura",             color: .purple)
-                sessionCard(icon: "doc.text.magnifyingglass", title: "Revisar código",     subtitle: "Code review com sugestões",          color: .blue)
-                sessionCard(icon: "terminal.fill",            title: "Script / automação", subtitle: "Shell, Python, automações",          color: .green)
+                sessionCard(icon: "testtube.2",               title: String(localized: "Write tests"),    subtitle: "Unit tests e cobertura",             color: .purple)
+                sessionCard(icon: "doc.text.magnifyingglass", title: String(localized: "Review code"),     subtitle: String(localized: "Code review with suggestions"),          color: .blue)
+                sessionCard(icon: "terminal.fill",            title: String(localized: "Script / automation"), subtitle: String(localized: "Shell, Python, automations"),          color: .green)
             }
         }
     }
 
     private var toolsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Ferramentas").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+            Text("Tools").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 toolButton(icon: "terminal.fill",            label: "Terminal", color: .green)         { showTerminal   = true }
                 toolButton(icon: "arrow.triangle.branch",    label: "Git",      color: .orange)        { showGitPanel   = true }
-                toolButton(icon: "doc.text.magnifyingglass", label: "Busca",    color: .blue)          { showCodeSearch = true }
-                toolButton(icon: "testtube.2",               label: "Testes",   color: .purple)        { showTestRunner = true }
+                toolButton(icon: "doc.text.magnifyingglass", label: String(localized: "Search"),    color: .blue)          { showCodeSearch = true }
+                toolButton(icon: "testtube.2",               label: String(localized: "Tests"),   color: .purple)        { showTestRunner = true }
                 toolButton(icon: "puzzlepiece.extension",    label: "MCP",      color: LumeTheme.clay) { showMCPPanel   = true }
             }
         }
@@ -284,7 +284,7 @@ struct CodeDashboardView: View {
         }
         if !codeSessions.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Sessões Recentes").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+                Text("Recent Sessions").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
                 VStack(spacing: 4) {
                     ForEach(codeSessions.prefix(5)) { conv in
                         Button { onSelectConversation(conv) } label: {
@@ -425,12 +425,12 @@ struct GitPanelView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "checkmark.circle.fill").font(.system(size: 32)).foregroundStyle(.green)
                             Text("Working tree clean").font(.headline)
-                            Text("Nenhuma alteração pendente.").foregroundStyle(.secondary)
+                            Text("No pending changes.").foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity).padding(40)
                     }
                 } else {
-                    ProgressView("Carregando status…").frame(maxWidth: .infinity).padding(40)
+                    ProgressView("Loading status…").frame(maxWidth: .infinity).padding(40)
                 }
             }
             .padding(20)
@@ -440,7 +440,7 @@ struct GitPanelView: View {
     private var gitCommitTab: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Mensagem do commit").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                Text("Commit message").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
                 TextEditor(text: $commitMessage).font(.system(size: 13)).frame(height: 80)
                     .scrollContentBackground(.hidden).padding(8)
                     .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
@@ -517,7 +517,7 @@ struct GitLogView: View {
     var body: some View {
         Group {
             if isLoading {
-                ProgressView("Carregando log…").frame(maxWidth: .infinity).padding(40)
+                ProgressView("Loading log…").frame(maxWidth: .infinity).padding(40)
             } else {
                 ScrollView {
                     Text(log).font(.system(size: 11, design: .monospaced))
@@ -528,7 +528,7 @@ struct GitLogView: View {
         }
         .task {
             let result = await AgentToolExecutor.shared.runShell(command: "git log --oneline -30", workingDirectory: workspacePath)
-            log = result.output.isEmpty ? "Sem commits ainda." : result.output
+            log = result.output.isEmpty ? String(localized: "No commits yet.") : result.output
             isLoading = false
         }
     }
@@ -573,7 +573,7 @@ struct CodeSearchView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Label("Busca no Código", systemImage: "doc.text.magnifyingglass")
+                Label("Code Search", systemImage: "doc.text.magnifyingglass")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                 Spacer()
                 if let path = workspacePath {
@@ -595,12 +595,12 @@ struct CodeSearchView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 13)).foregroundStyle(.secondary)
-                    TextField("Buscar no código…", text: $query)
+                    TextField("Search in code…", text: $query)
                         .textFieldStyle(.plain)
                         .font(.system(size: 14))
                         .onSubmit { performSearch() }
                     if isSearching { ProgressView().scaleEffect(0.7) }
-                    Button("Buscar") { performSearch() }
+                    Button("Search") { performSearch() }
                         .buttonStyle(.borderedProminent)
                         .disabled(query.isEmpty || workspacePath == nil)
 
@@ -613,7 +613,7 @@ struct CodeSearchView: View {
                             .foregroundStyle(showFilters ? Color.accentColor : Color.secondary)
                     }
                     .buttonStyle(.plain)
-                    .help("Filtros")
+                    .help("Filters")
                 }
 
                 // Opções inline
@@ -621,7 +621,7 @@ struct CodeSearchView: View {
                     Toggle("Aa", isOn: $caseSensitive)
                         .toggleStyle(.button)
                         .font(.system(size: 11, weight: .semibold))
-                        .help("Diferenciar maiúsculas/minúsculas")
+                        .help("Match case")
 
                     Toggle(".*", isOn: $useRegex)
                         .toggleStyle(.button)
@@ -632,12 +632,12 @@ struct CodeSearchView: View {
                                 design: .monospaced
                             )
                         )
-                        .help("Usar expressão regular")
+                        .help("Use regular expression")
 
                     Spacer()
 
                     if !results.isEmpty {
-                        Text("\(results.count) resultado\(results.count == 1 ? "" : "s")")
+                        Text("\(results.count) result\(results.count == 1 ? "" : "s")")
                             .font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                 }
@@ -649,7 +649,7 @@ struct CodeSearchView: View {
             if showFilters {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
-                        Text("Tipos:")
+                        Text("Types:")
                             .font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
                         ForEach(allExtensions, id: \.self) { ext in
                             Button {
@@ -685,19 +685,19 @@ struct CodeSearchView: View {
             if workspacePath == nil {
                 VStack(spacing: 8) {
                     Image(systemName: "folder.badge.questionmark").font(.system(size: 32)).foregroundStyle(.tertiary)
-                    Text("Nenhum workspace aberto").foregroundStyle(.secondary)
-                    Text("Selecione uma pasta em Code para buscar.").font(.system(size: 11)).foregroundStyle(.tertiary)
+                    Text("No workspace open").foregroundStyle(.secondary)
+                    Text("Select a folder in Code to search.").font(.system(size: 11)).foregroundStyle(.tertiary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if results.isEmpty && query.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "doc.text.magnifyingglass").font(.system(size: 36)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
-                    Text("Busca Inteligente").font(.system(size: 15, weight: .semibold))
+                    Text("Smart Search").font(.system(size: 15, weight: .semibold))
                     VStack(alignment: .leading, spacing: 6) {
-                        searchTip(icon: "textformat.abc", text: "Texto simples — busca literal no código")
-                        searchTip(icon: "chevron.left.forwardslash.chevron.right", text: "Ative .* para usar regex: func\\s+\\w+")
-                        searchTip(icon: "textformat", text: "Ative Aa para diferenciar maiúsculas")
-                        searchTip(icon: "doc.badge.gearshape", text: "Filtre por tipo de arquivo com os chips")
+                        searchTip(icon: "textformat.abc", text: String(localized: "Plain text — literal search in code"))
+                        searchTip(icon: "chevron.left.forwardslash.chevron.right", text: String(localized: "Enable .* to use regex: func\\s+\\w+"))
+                        searchTip(icon: "textformat", text: String(localized: "Enable Aa to match case"))
+                        searchTip(icon: "doc.badge.gearshape", text: String(localized: "Filter by file type with the chips"))
                     }
                     .padding(12)
                     .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 10))
@@ -706,8 +706,8 @@ struct CodeSearchView: View {
             } else if results.isEmpty && !isSearching {
                 VStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").font(.system(size: 32)).foregroundStyle(.tertiary)
-                    Text("Nenhum resultado para \"\(query)\"").foregroundStyle(.secondary)
-                    Text("Tente termos diferentes ou ajuste os filtros.").font(.system(size: 11)).foregroundStyle(.tertiary)
+                    Text("No results for \"\(query)\"").foregroundStyle(.secondary)
+                    Text("Try different terms or adjust the filters.").font(.system(size: 11)).foregroundStyle(.tertiary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -847,7 +847,7 @@ struct TestRunnerView: View {
                 if let code = exitCode {
                     HStack(spacing: 6) {
                         Circle().fill(code == 0 ? Color.green : Color.red).frame(width: 8, height: 8)
-                        Text(code == 0 ? "Passou" : "Falhou").font(.system(size: 12, weight: .medium))
+                        Text(code == 0 ? "Passed" : "Failed").font(.system(size: 12, weight: .medium))
                             .foregroundStyle(code == 0 ? .green : .red)
                     }
                 }
@@ -861,7 +861,7 @@ struct TestRunnerView: View {
 
             HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Framework detectado:").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text("Framework detected:").font(.system(size: 11)).foregroundStyle(.secondary)
                     Text(frameworkLabel).font(.system(size: 12, weight: .semibold))
                 }
                 Spacer()
@@ -870,7 +870,7 @@ struct TestRunnerView: View {
                 Button { runTests() } label: {
                     HStack(spacing: 5) {
                         if isRunning { ProgressView().scaleEffect(0.6) } else { Image(systemName: "play.fill").font(.system(size: 11)) }
-                        Text(isRunning ? "Executando…" : "Rodar Testes").font(.system(size: 12, weight: .semibold))
+                        Text(isRunning ? "Running…" : "Run Tests").font(.system(size: 12, weight: .semibold))
                     }
                 }
                 .buttonStyle(.borderedProminent).disabled(isRunning || workspacePath == nil)
@@ -880,7 +880,7 @@ struct TestRunnerView: View {
             Divider().opacity(0.4)
 
             ScrollView {
-                Text(output.isEmpty ? "Clique em 'Rodar Testes' para começar." : output)
+                Text(output.isEmpty ? String(localized: "Click 'Run Tests' to start.") : output)
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(output.isEmpty ? Color.secondary : Color.primary)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(16).textSelection(.enabled)
@@ -895,7 +895,7 @@ struct TestRunnerView: View {
         case "swift": return "Swift Package Manager"
         case "node":  return "Node.js / npm"
         case "python": return "Python / pytest"
-        default: return "Não detectado"
+        default: return String(localized: "Not detected")
         }
     }
 
@@ -907,7 +907,7 @@ struct TestRunnerView: View {
         case "swift": cmd = "swift test 2>&1"
         case "node":  cmd = "npm test 2>&1"
         case "python": cmd = "python -m pytest 2>&1"
-        default: cmd = "echo 'Framework não reconhecido'"
+        default: cmd = "echo 'Framework not recognized'"
         }
         Task {
             let r = await AgentToolExecutor.shared.runShell(command: cmd, workingDirectory: path)
@@ -920,10 +920,10 @@ struct TestRunnerView: View {
         isRunning = true; output = ""; exitCode = nil
         let cmd: String
         switch detectedFramework {
-        case "swift": cmd = "swiftlint 2>&1 || echo 'swiftlint não instalado'"
-        case "node":  cmd = "npx eslint . 2>&1 || echo 'eslint não instalado'"
-        case "python": cmd = "flake8 . 2>&1 || echo 'flake8 não instalado'"
-        default: cmd = "echo 'Framework não reconhecido'"
+        case "swift": cmd = "swiftlint 2>&1 || echo 'swiftlint not installed'"
+        case "node":  cmd = "npx eslint . 2>&1 || echo 'eslint not installed'"
+        case "python": cmd = "flake8 . 2>&1 || echo 'flake8 not installed'"
+        default: cmd = "echo 'Framework not recognized'"
         }
         Task {
             let r = await AgentToolExecutor.shared.runShell(command: cmd, workingDirectory: path)
@@ -942,7 +942,7 @@ struct MCPQuickView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Label("MCP Conectores", systemImage: "puzzlepiece.extension.fill")
+                Label("MCP Connectors", systemImage: "puzzlepiece.extension.fill")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                 Spacer()
                 Button { dismiss() } label: {
@@ -956,9 +956,9 @@ struct MCPQuickView: View {
             if connectors.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "puzzlepiece.extension.fill").font(.system(size: 36)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
-                    Text("Nenhum conector configurado").font(.system(size: 14, weight: .medium))
-                    Text("Configure conectores MCP em Configurações → MCP.").font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                    Button("Abrir Configurações") { WindowOpener.shared.openSettings?(); dismiss() }.buttonStyle(.borderedProminent)
+                    Text("No connector configured").font(.system(size: 14, weight: .medium))
+                    Text("Set up MCP connectors in Settings → MCP.").font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    Button("Open Settings") { WindowOpener.shared.openSettings?(); dismiss() }.buttonStyle(.borderedProminent)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity).padding(40)
             } else {

@@ -145,7 +145,7 @@ struct ChatInputView: View {
                 // Placeholder alinhado com o cursor nativo do NSTextView
                 // top=5 e leading=5 correspondem ao textContainerInset padrão do SwiftUI wrapper
                 if text.isEmpty && !isDictating {
-                    Text(isLoading ? "Gerando resposta…" : placeholder)
+                    Text(isLoading ? String(localized: "Generating response…") : placeholder)
                         .font(.system(size: 14))
                         .foregroundStyle(
                             composerVibrant ? Color.white.opacity(0.85) : Color(.placeholderTextColor)
@@ -172,7 +172,7 @@ struct ChatInputView: View {
             HStack(spacing: 6) {
                 pillActionBtn(
                     icon: "plus",
-                    help: "Anexar arquivo",
+                    help: String(localized: "Attach file"),
                     tint: composerVibrant ? Color.white.opacity(0.7) : nil,
                     action: onAttach
                 )
@@ -262,23 +262,23 @@ struct ChatInputView: View {
         Menu {
             Button { setApprovalMode(.strict) } label: {
                 if approvalMode != .autonomous {
-                    Label("Perguntar antes de agir", systemImage: "checkmark")
+                    Label("Ask before acting", systemImage: "checkmark")
                 } else {
-                    Text("Perguntar antes de agir")
+                    Text("Ask before acting")
                 }
             }
             Button { setApprovalMode(.autonomous) } label: {
                 if approvalMode == .autonomous {
-                    Label("Agir sem perguntar", systemImage: "checkmark")
+                    Label("Act without asking", systemImage: "checkmark")
                 } else {
-                    Text("Agir sem perguntar")
+                    Text("Act without asking")
                 }
             }
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: approvalMode == .autonomous ? "forward.fill" : "hand.raised")
                     .font(.system(size: 11, weight: .medium))
-                Text(approvalMode == .autonomous ? "Agir" : "Perguntar")
+                Text(approvalMode == .autonomous ? "Act" : "Ask")
                     .font(.system(size: 12, weight: .medium))
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .semibold))
@@ -297,8 +297,8 @@ struct ChatInputView: View {
         .tint(composerVibrant ? Color.white : Color(.secondaryLabelColor))
         .fixedSize()
         .help(approvalMode == .autonomous
-              ? "Lume executa ações sem pedir aprovação"
-              : "Lume pausa para você aprovar cada ação")
+              ? "Lume runs actions without asking for approval"
+              : "Lume pauses for you to approve each action")
     }
 
     private func setApprovalMode(_ mode: ApprovalMode) {
@@ -330,7 +330,7 @@ struct ChatInputView: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .help("Parar (⌘.)")
+                .help("Stop (⌘.)")
                 .keyboardShortcut(".", modifiers: .command)
 
                 // Enfileirar: envia a mensagem digitada quando a resposta atual terminar
@@ -339,7 +339,7 @@ struct ChatInputView: View {
                         HStack(spacing: 5) {
                             Image(systemName: "return")
                                 .font(.system(size: 11, weight: .bold))
-                            Text("Fila")
+                            Text("Queue")
                                 .font(.system(size: 12, weight: .semibold))
                         }
                         .foregroundStyle(.white)
@@ -348,7 +348,7 @@ struct ChatInputView: View {
                         .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     .buttonStyle(.plain)
-                    .help("Enfileirar — envia ao terminar a resposta")
+                    .help("Queue — sends when the response finishes")
                     .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -361,7 +361,7 @@ struct ChatInputView: View {
                     .background(Color.accentColor, in: Circle())
             }
             .buttonStyle(.plain)
-            .help("Enviar (↩)")
+            .help("Send (↩)")
             .transition(.scale.combined(with: .opacity))
         } else {
             // Campo vazio: microfone (ditado)
@@ -372,7 +372,7 @@ struct ChatInputView: View {
                     .frame(width: 30, height: 30)
             }
             .buttonStyle(.plain)
-            .help(isDictating ? "Parar gravação" : "Ditado")
+            .help(isDictating ? "Stop recording" : "Dictation")
             .transition(.scale.combined(with: .opacity))
         }
     }

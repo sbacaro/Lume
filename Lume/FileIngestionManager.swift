@@ -147,7 +147,7 @@ actor FileIngestionManager {
             switch self {
             case .unsupportedFormat(let ext): return "Formato .\(ext) não suportado"
             case .cannotOpenFile(let name):   return "Não foi possível abrir \(name)"
-            case .noTextContent:              return "Nenhum texto encontrado no arquivo"
+            case .noTextContent:              return String(localized: "No text found in the file")
             }
         }
     }

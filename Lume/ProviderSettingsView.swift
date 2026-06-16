@@ -33,7 +33,7 @@ struct ProviderSettingsView: View {
                     Button {
                         showAddProvider = true
                     } label: {
-                        Label("Adicionar", systemImage: "plus")
+                        Label("Add", systemImage: "plus")
                     }
                     .buttonStyle(.lumeSecondaryCompact)
                 }
@@ -57,9 +57,9 @@ struct ProviderSettingsView: View {
                         .font(.system(size: 36))
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
-                    Text("Adicione um provider para começar")
+                    Text("Add a provider to get started")
                         .foregroundStyle(.secondary)
-                    Button("Adicionar Provider") { showAddProvider = true }
+                    Button("Add Provider") { showAddProvider = true }
                         .buttonStyle(.lumePrimary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -165,8 +165,8 @@ struct ProviderDetailView: View {
 
                 // ── Nome + Tipo ──────────────────────────────────
                 HStack(spacing: 16) {
-                    settingsSection("Nome") {
-                        TextField("Nome do Provider", text: $provider.name)
+                    settingsSection("Name") {
+                        TextField("Provider Name", text: $provider.name)
                             .textFieldStyle(.roundedBorder)
                     }
                     settingsSection("Tipo") {
@@ -191,9 +191,9 @@ struct ProviderDetailView: View {
                     HStack(spacing: 8) {
                         Group {
                             if showPassword {
-                                TextField("Cole sua API Key aqui", text: $apiKey)
+                                TextField("Paste your API Key here", text: $apiKey)
                             } else {
-                                SecureField("Cole sua API Key aqui", text: $apiKey)
+                                SecureField("Paste your API Key here", text: $apiKey)
                             }
                         }
                         .textFieldStyle(.roundedBorder)
@@ -220,7 +220,7 @@ struct ProviderDetailView: View {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 12))
                                 }
-                                Text(isValidating ? "Validando…" : "Validar e Salvar")
+                                Text(isValidating ? "Validating…" : "Validate and Save")
                             }
                         }
                         .buttonStyle(.lumePrimary)
@@ -240,10 +240,10 @@ struct ProviderDetailView: View {
                 }
 
                 // ── Modelos — Picker dropdown ─────────────────────
-                settingsSection("Modelo Padrão") {
+                settingsSection(String(localized: "Default Model")) {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Text("\(displayedModels.count) modelos disponíveis")
+                            Text(String(localized: "\(displayedModels.count) models available"))
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -257,7 +257,7 @@ struct ProviderDetailView: View {
                                         Image(systemName: "arrow.clockwise")
                                             .font(.system(size: 10))
                                     }
-                                    Text(isFetchingModels ? "Buscando…" : "Atualizar lista")
+                                    Text(isFetchingModels ? "Searching…" : "Refresh list")
                                 }
                             }
                             .buttonStyle(.lumeSecondaryCompact)
@@ -269,7 +269,7 @@ struct ProviderDetailView: View {
                         }
 
                         if displayedModels.isEmpty {
-                            Text("Salve a API Key e clique em Atualizar para carregar os modelos.")
+                            Text("Save the API Key and click Refresh to load the models.")
                                 .font(.caption2).foregroundStyle(.tertiary)
                         } else {
                             // ✅ Picker dropdown — limpo e sem duplicatas
@@ -283,7 +283,7 @@ struct ProviderDetailView: View {
                             .onChange(of: provider.defaultModel) { _, _ in saveProvider() }
 
                             if !provider.cachedModels.isEmpty {
-                                Text("\(provider.cachedModels.count) modelos carregados do servidor.")
+                                Text("\(provider.cachedModels.count) models loaded from the server.")
                                     .font(.caption2).foregroundStyle(.tertiary)
                             }
                         }
@@ -296,14 +296,14 @@ struct ProviderDetailView: View {
                         VStack(spacing: 4) {
                             Slider(value: $provider.temperature, in: 0...2, step: 0.1)
                             HStack {
-                                Text("Preciso").font(.system(size: 10)).foregroundStyle(.tertiary)
+                                Text("Precise").font(.system(size: 10)).foregroundStyle(.tertiary)
                                 Spacer()
-                                Text("Criativo").font(.system(size: 10)).foregroundStyle(.tertiary)
+                                Text("Creative").font(.system(size: 10)).foregroundStyle(.tertiary)
                             }
                         }
                     }
 
-                    settingsSection("Tokens máximos") {
+                    settingsSection(String(localized: "Max tokens")) {
                         HStack(spacing: 6) {
                             TextField("Auto", text: $maxTokensText)
                                 .textFieldStyle(.roundedBorder)
@@ -329,7 +329,7 @@ struct ProviderDetailView: View {
                 HStack {
                     Toggle(isOn: $provider.isActive) {
                         HStack(spacing: 6) {
-                            Text("Provider Ativo")
+                            Text("Active Provider")
                                 .font(.system(size: 13, weight: .semibold))
                             if provider.isActive {
                                 Circle().fill(Color.green).frame(width: 6, height: 6)
@@ -344,7 +344,7 @@ struct ProviderDetailView: View {
                     Button {
                         saveProvider()
                     } label: {
-                        Label("Salvar", systemImage: "checkmark")
+                        Label("Save", systemImage: "checkmark")
                     }
                     .buttonStyle(.lumePrimary)
                     .keyboardShortcut(.defaultAction)
@@ -392,7 +392,7 @@ struct ProviderDetailView: View {
                 // Todos os providers OpenAI-compatible (openai_custom, litellm, ollama,
                 // vllm, tgi, portkey, etc.) usam o mesmo endpoint /models
                 guard !provider.baseURL.isEmpty, let url = URL(string: provider.baseURL) else {
-                    fetchError = "Configure a Base URL antes de buscar modelos"
+                    fetchError = String(localized: "Configure the Base URL before fetching models")
                     isFetchingModels = false
                     return
                 }
@@ -406,9 +406,9 @@ struct ProviderDetailView: View {
                 provider.defaultModel = models[0]
             }
             try? modelContext.save()
-            validationMessage = "✓ \(models.count) modelos carregados"
+            validationMessage = String(localized: "✓ \(models.count) models loaded")
         } catch {
-            fetchError = "Erro ao buscar modelos: \(error.localizedDescription)"
+            fetchError = String(localized: "Error fetching models: \(error.localizedDescription)")
         }
         isFetchingModels = false
     }
@@ -428,14 +428,14 @@ struct ProviderDetailView: View {
             try? await KeychainManager.shared.saveAPIKey(apiKey, for: provider.id)
             saveProvider()
             try? await providerManager.activateProvider(config: provider, apiKey: apiKey)
-            validationMessage = "Chave salva. Erro de conectividade."
+            validationMessage = String(localized: "Key saved. Connectivity error.")
         }
         isValidating = false
     }
 
     private func saveProvider() {
         do { try modelContext.save() } catch {
-            validationMessage = "Erro ao salvar: \(error.localizedDescription)"
+            validationMessage = String(localized: "Error saving: \(error.localizedDescription)")
         }
     }
 
@@ -461,25 +461,25 @@ struct AddProviderView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Adicionar Novo Provider")
+            Text("Add New Provider")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
 
-            Picker("Tipo de Provider", selection: $selectedType) {
+            Picker("Provider Type", selection: $selectedType) {
                 Text("OpenAI").tag("openai")
                 Text("Anthropic").tag("anthropic")
                 Text("Custom (OpenAI)").tag("openai_custom")
             }
             .pickerStyle(.segmented)
 
-            TextField("Nome (ex: Meu ChatGPT, Llama Local)", text: $providerName)
+            TextField("Name (e.g. My ChatGPT, Local Llama)", text: $providerName)
                 .textFieldStyle(.roundedBorder)
 
             if selectedType == "openai_custom" {
-                TextField("Base URL (ex: https://api.example.com/v1)", text: $baseURL)
+                TextField("Base URL (e.g. https://api.example.com/v1)", text: $baseURL)
                     .textFieldStyle(.roundedBorder)
             }
 
-            SecureField("API Key (opcional para alguns servidores)", text: $apiKey)
+            SecureField("API Key (optional for some servers)", text: $apiKey)
                 .textFieldStyle(.roundedBorder)
 
             Text(providerDescription)
@@ -488,10 +488,10 @@ struct AddProviderView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack {
-                Button("Cancelar", role: .cancel) { dismiss() }
+                Button("Cancel", role: .cancel) { dismiss() }
                     .buttonStyle(.lumeSecondary)
                 Spacer()
-                Button("Adicionar") { addProvider() }
+                Button("Add") { addProvider() }
                     .buttonStyle(.lumePrimary)
                     .disabled(providerName.isEmpty || (selectedType == "openai_custom" && baseURL.isEmpty))
                     .keyboardShortcut(.defaultAction)
@@ -503,9 +503,9 @@ struct AddProviderView: View {
 
     private var providerDescription: String {
         switch selectedType {
-        case "openai":        return "Provider oficial OpenAI. Requer API Key de platform.openai.com"
-        case "anthropic":     return "Provider oficial Anthropic. Requer API Key de console.anthropic.com"
-        case "openai_custom": return "Servidor compatível com a API OpenAI (LiteLLM, Ollama, vLLM, etc). Após salvar, clique em Atualizar para carregar os modelos."
+        case "openai":        return String(localized: "Official OpenAI provider. Requires an API Key from platform.openai.com")
+        case "anthropic":     return String(localized: "Official Anthropic provider. Requires an API Key from console.anthropic.com")
+        case "openai_custom": return String(localized: "OpenAI-compatible server (LiteLLM, Ollama, vLLM, etc). After saving, click Refresh to load the models.")
         default: return ""
         }
     }

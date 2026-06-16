@@ -77,6 +77,6 @@ struct StarLoaderView: View {
             .opacity(pulsing ? 1.0 : 0.45)
             .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulsing)
             .onAppear { pulsing = true }
-            .accessibilityLabel("Gerando resposta")
+            .accessibilityLabel(String(localized: "Generating response"))
     }
 }

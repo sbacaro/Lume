@@ -95,7 +95,7 @@ final class VoiceDictationManager {
         guard await requestPermission() else { return }
 
         guard let recognizer = speechRecognizer, recognizer.isAvailable else {
-            error = "Reconhecimento de fala não disponível no momento."
+            error = String(localized: "Speech recognition is currently unavailable.")
             return
         }
 

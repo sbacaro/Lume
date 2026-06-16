@@ -566,8 +566,8 @@ final class OpenAIProvider: AIProvider {
         case "web_search":      return "Pesquisando na web…"
         case "web_fetch":       return "Lendo página…"
         case "run_shell":       return "Executando comando…"
-        case "write_file":      return "Escrevendo arquivo…"
-        case "read_file":       return "Lendo arquivo…"
+        case "write_file":      return String(localized: "Writing file…")
+        case "read_file":       return String(localized: "Reading file…")
         case "list_directory":  return "Listando arquivos…"
         case "create_directory":return "Criando diretório…"
         case "github_list_repos":   return "Listando repositórios…"

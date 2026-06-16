@@ -34,7 +34,7 @@ struct UpdateNotificationCard: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Atualização disponível")
+                    Text("Update available")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.primary)
                     Text("Lume \(release.version)")
@@ -65,7 +65,7 @@ struct UpdateNotificationCard: View {
                     withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
                 } label: {
                     HStack(spacing: 4) {
-                        Text(isExpanded ? "Ocultar novidades" : "Ver novidades")
+                        Text(isExpanded ? "Hide what’s new" : "See what’s new")
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
@@ -96,7 +96,7 @@ struct UpdateNotificationCard: View {
             // Botões de ação
             HStack(spacing: 6) {
                 Button(action: onDismiss) {
-                    Text("Depois")
+                    Text("Later")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
@@ -110,7 +110,7 @@ struct UpdateNotificationCard: View {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.down.circle")
                             .font(.system(size: 10, weight: .semibold))
-                        Text("Baixar")
+                        Text("Download")
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundStyle(.white)
