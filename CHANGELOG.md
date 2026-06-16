@@ -5,6 +5,19 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.3.4] — 2026-06-16
+
+### Adicionado
+
+- **Atualização automática via Sparkle**: ao detectar uma versão nova, o app baixa o `.dmg`, instala e reabre sozinho (UI padrão do Sparkle), **sem abrir o navegador**. Segurança por assinatura **EdDSA** (appcast assinado).
+- **`setup-sparkle.sh`**: configura o Sparkle de ponta a ponta no que é automatizável (resolve o pacote, gera as chaves EdDSA e injeta a chave pública no projeto).
+
+### Alterado
+
+- **`release.sh`** agora **gera e assina o appcast** automaticamente quando o Sparkle está instalado, commita o `appcast.xml` e publica o release com o **DMG** (o `Lume.app` vai dentro do DMG). O PKG foi descontinuado.
+
+---
+
 ## [1.3.3] — 2026-06-16
 
 ### Corrigido

@@ -1,3 +1,44 @@
+# ✨ Lume v1.3.4 — Atualização automática (Sparkle)
+
+Esta versão liga a **atualização automática de verdade** via Sparkle: a partir dela, as
+próximas versões baixam, instalam e reabrem o app sozinhas — **sem abrir o navegador**.
+
+**Data de lançamento:** 2026-06-16
+**Versão:** v1.3.4 (build 9)
+**Tipo:** Funcionalidade
+
+---
+
+## ✨ Novidades
+
+### Atualização automática via Sparkle
+- Ao detectar uma versão nova, o app **baixa o `.dmg`, instala e reabre sozinho**, pela
+  UI padrão do Sparkle — sem passar pelo navegador.
+- Segurança por **assinatura EdDSA**: como o app é distribuído sem assinatura da Apple,
+  o appcast assinado garante a integridade de cada atualização.
+
+### Setup e release em um comando
+- **`setup-sparkle.sh`** configura tudo que é automatizável: resolve o pacote, gera as
+  chaves EdDSA e injeta a chave pública no projeto.
+- **`release.sh`** passou a **gerar e assinar o appcast** automaticamente e publicar o
+  release com o DMG (o `Lume.app` vai **dentro do DMG**).
+
+---
+
+## 🐞 Correções (incluídas da 1.3.3)
+
+- **Menu "Check for Updates…"** verifica dentro do app (não abre mais o navegador).
+- **Renderização de chamadas de ferramenta** corrigida (Base64): conteúdos com `]]`, `|`
+  ou quebras de linha não vazam mais como texto cru nas mensagens.
+
+---
+
+> Importante: esta é a **primeira** build com Sparkle. Instale-a **manualmente** uma vez
+> (a 1.3.2/1.3.3 não têm Sparkle para se auto-atualizar). Da próxima em diante, é automático.
+
+<details>
+<summary>Histórico — versões anteriores</summary>
+
 # 🩹 Lume v1.3.3 — "Check for Updates" no menu e correção de renderização
 
 Duas correções: o item **"Check for Updates…"** do menu passa a verificar **dentro do
@@ -240,6 +281,9 @@ clicar em **Atualizar** na notificação (ou em **Verificar** na tela Sobre).
 ---
 
 **Changelog completo:** veja [`CHANGELOG.md`](CHANGELOG.md) · [v1.1.0](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)
+
+</details>
+
 
 </details>
 
