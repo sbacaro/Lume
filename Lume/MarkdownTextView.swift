@@ -177,6 +177,20 @@ struct MarkdownTextView: View {
         return (events, answer.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
+    /// Decodifica um campo (input/output) de um tool block. O formato atual é
+    /// Base64; mensagens antigas (formato legado com `∣`/`⏎`) não decodificam como
+    /// Base64 válido e caem no fallback, sendo exibidas como estavam.
+    static func decodeToolField(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        if let data = Data(base64Encoded: trimmed),
+           let decoded = String(data: data, encoding: .utf8) {
+            return decoded
+        }
+        return trimmed
+            .replacingOccurrences(of: "⏎", with: "\n")
+            .replacingOccurrences(of: "∣", with: "|")
+    }
+
     /// Converte "[[TOOL:name|input|output|success]]" em ToolCallItem.
     static func parseToolBlock(_ block: String) -> ToolCallItem? {
         guard block.hasPrefix("[[TOOL:"), block.hasSuffix("]]") else { return nil }
@@ -188,9 +202,8 @@ struct MarkdownTextView: View {
         }
         guard parts.count >= 3 else { return nil }
         let name = parts[0].trimmingCharacters(in: .whitespaces)
-        var input = parts[1].trimmingCharacters(in: .whitespaces)
-        var output = parts[2].trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: "⏎", with: "\n")   // restaura quebras de linha
+        var input = Self.decodeToolField(parts[1])
+        var output = Self.decodeToolField(parts[2])
         let success = parts.count >= 4 ? parts[3].trimmingCharacters(in: .whitespaces) == "1" : true
         if input.hasPrefix("{") || input.hasPrefix("[") {
             if let data = input.data(using: .utf8),
@@ -265,8 +278,8 @@ struct MarkdownTextView: View {
                 }
                 if parts.count >= 3 {
                     let name = parts[0].trimmingCharacters(in: .whitespaces)
-                    var input = parts[1].trimmingCharacters(in: .whitespaces)
-                    var output = parts[2].trimmingCharacters(in: .whitespaces)
+                    var input = Self.decodeToolField(parts[1])
+                    var output = Self.decodeToolField(parts[2])
                     let success = parts.count >= 4 ? parts[3].trimmingCharacters(in: .whitespaces) == "1" : true
                     if input.hasPrefix("{") || input.hasPrefix("[") {
                         if let data = input.data(using: .utf8),

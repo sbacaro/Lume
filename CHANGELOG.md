@@ -5,6 +5,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.3.3] — 2026-06-16
+
+### Corrigido
+
+- **Menu "Check for Updates…"** agora faz a verificação **dentro do app** e mostra o status na janela **Sobre**, em vez de abrir a página de releases no navegador.
+- **Renderização de chamadas de ferramenta**: conteúdos com `]]`, `|` ou quebras de linha (ex.: um script bash com `if [[ … ]]`) não quebram mais o bloco da ferramenta. O payload passou a ser codificado em **Base64**, então nada vaza como texto cru nem exibe `\n` literais na bolha.
+
+---
+
 ## [1.3.2] — 2026-06-16
 
 ### Corrigido

@@ -1,3 +1,30 @@
+# 🩹 Lume v1.3.3 — "Check for Updates" no menu e correção de renderização
+
+Duas correções: o item **"Check for Updates…"** do menu passa a verificar **dentro do
+app** (antes abria o navegador), e o conteúdo de chamadas de ferramenta não vaza mais
+como texto cru nas mensagens.
+
+**Data de lançamento:** 2026-06-16
+**Versão:** v1.3.3 (build 8)
+**Tipo:** Correções
+
+---
+
+## 🐞 Correções
+
+- **Menu "Check for Updates…"** agora faz a verificação dentro do app e mostra o status
+  na janela **Sobre** ("Procurando…", "Nova versão disponível: X" ou "Você está na versão
+  mais recente."), em vez de abrir a página de releases do GitHub no navegador.
+- **Renderização de chamadas de ferramenta corrigida**: scripts e conteúdos com `]]`, `|`
+  ou quebras de linha (ex.: um script bash com `if [[ … ]]`) não quebram mais o bloco da
+  ferramenta — o payload passou a ser codificado em Base64, então nada vaza como texto cru
+  nem mostra `\n` literais na bolha.
+
+---
+
+<details>
+<summary>Histórico — versões anteriores</summary>
+
 # 🩹 Lume v1.3.2 — Correção do "Check" no About
 
 Correção pontual: o botão de **verificar atualizações** na tela Sobre passa a checar
@@ -213,6 +240,9 @@ clicar em **Atualizar** na notificação (ou em **Verificar** na tela Sobre).
 ---
 
 **Changelog completo:** veja [`CHANGELOG.md`](CHANGELOG.md) · [v1.1.0](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)
+
+</details>
+
 
 </details>
 

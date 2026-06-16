@@ -150,7 +150,7 @@ struct LumeApp: App {
         }
         .modelContainer(sharedModelContainer)
         .commands {
-            LumeMenuCommands(showSettings: $showSettings, sparkle: sparkle)
+            LumeMenuCommands(showSettings: $showSettings)
         }
         .defaultSize(width: 1300, height: 760)
         .restorationBehavior(.disabled)
@@ -173,7 +173,6 @@ struct LumeApp: App {
 private struct LumeMenuCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     @Binding var showSettings: Bool
-    let sparkle: SparkleUpdater
 
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
@@ -183,7 +182,10 @@ private struct LumeMenuCommands: Commands {
         }
         CommandGroup(after: .appInfo) {
             Button(String(localized: "Check for Updates…")) {
-                sparkle.checkForUpdates()
+                // Verifica dentro do app e mostra o status na janela Sobre,
+                // em vez de abrir a página de releases no navegador.
+                openWindow(id: "about")
+                Task { await UpdateManager.shared.checkForUpdatesForced() }
             }
         }
         CommandGroup(replacing: .newItem) { }

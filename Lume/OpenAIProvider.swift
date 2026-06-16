@@ -270,17 +270,14 @@ final class OpenAIProvider: AIProvider {
                             continuation.yield("[[STATUS:\(line)]]")
                         }
 
-                        // Emite bloco estruturado [[TOOL:...]] — renderizado como ToolCallBlockView
-                        // Sanitiza inputs para usar | como separador
-                        let inputClean = argsString
-                            .replacingOccurrences(of: "\n", with: " ")
-                            .replacingOccurrences(of: "|", with: "∣")
-                        let outputClean = String(result.output.prefix(2000))
-                            .replacingOccurrences(of: "|", with: "∣")
-                            .replacingOccurrences(of: "\n", with: "⏎")   // preserva estrutura
+                        // Emite bloco estruturado [[TOOL:...]] — renderizado como ToolCallBlockView.
+                        // Base64 garante que o conteúdo (que pode conter |, [[ ]], quebras de
+                        // linha, etc.) nunca colida com o delimitador [[TOOL:…]].
+                        let inputEnc = Data(argsString.utf8).base64EncodedString()
+                        let outputEnc = Data(String(result.output.prefix(2000)).utf8).base64EncodedString()
                         let successFlag = result.success ? "1" : "0"
-                        
-                        continuation.yield("\n[[TOOL:\(toolName)|\(inputClean)|\(outputClean)|\(successFlag)]]\n")
+
+                        continuation.yield("\n[[TOOL:\(toolName)|\(inputEnc)|\(outputEnc)|\(successFlag)]]\n")
 
                         if result.success {
                             allToolsFailed = false

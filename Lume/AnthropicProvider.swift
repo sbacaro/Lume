@@ -307,13 +307,11 @@ final class AnthropicProvider: AIProvider {
                                 continuation.yield("[[STATUS:\(line)]]")
                             }
 
-                            let inputClean = tu.json
-                                .replacingOccurrences(of: "\n", with: " ")
-                                .replacingOccurrences(of: "|", with: "∣")
-                            let outputClean = String(result.output.prefix(2000))
-                                .replacingOccurrences(of: "|", with: "∣")
-                                .replacingOccurrences(of: "\n", with: "⏎")
-                            continuation.yield("\n[[TOOL:\(tu.name)|\(inputClean)|\(outputClean)|\(result.success ? "1" : "0")]]\n")
+                            // Base64 garante que o conteúdo (que pode conter |, [[ ]],
+                            // quebras de linha, etc.) nunca colida com o delimitador [[TOOL:…]].
+                            let inputEnc = Data(tu.json.utf8).base64EncodedString()
+                            let outputEnc = Data(String(result.output.prefix(2000)).utf8).base64EncodedString()
+                            continuation.yield("\n[[TOOL:\(tu.name)|\(inputEnc)|\(outputEnc)|\(result.success ? "1" : "0")]]\n")
 
                             resultBlocks.append([
                                 "type": "tool_result",
