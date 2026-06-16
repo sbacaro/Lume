@@ -92,23 +92,49 @@ final class UpdateManager {
     // MARK: - GitHub API
 
     private func fetchLatestRelease() async throws -> AppRelease {
-        let url = URL(string: "https://api.github.com/repos/\(githubOwner)/\(githubRepo)/releases/latest")!
-        var request = URLRequest(url: url)
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
-        request.timeoutInterval = 15
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let http = response as? HTTPURLResponse else {
-            throw UpdateError.invalidResponse
+        // 1) Tenta o endpoint "latest" (ignora drafts e prereleases).
+        if let latest = try await requestRelease(path: "releases/latest") {
+            return latest
         }
+        // 2) Fallback: o "latest" devolveu 404 (ex.: repo só com prereleases,
+        //    ou release recém-publicado ainda propagando). Usa a lista completa.
+        let releases = try await requestReleasesList()
+        var newest: AppRelease?
+        for release in releases where newest == nil || isNewer(release.version, than: newest!.version) {
+            newest = release
+        }
+        guard let result = newest else { throw UpdateError.noReleasesFound }
+        return result
+    }
+
+    /// Busca um único release; retorna `nil` em 404 (sem release).
+    private func requestRelease(path: String) async throws -> AppRelease? {
+        let (data, http) = try await apiGet(path)
+        if http.statusCode == 404 { return nil }
+        guard http.statusCode == 200 else { throw UpdateError.httpError(http.statusCode) }
+        return try JSONDecoder().decode(GitHubRelease.self, from: data).toAppRelease()
+    }
+
+    /// Lista os releases publicados (exclui drafts).
+    private func requestReleasesList() async throws -> [AppRelease] {
+        let (data, http) = try await apiGet("releases?per_page=30")
         guard http.statusCode == 200 else {
             throw http.statusCode == 404 ? UpdateError.noReleasesFound : UpdateError.httpError(http.statusCode)
         }
+        let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
+        return releases.filter { !($0.draft ?? false) }.map { $0.toAppRelease() }
+    }
 
-        let json = try JSONDecoder().decode(GitHubRelease.self, from: data)
-        return json.toAppRelease()
+    private func apiGet(_ path: String) async throws -> (Data, HTTPURLResponse) {
+        let url = URL(string: "https://api.github.com/repos/\(githubOwner)/\(githubRepo)/\(path)")!
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        request.setValue("Lume-Updater", forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 15
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw UpdateError.invalidResponse }
+        return (data, http)
     }
 
     // MARK: - Version comparison (semver)
@@ -137,9 +163,9 @@ enum UpdateError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidResponse:  return "Resposta inválida do GitHub"
-        case .noReleasesFound:  return "Nenhuma versão publicada encontrada"
-        case .httpError(let c): return "Erro HTTP \(c) ao verificar atualizações"
+        case .invalidResponse:  return String(localized: "Invalid response from GitHub")
+        case .noReleasesFound:  return String(localized: "No published release found")
+        case .httpError(let c): return String(localized: "HTTP error \(c) while checking for updates")
         case .noDownloadAsset:  return String(localized: "Download file not found in the release")
         }
     }
@@ -154,11 +180,12 @@ private struct GitHubRelease: Decodable {
     let htmlUrl: String
     let publishedAt: String
     let prerelease: Bool
+    let draft: Bool?
     let assets: [GitHubAsset]
 
     enum CodingKeys: String, CodingKey {
         case tagName = "tag_name"
-        case name, body, prerelease, assets
+        case name, body, prerelease, draft, assets
         case htmlUrl = "html_url"
         case publishedAt = "published_at"
     }

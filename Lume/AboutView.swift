@@ -12,6 +12,7 @@ import AppKit
 
 struct AboutView: View {
     @State private var updater = UpdateManager.shared
+    @EnvironmentObject private var sparkle: SparkleUpdater
 
     // MARK: - Metadados do app
 
@@ -110,15 +111,11 @@ struct AboutView: View {
             }
             Spacer()
             Button {
-                Task { await updater.checkForUpdatesForced() }
+                sparkle.checkForUpdates()
             } label: {
                 HStack(spacing: 5) {
-                    if updater.isChecking {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 11, weight: .semibold))
                     Text("Check").font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundStyle(.white)
@@ -126,7 +123,6 @@ struct AboutView: View {
                 .background(Color.accentColor, in: Capsule())
             }
             .buttonStyle(.plain)
-            .disabled(updater.isChecking)
         }
         .padding(14)
         .background(Color.primary.opacity(0.04),

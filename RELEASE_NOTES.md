@@ -1,3 +1,54 @@
+# 🧭 Lume v1.3.0 — Chat unificado, IA ciente do modo e auto-update
+
+Esta versão **unifica a interface de chat** nos três modos, deixa o **modelo ciente de
+onde está** (Chat, Cowork ou Code) e traz a base de **atualização automática (Sparkle)**
+além de scripts de release com DMG personalizado.
+
+**Data de lançamento:** 2026-06-16
+**Versão:** v1.3.0 (build 5)
+**Tipo:** Funcionalidades + correções
+
+---
+
+## ✨ Novidades
+
+### Mesma UI de chat em todos os modos
+- O **Cowork** passou a usar o **mesmo composer** (caixa de digitação, menus de modelo e
+  aprovação, bolhas) do Chat e do Code. Acabaram as três caixas com aparências diferentes.
+
+### IA ciente do modo
+- O modelo recebe um cabeçalho dizendo se está em **Chat**, **Cowork** ou **Code**, com o
+  papel, as ferramentas e o comportamento esperados de cada área — respostas mais alinhadas
+  ao que cada modo faz.
+
+### Atualização automática (Sparkle)
+- **Verificar Atualizações…** (menu) e o botão no About baixam o `.dmg`, instalam e
+  reiniciam o app sozinhos. Requer configuração — veja `SETUP_SPARKLE.md`.
+
+### Scripts de release
+- `build-release.sh` (compila → `.app` → `Lume-<versão>.dmg`), `build-dmg.sh` (DMG com
+  fundo no gradiente da marca + atalho do Applications, headless) e `generate-appcast.sh`.
+
+---
+
+## 🔧 Alterações
+
+- Verificador de atualizações mais robusto: fallback para a lista de releases, header
+  `User-Agent` e mensagens de erro localizadas.
+
+---
+
+## 🐞 Correções
+
+- O contexto do workspace de **Code** não vaza mais para conversas do **Chat**.
+- Porcentagem do progresso de tarefas formatada via `FormatStyle` (corrige aviso do Xcode).
+- Textos remanescentes em português agora localizáveis e chaves órfãs do catálogo removidas.
+
+---
+
+<details>
+<summary>Histórico — versões anteriores</summary>
+
 # 🌍 Lume v1.2.0 — Suporte a idiomas, botões em pílula e correções
 
 Esta versão traz **internacionalização completa** (inglês + português do Brasil) com um
@@ -98,5 +149,8 @@ clicar em **Atualizar** na notificação (ou em **Verificar** na tela Sobre).
 ---
 
 **Changelog completo:** veja [`CHANGELOG.md`](CHANGELOG.md) · [v1.1.0](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)
+
+</details>
+
 
 </details>

@@ -504,7 +504,7 @@ struct ChatInputView: View {
     /// Ex: "anthropic/claude-opus-4-8" → "claude-opus-4-8"
     ///     "vertex_ai/gemini-2.5-flash" → "gemini-2.5-flash"
     private func shortModelName(_ model: String) -> String {
-        if model.isEmpty { return "Modelo" }
+        if model.isEmpty { return String(localized: "Model") }
         // Remove prefixo provider/ se presente
         if let slash = model.firstIndex(of: "/") {
             let name = String(model[model.index(after: slash)...])

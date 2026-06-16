@@ -296,8 +296,8 @@ final class AIProviderManager {
         }
 
         // ── CONTEXTO DE WORKSPACE DE CODE ────────────────────────
-        // Injeta arquivos do workspace Code quando a conversa não pertence a um projeto
-        if conversation.project == nil,
+        // Injeta arquivos do workspace Code apenas em conversas do modo Code (tag "code")
+        if conversation.tags.contains("code"),
            let codePath = UserDefaults.standard.string(forKey: "code_workspace_path") {
             let codeURL: URL
             var codeAccessing = false
@@ -332,6 +332,40 @@ final class AIProviderManager {
                     + fileContext
             }
         }
+
+        // ── CABEÇALHO DE MODO (Chat / Cowork / Code) ─────────────
+        // Diz ao modelo em QUAL área do Lume ele está e o que se espera dele.
+        // Fica no topo do system prompt para enquadrar todo o resto.
+        let modeHeader: String
+        if conversation.tags.contains("code") {
+            modeHeader = """
+            # Modo atual: CODE
+            Você está no modo Code do Lume — um agente de engenharia de software operando sobre um workspace de código.
+            - Objetivo: escrever, refatorar, revisar e depurar código; rodar testes e lint; usar git; executar comandos no terminal.
+            - Ferramentas disponíveis: shell/bash, leitura e escrita de arquivos, status/diff/commit do git, execução de testes. Use-as diretamente em vez de pedir que o usuário faça manualmente.
+            - Use SEMPRE caminhos absolutos e opere apenas dentro da pasta do workspace. Antes de alterar, entenda o código existente.
+            - Seja preciso e fundamentado: não invente APIs, bibliotecas ou funções; corrija com base na causa real (ex.: saída do teste), não em suposições. Explique mudanças de forma concisa.
+            """
+        } else if conversation.project != nil {
+            modeHeader = """
+            # Modo atual: COWORK
+            Você está no modo Cowork do Lume — trabalho contínuo dentro de um projeto, com contexto que se acumula entre conversas.
+            - Objetivo: entregáveis e trabalho de projeto (documentos, planos, relatórios, organização), usando os arquivos e as instruções do projeto como base.
+            - Os arquivos do projeto foram indexados (RAG): baseie-se neles e cite-os quando relevante; respeite as instruções do projeto.
+            - Mantenha tudo contextualizado a ESTE projeto — não pergunte em qual projeto trabalhar. Você pode ler/escrever arquivos dentro da pasta do projeto.
+            - Priorize resultados práticos, organizados e prontos para uso.
+            """
+        } else {
+            modeHeader = """
+            # Modo atual: CHAT
+            Você está no modo Chat do Lume — um assistente geral de conversação.
+            - Objetivo: responder perguntas, explicar, escrever e revisar textos, brainstorming, tradução e tarefas gerais do dia a dia.
+            - Não há projeto nem workspace de código associados a esta conversa; não presuma acesso a arquivos do usuário a menos que ele anexe algo.
+            - Você pode pesquisar na web quando útil. Seja claro, direto e conversacional.
+            - Não execute comandos de shell nem altere arquivos do sistema neste modo, a menos que o usuário peça explicitamente.
+            """
+        }
+        baseSystemPrompt = modeHeader + "\n\n" + baseSystemPrompt
 
         let optimizedSystemPrompt = baseSystemPrompt
 

@@ -97,6 +97,8 @@ struct LumeApp: App {
     @State private var showSettings = false
     // ✅ Novo Projeto agora é sheet
     @State private var showNewProject = false
+    // Atualização automática (Sparkle)
+    @StateObject private var sparkle = SparkleUpdater()
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -122,6 +124,7 @@ struct LumeApp: App {
             ContentView()
             .task { FullDiskAccessHelper.requestAccessIfNeeded() }
                 .environment(\.lumeConfig, config)
+                .environmentObject(sparkle)
                 .withWindowOpenerSetup(showSettings: $showSettings, showNewProject: $showNewProject)
                 .onAppear {
                     DispatchQueue.main.async {
@@ -147,7 +150,7 @@ struct LumeApp: App {
         }
         .modelContainer(sharedModelContainer)
         .commands {
-            LumeMenuCommands(showSettings: $showSettings)
+            LumeMenuCommands(showSettings: $showSettings, sparkle: sparkle)
         }
         .defaultSize(width: 1300, height: 760)
         .restorationBehavior(.disabled)
@@ -155,7 +158,7 @@ struct LumeApp: App {
 
         // ── Janela String(localized: "About Lume") ─────────────────────────────────
         Window(String(localized: "About Lume"), id: "about") {
-            AboutView()
+            AboutView().environmentObject(sparkle)
         }
         .windowResizability(.contentSize)
         .restorationBehavior(.disabled)
@@ -170,11 +173,17 @@ struct LumeApp: App {
 private struct LumeMenuCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     @Binding var showSettings: Bool
+    let sparkle: SparkleUpdater
 
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button(String(localized: "About Lume")) {
                 openWindow(id: "about")
+            }
+        }
+        CommandGroup(after: .appInfo) {
+            Button(String(localized: "Check for Updates…")) {
+                sparkle.checkForUpdates()
             }
         }
         CommandGroup(replacing: .newItem) { }

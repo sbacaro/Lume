@@ -818,6 +818,16 @@
         }
       }
     },
+    "Check for Updates…": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verificar Atualizações…"
+          }
+        }
+      }
+    },
     "Check for a new version.": {
       "localizations": {
         "pt-BR": {
@@ -2154,6 +2164,16 @@
         }
       }
     },
+    "HTTP error %lld while checking for updates": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erro HTTP %lld ao verificar atualizações"
+          }
+        }
+      }
+    },
     "HTTP/SSE": {},
     "Hello": {
       "localizations": {
@@ -2374,6 +2394,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Raciocínio interno"
+          }
+        }
+      }
+    },
+    "Invalid response from GitHub": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resposta inválida do GitHub"
           }
         }
       }
@@ -2705,6 +2735,16 @@
         }
       }
     },
+    "Model": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo"
+          }
+        }
+      }
+    },
     "More options": {
       "localizations": {
         "pt-BR": {
@@ -3031,6 +3071,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nenhum projeto ainda"
+          }
+        }
+      }
+    },
+    "No published release found": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma versão publicada encontrada"
           }
         }
       }

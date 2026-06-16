@@ -68,7 +68,8 @@ struct ContentView: View {
                     Task { try? await providerManager.streamMessage(content: task.prompt, conversation: conv) }
                 }
             }
-            await updateManager.checkForUpdates()
+            // Atualizações são gerenciadas pelo Sparkle (download + install + relaunch).
+            // O verificador antigo via GitHub API foi desativado para não duplicar avisos.
         }
         .sheet(item: $renamingConversation) { conv in
             RenameConversationSheet(conversation: conv, initialName: conv.title) { renamingConversation = nil }

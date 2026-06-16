@@ -5,6 +5,30 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.3.0] — 2026-06-16
+
+### Adicionado
+
+- **Atualização automática (Sparkle)**: o menu **Verificar Atualizações…** e o botão no About baixam o `.dmg`, instalam e reiniciam o app sozinhos — na próxima abertura já na versão nova. (Requer configuração do pacote e do appcast — ver `SETUP_SPARKLE.md`.)
+- **IA ciente do modo**: o modelo agora recebe, no topo do system prompt, um cabeçalho dizendo se está em **Chat**, **Cowork** ou **Code**, com o papel, as ferramentas e o comportamento esperados de cada área.
+- **Scripts de release**:
+  - `build-release.sh` — pipeline completo: compila, gera o `.app` e entrega o `Lume-<versão>.dmg`.
+  - `build-dmg.sh` — DMG custom com **fundo no gradiente da marca**, seta e atalho do **Applications**, de forma headless (sem depender do Finder).
+  - `generate-appcast.sh` — gera e assina (EdDSA) o `appcast.xml` do Sparkle.
+
+### Alterado
+
+- **UI do chat unificada**: o **Cowork** agora usa o mesmo composer (caixa de digitação, menus de modelo/aprovação e bolhas) do Chat e do Code — fim das três caixas diferentes.
+- **Verificador de atualizações mais robusto**: fallback para a lista de releases quando o "latest" retorna 404, header `User-Agent` e mensagens de erro localizadas.
+
+### Corrigido
+
+- O **contexto do workspace de Code** não vaza mais para conversas do Chat — fica restrito ao modo Code.
+- Porcentagem do progresso de tarefas formatada via **FormatStyle** (corrige o aviso de localização do Xcode).
+- Textos que ainda apareciam em português agora são localizáveis (ex.: "Verificar" → Check, "Modelo" → Model) e chaves órfãs do catálogo de strings foram removidas.
+
+---
+
 ## [1.2.0] — 2026-06-16
 
 ### Adicionado

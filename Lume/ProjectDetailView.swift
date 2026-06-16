@@ -21,6 +21,7 @@ struct ProjectDetailView: View {
     @State private var messageText = ""
     @State private var indexedFiles: [String] = []
     @State private var gradientAngle: Double = 0
+    @State private var attachedImages: [NSImage] = []
 
     var body: some View {
         Group {
@@ -87,7 +88,6 @@ struct ProjectDetailView: View {
                 projectHeader
                 Divider().opacity(0.3)
                 conversationsArea
-                Divider().opacity(0.3)
                 projectInputArea
             }
             .frame(minWidth: 420)
@@ -283,126 +283,32 @@ struct ProjectDetailView: View {
     // MARK: - Project Input Area
 
     private var projectInputArea: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .bottom, spacing: 10) {
-                VStack(alignment: .leading, spacing: 0) {
-                    ZStack(alignment: .topLeading) {
-                        TextEditor(text: $messageText)
-                            .font(.system(size: 14))
-                            .frame(minHeight: 36, maxHeight: 160)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .scrollContentBackground(.hidden)
-                            .background(Color.clear)
-                            .onKeyPress(.return) {
-                                let flags = NSApp.currentEvent?.modifierFlags ?? []
-                                if flags.contains(.shift) { return .ignored }
-                                sendMessage()
-                                return .handled
-                            }
-
-                        if messageText.isEmpty {
-                            Text("What would you like to work on in this project?")
-                                .font(.system(size: 14))
-                                .foregroundStyle(Color(.placeholderTextColor))
-                                .padding(.top, 5)
-                                .padding(.leading, 5)
-                                .allowsHitTesting(false)
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.top, 12)
-                    .padding(.bottom, 4)
-
-                    HStack(spacing: 6) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "folder").font(.system(size: 10))
-                            Text(project.name).font(.system(size: 11, weight: .medium))
-                            Image(systemName: "chevron.down").font(.system(size: 8))
-                        }
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(Color.primary.opacity(0.06),
-                                    in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-
-                        HStack(spacing: 4) {
-                            Image(systemName: "cpu").font(.system(size: 10))
-                            Text(providerManager.activeProvider?.defaultModel ?? "Modelo")
-                                .font(.system(size: 11, weight: .medium))
-                            Image(systemName: "chevron.down").font(.system(size: 8))
-                        }
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(Color.primary.opacity(0.06),
-                                    in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-
-                        Spacer()
-
-                        Button { showFileImporter = true } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 26, height: 26)
-                        }
-                        .buttonStyle(.plain)
-
-                        Button { } label: {
-                            Image(systemName: "mic")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 26, height: 26)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 10)
-                    .padding(.top, 2)
+        // Reusa o MESMO composer do Chat/Code para a UI ficar idêntica em todos os modos.
+        ChatInputView(
+            text: $messageText,
+            placeholder: String(localized: "What would you like to work on in this project?"),
+            isLoading: providerManager.isLoading,
+            onSend: sendMessage,
+            onStop: { providerManager.cancelStreaming() },
+            onAttach: { showFileImporter = true },
+            onVoice: { },
+            isDictating: false,
+            modelName: providerManager.activeProvider?.defaultModel ?? "",
+            availableModels: [],
+            onModelChange: { newModel in
+                providerManager.activeProvider?.defaultModel = newModel
+            },
+            onProviderModelSelect: { provider, newModel in
+                Task {
+                    try? await providerManager.setActiveProvider(
+                        configID: provider.id, config: provider, context: modelContext)
+                    providerManager.activeProvider?.defaultModel = newModel
                 }
-                .background {
-                    ZStack {
-                        Rectangle().fill(.ultraThinMaterial)
-                        LinearGradient(
-                            colors: [
-                                Color.accentColor.opacity(0.06),
-                                Color.purple.opacity(0.03),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-                }
-                .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
-
-                Button(action: sendMessage) {
-                    Image(systemName: "arrow.up")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(messageText.trimmingCharacters(in: .whitespaces).isEmpty
-                                         ? Color(.tertiaryLabelColor) : .white)
-                        .frame(width: 36, height: 36)
-                        .background(
-                            messageText.trimmingCharacters(in: .whitespaces).isEmpty
-                                ? Color(.controlBackgroundColor) : Color.accentColor,
-                            in: Circle()
-                        )
-                        .overlay(Circle().strokeBorder(
-                            Color.primary.opacity(messageText.trimmingCharacters(in: .whitespaces).isEmpty ? 0.1 : 0),
-                            lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(messageText.trimmingCharacters(in: .whitespaces).isEmpty)
-                .animation(.easeInOut(duration: 0.2), value: messageText.isEmpty)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-        }
-        .background(.ultraThinMaterial)
+            },
+            attachedImages: $attachedImages
+        )
     }
+
 
     // MARK: - Right Panel
 
@@ -560,6 +466,7 @@ struct ProjectDetailView: View {
         // Silencia o warning — save() é síncrono, resultado ignorado intencionalmente
         do { try modelContext.save() } catch { }
         messageText = ""
+        attachedImages = []
 
         let manager = providerManager
         let ragProject = project
