@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var renamingConversation: Conversation? = nil
     @State private var expandedProjects: Set<String> = []
     @State private var updateManager = UpdateManager.shared
+    @EnvironmentObject private var sparkle: SparkleUpdater
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "lume_onboarding_completed")
     @State private var showNewProject = false
     @State private var showCommandPalette = false
@@ -39,24 +40,10 @@ struct ContentView: View {
                 .toolbar(removing: .title)
                 .toolbarBackground(.hidden, for: .windowToolbar)
         } detail: {
-            ZStack(alignment: .bottomTrailing) {
-                detailView
-                    .navigationTitle("")
-                    .toolbar(removing: .title)
-                    .toolbarBackground(.hidden, for: .windowToolbar)
-                if let release = updateManager.availableRelease {
-                    UpdateNotificationCard(
-                        release: release,
-                        onUpdate: { updateManager.openDownloadPage(); updateManager.dismiss() },
-                        onDismiss: { withAnimation(.easeInOut(duration: 0.2)) { updateManager.dismiss() } }
-                    )
-                    .padding(20)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .bottom).combined(with: .opacity),
-                        removal: .move(edge: .bottom).combined(with: .opacity)
-                    ))
-                }
-            }
+            detailView
+                .navigationTitle("")
+                .toolbar(removing: .title)
+                .toolbarBackground(.hidden, for: .windowToolbar)
         }
         .navigationSplitViewStyle(.balanced)
         .task {
@@ -68,8 +55,9 @@ struct ContentView: View {
                     Task { try? await providerManager.streamMessage(content: task.prompt, conversation: conv) }
                 }
             }
-            // Atualizações são gerenciadas pelo Sparkle (download + install + relaunch).
-            // O verificador antigo via GitHub API foi desativado para não duplicar avisos.
+            // Detecta atualizações (GitHub) para exibir o popup na sidebar.
+            // O download/instalação em si é feito pelo Sparkle ao tocar no popup.
+            await updateManager.checkForUpdates()
         }
         .sheet(item: $renamingConversation) { conv in
             RenameConversationSheet(conversation: conv, initialName: conv.title) { renamingConversation = nil }
@@ -586,26 +574,30 @@ struct ContentView: View {
     // MARK: - Bottom bar
 
     private var bottomBar: some View {
-        HStack(spacing: 8) {
-            if updateManager.availableRelease != nil {
-                Button { } label: {
-                    HStack(spacing: 4) {
-                        Circle().fill(Color.accentColor).frame(width: 5, height: 5)
-                        Text("Update available").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+        VStack(spacing: 8) {
+            // Popup de atualização — logo acima do nome do modelo
+            if let release = updateManager.availableRelease {
+                SidebarUpdateBadge(
+                    version: release.version,
+                    onUpdate: { sparkle.checkForUpdates(); updateManager.dismiss() },
+                    onDismiss: { withAnimation(.easeInOut(duration: 0.2)) { updateManager.dismiss() } }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            HStack(spacing: 8) {
+                Spacer()
+                if let config = activeConfig {
+                    HStack(spacing: 5) {
+                        Circle().fill(Color.green).frame(width: 5, height: 5).shadow(color: .green.opacity(0.6), radius: 2)
+                        Text(config.name).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, 7).padding(.vertical, 3).background(.ultraThinMaterial, in: Capsule())
-                }.buttonStyle(.plain)
-            }
-            Spacer()
-            if let config = activeConfig {
-                HStack(spacing: 5) {
-                    Circle().fill(Color.green).frame(width: 5, height: 5).shadow(color: .green.opacity(0.6), radius: 2)
-                    Text(config.name).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                 }
-                .padding(.horizontal, 7).padding(.vertical, 3).background(.ultraThinMaterial, in: Capsule())
             }
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
+        .animation(.easeInOut(duration: 0.25), value: updateManager.availableRelease?.version)
     }
 
     // MARK: - Detail

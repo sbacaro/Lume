@@ -1,0 +1,11 @@
+// Version.xcconfig
+//
+// FONTE ÚNICA da versão do Lume.
+// Edite SÓ aqui — o app (Info.plist via build settings), o About, os scripts de
+// build/DMG e a atualização (Sparkle/appcast) leem todos a partir daqui.
+//
+//   MARKETING_VERSION       → CFBundleShortVersionString (ex.: "1.3.0")
+//   CURRENT_PROJECT_VERSION → CFBundleVersion / build      (ex.: "5")
+
+MARKETING_VERSION = 1.3.1
+CURRENT_PROJECT_VERSION = 6

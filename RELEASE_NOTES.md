@@ -1,3 +1,45 @@
+# 🔔 Lume v1.3.1 — Notificação de atualização na sidebar e fonte única de versão
+
+Esta versão traz um **popup de atualização no estilo do Lume** logo acima do nome do
+modelo, uma **fonte única para o número da versão** e a consolidação do fluxo de release
+em um único script.
+
+**Data de lançamento:** 2026-06-16
+**Versão:** v1.3.1 (build 6)
+**Tipo:** Melhorias + correção
+
+---
+
+## ✨ Novidades
+
+### Notificação de atualização na sidebar
+- Quando há uma versão nova, aparece um **popup no estilo do Lume** (vidro + gradiente da
+  marca) **logo acima do nome do modelo**, no rodapé da barra lateral. Toque para atualizar
+  (via Sparkle); há um botão para dispensar.
+
+### Fonte única da versão
+- O número da versão agora vive só no **`Version.xcconfig`**. O app, o About e todos os
+  scripts derivam dele. Use **`set-version.sh`** para bumpar em um comando.
+
+---
+
+## 🔧 Alterações
+
+- **`build-release.sh` virou um único arquivo autocontido**: compila, gera o `.app` e
+  produz o `Lume-<versão>.dmg` (fundo no gradiente da marca + atalho do Applications,
+  headless). O antigo `build-dmg.sh` foi incorporado.
+
+---
+
+## 🐞 Correções
+
+- Correção de compilação no stub do `SparkleUpdater` (faltava `import Combine`).
+
+---
+
+<details>
+<summary>Histórico — versões anteriores</summary>
+
 # 🧭 Lume v1.3.0 — Chat unificado, IA ciente do modo e auto-update
 
 Esta versão **unifica a interface de chat** nos três modos, deixa o **modelo ciente de
@@ -149,6 +191,9 @@ clicar em **Atualizar** na notificação (ou em **Verificar** na tela Sobre).
 ---
 
 **Changelog completo:** veja [`CHANGELOG.md`](CHANGELOG.md) · [v1.1.0](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)
+
+</details>
+
 
 </details>
 

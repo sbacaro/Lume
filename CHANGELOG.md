@@ -5,6 +5,23 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.3.1] — 2026-06-16
+
+### Adicionado
+
+- **Notificação de atualização na sidebar**: um popup no estilo do Lume (vidro + gradiente da marca) aparece **logo acima do nome do modelo**, no rodapé da barra lateral. Toque para atualizar (via Sparkle); há um botão para dispensar.
+- **Fonte única da versão (`Version.xcconfig`)**: o número da versão passa a viver em um único arquivo, do qual o app, o About e todos os scripts derivam. Inclui `set-version.sh` para bumpar em um comando.
+
+### Alterado
+
+- **`build-release.sh` agora é um único arquivo autocontido**: compila, gera o `.app` e produz o `Lume-<versão>.dmg` (com fundo no gradiente da marca e atalho do Applications, headless) — o antigo `build-dmg.sh` foi incorporado.
+
+### Corrigido
+
+- Correção de compilação no stub do `SparkleUpdater` (faltava `import Combine`), que impedia o build sem o pacote Sparkle adicionado.
+
+---
+
 ## [1.3.0] — 2026-06-16
 
 ### Adicionado

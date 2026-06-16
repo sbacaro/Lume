@@ -141,3 +141,80 @@ struct UpdateNotificationCard: View {
         }
     }
 }
+
+// MARK: - Sidebar Update Badge
+
+/// Popup compacto de "atualização disponível" para a sidebar — no estilo do Lume
+/// (vidro + gradiente da marca + borda de acento). Fica logo acima do nome do modelo.
+struct SidebarUpdateBadge: View {
+    let version: String
+    let onUpdate: () -> Void
+    let onDismiss: () -> Void
+
+    @State private var appeared = false
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(spacing: 9) {
+            ZStack {
+                Circle()
+                    .fill(LumeBrand.gradient)
+                    .frame(width: 26, height: 26)
+                    .shadow(color: LumeBrand.glow.opacity(0.40), radius: 4, y: 1)
+                Image(systemName: "sparkles")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Update available")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("Lume \(version)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 4)
+
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 18, height: 18)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Dismiss")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [Color.accentColor.opacity(0.12), Color.accentColor.opacity(0.02), Color.clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+            }
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.accentColor.opacity(hovering ? 0.5 : 0.22), lineWidth: 1)
+        }
+        .shadow(color: Color.black.opacity(0.10), radius: 6, y: 2)
+        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .onTapGesture { onUpdate() }
+        .onHover { hovering = $0 }
+        .scaleEffect(appeared ? 1 : 0.96)
+        .opacity(appeared ? 1 : 0)
+        .onAppear {
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { appeared = true }
+        }
+        .help("Update Lume to \(version)")
+    }
+}
