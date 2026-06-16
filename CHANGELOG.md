@@ -5,6 +5,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.3.2] — 2026-06-16
+
+### Corrigido
+
+- O botão **"Check"** (Verificar atualizações) na tela **Sobre** agora faz a verificação **dentro do app** e mostra o status ali mesmo ("Procurando…", "Nova versão disponível: X" ou "Você está na versão mais recente."), em vez de abrir a página de releases no navegador.
+
+---
+
 ## [1.3.1] — 2026-06-16
 
 ### Adicionado

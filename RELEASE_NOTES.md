@@ -1,3 +1,25 @@
+# 🩹 Lume v1.3.2 — Correção do "Check" no About
+
+Correção pontual: o botão de **verificar atualizações** na tela Sobre passa a checar
+**dentro do app**, em vez de abrir o navegador.
+
+**Data de lançamento:** 2026-06-16
+**Versão:** v1.3.2 (build 7)
+**Tipo:** Correção
+
+---
+
+## 🐞 Correções
+
+- O botão **"Check"** na tela **Sobre** agora faz a verificação dentro do app e mostra o
+  status ali mesmo ("Procurando…", "Nova versão disponível: X" ou "Você está na versão
+  mais recente."), em vez de abrir a página de releases do GitHub no navegador.
+
+---
+
+<details>
+<summary>Histórico — versões anteriores</summary>
+
 # 🔔 Lume v1.3.1 — Notificação de atualização na sidebar e fonte única de versão
 
 Esta versão traz um **popup de atualização no estilo do Lume** logo acima do nome do
@@ -191,6 +213,9 @@ clicar em **Atualizar** na notificação (ou em **Verificar** na tela Sobre).
 ---
 
 **Changelog completo:** veja [`CHANGELOG.md`](CHANGELOG.md) · [v1.1.0](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)
+
+</details>
+
 
 </details>
 
