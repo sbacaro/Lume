@@ -233,14 +233,20 @@ else
   echo "✔ PKG: $OUT_PKG ($(du -h "$OUT_PKG" | cut -f1))"
 fi
 
-# ── 5) Commit + push do que estiver pendente ─────────────────────────────────
+# ── 5) Commit + sincroniza com o remoto + push ───────────────────────────────
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "▶ Commitando mudanças pendentes…"
   git add -A
   git commit -q -m "$TAG"
 fi
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+echo "▶ Sincronizando com o remoto (pull --rebase)…"
+if ! git pull --rebase --autostash origin "$BRANCH"; then
+  echo "✖ Conflito ao integrar mudanças do remoto. Resolva os conflitos e rode de novo: ./release.sh --no-build"
+  exit 1
+fi
 echo "▶ git push…"
-git push -q
+git push -q origin "$BRANCH"
 
 # ── 6) Tag vX.Y.Z ────────────────────────────────────────────────────────────
 if git rev-parse "$TAG" >/dev/null 2>&1; then
