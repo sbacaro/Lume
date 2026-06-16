@@ -4,11 +4,11 @@
 #
 #   1) Versão na FONTE ÚNICA (Version.xcconfig). Opcional: passar nova versão.
 #   2) Compila o app (xcodebuild, Release) → Lume.app
-#   3) Gera o DMG custom (fundo com o gradiente da marca + atalho do Applications)
-#   4) Gera o PKG (instalador que coloca o Lume.app em /Applications)
-#   5) Commit + push do que estiver pendente
-#   6) Cria e empurra a tag vX.Y.Z
-#   7) Cria/atualiza o release no GitHub, anexa DMG + PKG e marca como "latest"
+#   3) Gera o DMG custom com o Lume.app DENTRO (fundo no gradiente da marca +
+#      atalho do Applications para arrastar e soltar)
+#   4) Commit + push do que estiver pendente
+#   5) Cria e empurra a tag vX.Y.Z
+#   6) Cria/atualiza o release no GitHub, anexa o DMG e marca como "latest"
 #
 # Autocontido: NÃO depende de build-release.sh nem de publish-release.sh.
 # Sem Homebrew nem gh obrigatórios — usa o que já vem no macOS (git + python3).
@@ -18,13 +18,25 @@
 #   ./release.sh                 # usa a versão atual do Version.xcconfig
 #   ./release.sh 1.3.4           # define nova versão (build = atual + 1) e publica
 #   ./release.sh 1.4.0 9         # nova versão e build explícitos
-#   ./release.sh --no-build      # reaproveita DMG/PKG já gerados
+#   ./release.sh --no-build      # reaproveita o DMG já gerado
 #   ./release.sh --draft         # cria como rascunho (não vira latest)
 #   ./release.sh --save-token    # salva/atualiza o token do GitHub no Keychain e sai
 #   ./release.sh --forget-token  # remove o token do Keychain
 #
 set -euo pipefail
-cd "$(dirname "$0")"
+
+# Blindagem contra auto-modificação: este script é versionado e, mais adiante,
+# faz `git commit` / `git pull --rebase`, que reescrevem o próprio arquivo no
+# disco. Se o bash ainda estiver lendo o original, passa a ler lixo no meio da
+# execução ("unbound variable"). Por isso rodamos a partir de uma cópia em /tmp.
+if [[ "${LUME_RELEASE_REEXEC:-}" != "1" ]]; then
+  _src_dir="$(cd "$(dirname "$0")" && pwd)"
+  _tmp_self="$(mktemp /tmp/lume_release.XXXXXX.sh)"
+  cat "$0" > "$_tmp_self"
+  exec env LUME_RELEASE_REEXEC=1 LUME_REPO_DIR="$_src_dir" bash "$_tmp_self" "$@"
+fi
+
+cd "${LUME_REPO_DIR:?}"
 [[ "$(uname)" == "Darwin" ]] || { echo "✖ Rode no macOS."; exit 1; }
 
 # ── Configuração ─────────────────────────────────────────────────────────────
@@ -79,8 +91,10 @@ BUILD="$(read_kv CURRENT_PROJECT_VERSION)"
 [[ -n "$VERSION" ]] || { echo "✖ Não consegui ler a versão de $CFG."; exit 1; }
 TAG="v$VERSION"
 OUT_DMG="$PWD/${APP_NAME}-${VERSION}.dmg"
-OUT_PKG="$PWD/${APP_NAME}-${VERSION}.pkg"
 APP="$BUILD_DIR/Build/Products/$CONFIG/$APP_NAME.app"
+# PKG foi descontinuado — o app vai DENTRO do DMG. Remove qualquer .pkg antigo
+# desta versão para que não seja re-anexado nem volte ao commit.
+rm -f "$PWD/${APP_NAME}-${VERSION}.pkg"
 
 # Repo OWNER/REPO a partir do remoto git
 REMOTE="$(git remote get-url origin 2>/dev/null || echo "")"
@@ -213,24 +227,7 @@ OSA
     sync; hdiutil detach "$MOUNT" -quiet
     hdiutil convert "$RW" -format UDZO -imagekey zlib-level=9 -o "$OUT_DMG" -quiet
   fi
-  echo "✔ DMG: $OUT_DMG ($(du -h "$OUT_DMG" | cut -f1))"
-fi
-
-# ── 4) PKG (instalador → /Applications) ──────────────────────────────────────
-if [[ "$NO_BUILD" == "1" && -f "$OUT_PKG" ]]; then
-  echo "✔ Reaproveitando PKG: $OUT_PKG"
-else
-  rm -f "$OUT_PKG"
-  echo "▶ Criando o PKG…"
-  PKGROOT="$WORK/pkgroot"; mkdir -p "$PKGROOT"
-  cp -R "$APP" "$PKGROOT/$APP_NAME.app"
-  pkgbuild --quiet \
-    --root "$PKGROOT" \
-    --install-location "/Applications" \
-    --identifier "$BUNDLE_ID" \
-    --version "$VERSION" \
-    "$OUT_PKG"
-  echo "✔ PKG: $OUT_PKG ($(du -h "$OUT_PKG" | cut -f1))"
+  echo "✔ DMG: $OUT_DMG ($(du -h "$OUT_DMG" | cut -f1))  — Lume.app está dentro do DMG"
 fi
 
 # ── 5) Commit + sincroniza com o remoto + push ───────────────────────────────
@@ -272,9 +269,9 @@ if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
   FLAG=(--latest); [[ "$DRAFT" == "1" ]] && FLAG=(--draft)
   if gh release view "$TAG" >/dev/null 2>&1; then
     gh release edit   "$TAG" --notes-file "$NOTES" "${FLAG[@]}"
-    gh release upload "$TAG" "$OUT_DMG" "$OUT_PKG" --clobber
+    gh release upload "$TAG" "$OUT_DMG" --clobber
   else
-    gh release create "$TAG" "$OUT_DMG" "$OUT_PKG" --title "Lume $TAG" --notes-file "$NOTES" "${FLAG[@]}"
+    gh release create "$TAG" "$OUT_DMG" --title "Lume $TAG" --notes-file "$NOTES" "${FLAG[@]}"
   fi
   echo "✅ Publicado: $(gh release view "$TAG" --json url -q .url)"
   exit 0
@@ -293,7 +290,7 @@ if [[ -z "$TOKEN" ]]; then
 fi
 [[ -n "$TOKEN" ]] || { echo "✖ Token vazio."; exit 1; }
 
-GH_TOKEN="$TOKEN" python3 - "$OWNER" "$REPO" "$TAG" "$NOTES" "$LATEST" "$OUT_DMG" "$OUT_PKG" <<'PY'
+GH_TOKEN="$TOKEN" python3 - "$OWNER" "$REPO" "$TAG" "$NOTES" "$LATEST" "$OUT_DMG" <<'PY'
 import os, sys, json, urllib.request, urllib.error
 tok = os.environ["GH_TOKEN"]
 owner, repo, tag, notes_path, latest, *assets = sys.argv[1:]
