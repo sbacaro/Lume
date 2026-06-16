@@ -47,6 +47,7 @@ final class SparkleUpdater: ObservableObject {
 #else
 
 import SwiftUI
+import Foundation
 import AppKit
 
 /// Stub usado enquanto o pacote Sparkle NÃO está adicionado ao target.
