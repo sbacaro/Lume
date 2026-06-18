@@ -77,4 +77,35 @@ struct RAGEngineTests {
         // min == max → evita divisão por zero, retorna zeros.
         #expect(RAGEngine.normalize([3, 3, 3]) == [0, 0, 0])
     }
+
+    // MARK: - Persistência do índice
+
+    @Test func contentHashIsDeterministicAndDistinct() {
+        let a = RAGIndexStore.contentHash("hello world")
+        #expect(a == RAGIndexStore.contentHash("hello world"))
+        #expect(a != RAGIndexStore.contentHash("hello world!"))
+        #expect(a.count == 64) // SHA-256 em hex
+    }
+
+    @Test func persistedDocumentRoundTrips() throws {
+        let doc = PersistedDocument(
+            documentName: "notes.txt",
+            contentHash: "abc",
+            backendID: "contextual",
+            dimension: 512,
+            summary: "resumo",
+            summaryEmbedding: [0.25, 0.5],
+            chunks: [
+                RAGChunk(id: "1", documentName: "notes.txt", content: "x",
+                         summary: "s", embedding: [0.5], chunkIndex: 0, totalChunks: 1)
+            ]
+        )
+        let data = try JSONEncoder().encode(doc)
+        let decoded = try JSONDecoder().decode(PersistedDocument.self, from: data)
+        #expect(decoded.documentName == "notes.txt")
+        #expect(decoded.backendID == "contextual")
+        #expect(decoded.summaryEmbedding == [0.25, 0.5])
+        #expect(decoded.chunks.count == 1)
+        #expect(decoded.chunks[0].embedding == [0.5])
+    }
 }

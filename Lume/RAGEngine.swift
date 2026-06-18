@@ -11,11 +11,12 @@
 //
 
 import Foundation
+import CryptoKit
 import NaturalLanguage
 
 // MARK: - Chunk
 
-struct RAGChunk: Sendable {
+nonisolated struct RAGChunk: Sendable, Codable {
     let id: String
     let documentName: String
     let content: String
@@ -23,6 +24,54 @@ struct RAGChunk: Sendable {
     let embedding: [Float]
     let chunkIndex: Int
     let totalChunks: Int
+}
+
+// MARK: - Persistência do índice
+
+/// Documento indexado serializável (chunks + resumo + embeddings) para cache em disco.
+nonisolated struct PersistedDocument: Codable {
+    let documentName: String
+    let contentHash: String
+    let backendID: String
+    let dimension: Int
+    let summary: String
+    let summaryEmbedding: [Float]
+    let chunks: [RAGChunk]
+}
+
+/// Cache em disco do índice RAG (Application Support/Lume/RAGIndex), um arquivo por
+/// documento. Invalidação por hash de conteúdo + identidade do backend de embedding.
+enum RAGIndexStore {
+
+    private nonisolated static let directory: URL = {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first!.appendingPathComponent("Lume/RAGIndex", isDirectory: true)
+        try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
+        return support
+    }()
+
+    /// SHA-256 hex de uma string (usado como hash de conteúdo e nome de arquivo).
+    nonisolated static func contentHash(_ text: String) -> String {
+        SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private nonisolated static func fileURL(for document: String) -> URL {
+        directory.appendingPathComponent(contentHash(document) + ".json")
+    }
+
+    nonisolated static func load(document: String) -> PersistedDocument? {
+        guard let data = try? Data(contentsOf: fileURL(for: document)) else { return nil }
+        return try? JSONDecoder().decode(PersistedDocument.self, from: data)
+    }
+
+    nonisolated static func save(_ doc: PersistedDocument) {
+        guard let data = try? JSONEncoder().encode(doc) else { return }
+        try? data.write(to: fileURL(for: doc.documentName), options: .atomic)
+    }
+
+    nonisolated static func delete(document: String) {
+        try? FileManager.default.removeItem(at: fileURL(for: document))
+    }
 }
 
 // MARK: - Source / Retrieval
@@ -62,19 +111,36 @@ actor RAGEngine {
     // MARK: - Index
 
     func index(file: FileIngestionManager.IngestedFile) async {
-        removeDocument(name: file.name)
+        clearInMemory(name: file.name)
         await embedder.loadIfNeeded()
+        let backendID = await embedder.backendID
+        let dimension = await embedder.dimension
+        let hash = RAGIndexStore.contentHash(file.content)
 
+        // Cache hit: mesmo conteúdo e mesmo backend de embedding → reaproveita do disco
+        // (evita re-embedar tudo a cada abertura do app).
+        if let cached = RAGIndexStore.load(document: file.name),
+           cached.contentHash == hash,
+           cached.backendID == backendID,
+           cached.dimension == dimension {
+            documentSummaries[file.name] = cached.summary
+            documentSummaryEmbeddings[file.name] = cached.summaryEmbedding
+            chunks.append(contentsOf: cached.chunks)
+            return
+        }
+
+        // Cache miss: (re)processa e grava no disco.
         let rawChunks = splitIntoChunks(text: file.content, name: file.name)
         let docSummary = summarize(text: file.content, maxSentences: 5)
+        let summaryEmbedding = await embedder.embed(text: docSummary)
         documentSummaries[file.name] = docSummary
-        documentSummaryEmbeddings[file.name] = await embedder.embed(text: docSummary)
+        documentSummaryEmbeddings[file.name] = summaryEmbedding
 
         var indexed: [RAGChunk] = []
         for (i, chunkText) in rawChunks.enumerated() {
             let summary = summarize(text: chunkText, maxSentences: 2)
             let embedding = await embedder.embed(text: chunkText)
-            let chunk = RAGChunk(
+            indexed.append(RAGChunk(
                 id: UUID().uuidString,
                 documentName: file.name,
                 content: chunkText,
@@ -82,10 +148,19 @@ actor RAGEngine {
                 embedding: embedding,
                 chunkIndex: i,
                 totalChunks: rawChunks.count
-            )
-            indexed.append(chunk)
+            ))
         }
         chunks.append(contentsOf: indexed)
+
+        RAGIndexStore.save(PersistedDocument(
+            documentName: file.name,
+            contentHash: hash,
+            backendID: backendID,
+            dimension: dimension,
+            summary: docSummary,
+            summaryEmbedding: summaryEmbedding,
+            chunks: indexed
+        ))
     }
 
     // MARK: - Retrieve
@@ -156,10 +231,17 @@ actor RAGEngine {
 
     // MARK: - Remove
 
-    func removeDocument(name: String) {
+    /// Limpa o estado em memória de um documento, sem tocar no cache em disco.
+    private func clearInMemory(name: String) {
         chunks.removeAll { $0.documentName == name }
         documentSummaries.removeValue(forKey: name)
         documentSummaryEmbeddings.removeValue(forKey: name)
+    }
+
+    /// Remove um documento do índice em memória **e** do cache em disco.
+    func removeDocument(name: String) {
+        clearInMemory(name: name)
+        RAGIndexStore.delete(document: name)
     }
 
     // MARK: - Private
@@ -262,6 +344,9 @@ actor TextEmbedder {
     private var loaded = false
     /// Dimensão do vetor produzido (definida na carga).
     private(set) var dimension = 512
+    /// Identidade do backend ("contextual" | "word" | "none") — usada para invalidar
+    /// o cache em disco quando o modelo de embedding muda entre versões.
+    private(set) var backendID = "none"
 
     /// Carrega o melhor backend disponível uma única vez.
     func loadIfNeeded() async {
@@ -274,6 +359,7 @@ actor TextEmbedder {
         if let ce = NLContextualEmbedding(script: .latin), (try? ce.load()) != nil {
             backend = .contextual(ce)
             dimension = ce.dimension
+            backendID = "contextual"
             return
         }
 
@@ -282,10 +368,12 @@ actor TextEmbedder {
             ?? NLEmbedding.wordEmbedding(for: .portuguese) {
             backend = .word(we)
             dimension = we.dimension
+            backendID = "word"
             return
         }
 
         backend = .none
+        backendID = "none"
     }
 
     func embed(text: String) async -> [Float] {
