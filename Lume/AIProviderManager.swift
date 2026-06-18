@@ -193,16 +193,28 @@ final class AIProviderManager {
         provider.defaultModel = conversationModel
 
         if !isCustomProvider && lumeConfig.enableModelRouting {
-            // O modelo escolhido pelo usuário é soberano: nunca o trocamos por baixo
-            // dos panos. O roteador roda em modo .preferred apenas para registrar a
-            // decisão/custo, mas mantém exatamente o modelo selecionado.
-            let routing = LLMRouter.route(
-                prompt: content,
-                history: conversation.messages,
-                provider: conversation.providerType,
-                preferredModel: conversationModel,
-                forceMode: .preferred
-            )
+            let routing: RoutingDecision
+            if lumeConfig.autoSelectModelByComplexityEnabled {
+                // Roteamento real: troca o modelo conforme a complexidade do prompt,
+                // classificada on-device (com fallback para a heurística).
+                routing = await LLMRouter.routeAsync(
+                    prompt: content,
+                    history: conversation.messages,
+                    provider: conversation.providerType,
+                    preferredModel: conversationModel,
+                    forceMode: .auto
+                )
+            } else {
+                // Modelo soberano (padrão): roda em .preferred apenas para registrar
+                // a decisão/custo, mantendo exatamente o modelo selecionado.
+                routing = LLMRouter.route(
+                    prompt: content,
+                    history: conversation.messages,
+                    provider: conversation.providerType,
+                    preferredModel: conversationModel,
+                    forceMode: .preferred
+                )
+            }
             lastRoutingDecision = routing
             provider.defaultModel = routing.model
         } else {

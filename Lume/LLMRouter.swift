@@ -98,7 +98,8 @@ enum LLMRouter {
         provider: String,
         preferredModel: String,
         hasImages: Bool = false,
-        forceMode: RoutingMode = .auto
+        forceMode: RoutingMode = .auto,
+        complexityOverride: ComplexityLevel? = nil
     ) -> RoutingDecision {
 
         // Detecta o provider real a partir do modelo (suporta gateways com prefixo)
@@ -155,7 +156,7 @@ enum LLMRouter {
             break
         }
 
-        let complexity = analyzeComplexity(prompt: prompt, history: history)
+        let complexity = complexityOverride ?? analyzeComplexity(prompt: prompt, history: history)
 
         switch complexity {
         case .low:
@@ -176,6 +177,27 @@ enum LLMRouter {
             return RoutingDecision(model: model, providerType: effectiveProvider,
                                    reason: .complexReasoning, estimatedCost: .expensive, confidence: 0.85)
         }
+    }
+
+    // MARK: - Async routing (complexidade on-device)
+
+    /// Versão assíncrona do `route`: em modo `.auto`, classifica a complexidade com o
+    /// modelo on-device (Foundation Models) e usa o resultado como override; cai para
+    /// a heurística por palavras-chave quando o modelo local não está disponível.
+    static func routeAsync(
+        prompt: String,
+        history: [Message],
+        provider: String,
+        preferredModel: String,
+        hasImages: Bool = false,
+        forceMode: RoutingMode = .auto
+    ) async -> RoutingDecision {
+        let override = forceMode == .auto ? await OnDeviceComplexity.classify(prompt: prompt) : nil
+        return route(
+            prompt: prompt, history: history, provider: provider,
+            preferredModel: preferredModel, hasImages: hasImages,
+            forceMode: forceMode, complexityOverride: override
+        )
     }
 
     // MARK: - Complexity Analysis

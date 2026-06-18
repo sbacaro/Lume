@@ -14,6 +14,15 @@ struct LumeConfig: Codable {
     var approvalMode: ApprovalMode = .supervised
     var maxAgentIterations: Int = 10
     var enableModelRouting: Bool = true
+    /// Quando ligado, troca automaticamente o modelo conforme a complexidade do prompt
+    /// (classificada on-device, com fallback heurístico). Opcional para não resetar
+    /// configs já salvas quando a chave não existe. Default: desligado.
+    var autoSelectModelByComplexity: Bool? = nil
+    /// Acessor booleano não-opcional para binding na UI e checagens.
+    var autoSelectModelByComplexityEnabled: Bool {
+        get { autoSelectModelByComplexity ?? false }
+        set { autoSelectModelByComplexity = newValue }
+    }
     var enableSemanticCache: Bool = true
     var enableRAG: Bool = true
     var enablePromptCaching: Bool = true  // Anthropic only

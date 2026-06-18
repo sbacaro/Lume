@@ -226,6 +226,11 @@ struct AgentSettingsView: View {
                 settingsSection(String(localized: "Optimizations")) {
                     Toggle("Automatic model routing", isOn: $config.enableModelRouting)
                         .onChange(of: config.enableModelRouting) { _, _ in config.save() }
+                    Toggle("Auto-select model by complexity (on-device)", isOn: $config.autoSelectModelByComplexityEnabled)
+                        .onChange(of: config.autoSelectModelByComplexityEnabled) { _, _ in config.save() }
+                    Text("When on, picks a cheaper or stronger model based on the prompt's complexity (classified on-device). Off by default — your chosen model stays as-is.")
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     Divider().opacity(0.4)
                     Toggle("Semantic cache", isOn: $config.enableSemanticCache)
                         .onChange(of: config.enableSemanticCache) { _, _ in config.save() }

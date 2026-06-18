@@ -758,6 +758,9 @@
     "Auto" : {
 
     },
+    "Auto-select model by complexity (on-device)" : {
+
+    },
     "Automatic model routing" : {
       "localizations" : {
         "pt-BR" : {
@@ -5336,6 +5339,9 @@
           }
         }
       }
+    },
+    "When on, picks a cheaper or stronger model based on the prompt's complexity (classified on-device). Off by default — your chosen model stays as-is." : {
+
     },
     "Workflow editor coming soon" : {
       "localizations" : {

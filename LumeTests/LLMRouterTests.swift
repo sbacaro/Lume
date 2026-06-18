@@ -169,6 +169,34 @@ struct LLMRouterTests {
         #expect(decision.estimatedCost == .cheap)
     }
 
+    @Test func routeHighComplexityOverrideUsesPowerfulModel() {
+        // Prompt trivial, mas override .high deve elevar a decisão.
+        let decision = LLMRouter.route(
+            prompt: "oi",
+            history: [],
+            provider: "anthropic",
+            preferredModel: "claude-sonnet-4-6",
+            forceMode: .auto,
+            complexityOverride: .high
+        )
+        #expect(decision.model == "claude-opus-4-8")
+        #expect(decision.reason == .complexReasoning)
+    }
+
+    @Test func routeLowComplexityOverrideUsesCheapModel() {
+        // Prompt que o heurístico marcaria alto, mas override .low rebaixa.
+        let decision = LLMRouter.route(
+            prompt: "analise em detalhes e compare passo a passo",
+            history: [],
+            provider: "openai",
+            preferredModel: "gpt-4o",
+            forceMode: .auto,
+            complexityOverride: .low
+        )
+        #expect(decision.model == "gpt-4o-mini")
+        #expect(decision.reason == .simpleQuery)
+    }
+
     @Test func routeEmptyPreferredModelReturnsPreferredReason() {
         let decision = LLMRouter.route(
             prompt: "oi",
