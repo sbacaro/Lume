@@ -97,7 +97,7 @@ final class MCPManager {
             return ToolResult(success: false, output: "Ação cancelada: o usuário recusou '\(name)'.", metadata: [:])
         }
         do {
-            let output = try await client.callTool(name: name, arguments: input.mapValues { $0 as Any })
+            let output = try await client.callTool(name: name, arguments: input)
             return ToolResult(success: true, output: output, metadata: ["mcp": connectorID])
         } catch {
             return ToolResult(success: false, output: error.localizedDescription, metadata: [:])

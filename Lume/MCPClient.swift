@@ -179,7 +179,9 @@ actor MCPClient {
     }
 
     /// Invoca uma ferramenta (`tools/call`) e devolve o texto concatenado do conteúdo.
-    func callTool(name: String, arguments: [String: Any]) async throws -> String {
+    /// Recebe `[String: String]` (Sendable) — os valores são serializados como JSON
+    /// dentro do actor, evitando enviar `[String: Any]` através da fronteira de isolamento.
+    func callTool(name: String, arguments: [String: String]) async throws -> String {
         let result = try await request(
             method: "tools/call",
             params: ["name": name, "arguments": arguments]
