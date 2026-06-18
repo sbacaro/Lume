@@ -91,4 +91,31 @@ struct MCPFramingTests {
         let value = try JSONDecoder().decode(JSONValue.self, from: Data(#"{"description":"x"}"#.utf8))
         #expect(MCPToolInfo(json: value) == nil)
     }
+
+    // MARK: - MCPAgentTool schema → parameters
+
+    @Test func schemaMapsToParameters() throws {
+        let schema = """
+        {"type":"object",
+         "properties":{
+           "path":{"type":"string","description":"File path"},
+           "depth":{"type":"number","description":"How deep"}
+         },
+         "required":["path"]}
+        """
+        let value = try JSONDecoder().decode(JSONValue.self, from: Data(schema.utf8))
+        let params = MCPAgentTool.parameters(from: value)
+        // ordenados por nome: depth, path
+        #expect(params.map(\.name) == ["depth", "path"])
+        let path = try #require(params.first { $0.name == "path" })
+        #expect(path.type == "string")
+        #expect(path.description == "File path")
+        #expect(path.required == true)
+        let depth = try #require(params.first { $0.name == "depth" })
+        #expect(depth.required == false)
+    }
+
+    @Test func schemaWithoutPropertiesIsEmpty() {
+        #expect(MCPAgentTool.parameters(from: .object([:])).isEmpty)
+    }
 }

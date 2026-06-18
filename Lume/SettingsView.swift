@@ -590,14 +590,24 @@ struct MCPSettingsView: View {
                 }
             }
             Divider().opacity(0.4)
-            HStack {
+            HStack(spacing: 10) {
                 Button("Add Connector") { showAdd = true }.buttonStyle(.lumePrimary)
+                Button("Connect / Refresh") {
+                    Task { await MCPManager.shared.syncConnectors(connectors) }
+                }
+                .buttonStyle(.lumeSecondary)
+                .disabled(connectors.allSatisfy { !$0.isEnabled })
+                if !MCPManager.shared.discoveredTools.isEmpty {
+                    Text("\(MCPManager.shared.discoveredTools.count) tools")
+                        .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                }
                 Spacer()
                 Link("About MCP →", destination: URL(string: "https://modelcontextprotocol.io")!)
                     .font(.system(size: 11)).foregroundStyle(Color.accentColor)
             }
             .padding()
         }
+        .task { await MCPManager.shared.syncConnectors(connectors) }
         .sheet(isPresented: $showAdd) { AddMCPConnectorSheet().presentationBackground(.ultraThinMaterial) }
     }
 }

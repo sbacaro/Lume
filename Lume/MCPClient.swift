@@ -235,3 +235,41 @@ actor MCPClient {
         }
     }
 }
+
+// MARK: - Ponte para o agente
+
+/// Adapta uma ferramenta MCP descoberta para o protocolo `AgentTool`, de modo que
+/// apareça junto das ferramentas nativas (`AgentToolExecutor.availableTools`) e seja
+/// oferecida ao modelo por todos os providers.
+struct MCPAgentTool: AgentTool {
+    let connectorID: String
+    let name: String
+    let description: String
+    let parameters: [ToolParameter]
+
+    init(connectorID: String, info: MCPToolInfo) {
+        self.connectorID = connectorID
+        self.name = info.name
+        self.description = info.description.isEmpty ? "MCP tool \(info.name)" : info.description
+        self.parameters = Self.parameters(from: info.inputSchema)
+    }
+
+    func execute(with input: [String: String]) async throws -> ToolResult {
+        await MCPManager.shared.executeMCPTool(connectorID: connectorID, name: name, input: input)
+    }
+
+    /// Converte um JSON Schema de input (`properties`/`required`) em `[ToolParameter]`.
+    nonisolated static func parameters(from schema: JSONValue) -> [ToolParameter] {
+        let props = schema["properties"]?.object ?? [:]
+        let required = Set((schema["required"]?.array ?? []).compactMap { $0.string })
+        return props.map { key, val in
+            ToolParameter(
+                name: key,
+                description: val["description"]?.string ?? "",
+                type: val["type"]?.string ?? "string",
+                required: required.contains(key)
+            )
+        }
+        .sorted { $0.name < $1.name }
+    }
+}

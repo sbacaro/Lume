@@ -35,7 +35,74 @@ final class MCPManager {
     var activeConnectors: [MCPConnector] = []
     var runningProcesses: [String: Process] = [:]
 
+    /// Clientes stdio conectados, por id de conector.
+    private var clients: [String: MCPClient] = [:]
+    /// Ferramentas descobertas (conector + descrição), expostas ao agente.
+    private(set) var discoveredTools: [DiscoveredTool] = []
+
+    struct DiscoveredTool: Identifiable {
+        let connectorID: String
+        let info: MCPToolInfo
+        var id: String { "\(connectorID)/\(info.name)" }
+    }
+
     private init() {}
+
+    // MARK: - Conexão (stdio) + descoberta de ferramentas
+
+    /// Conecta os conectores stdio habilitados que ainda não estão ativos e
+    /// atualiza a lista de ferramentas descobertas. Idempotente.
+    func syncConnectors(_ connectors: [MCPConnector]) async {
+        // Desconecta os que foram desabilitados/removidos (itera sobre um snapshot).
+        let enabledIDs = Set(connectors.filter { $0.isEnabled && $0.transport == "stdio" }.map { $0.id })
+        let toRemove = clients.filter { !enabledIDs.contains($0.key) }
+        for (id, client) in toRemove {
+            await client.stop()
+            clients.removeValue(forKey: id)
+            discoveredTools.removeAll { $0.connectorID == id }
+        }
+        // Conecta os novos.
+        for connector in connectors where connector.isEnabled && connector.transport == "stdio" {
+            guard clients[connector.id] == nil else { continue }
+            let client = MCPClient(connectorID: connector.id)
+            do {
+                try await client.start(command: connector.command)
+                try await client.initialize()
+                let tools = try await client.listTools()
+                clients[connector.id] = client
+                discoveredTools.append(contentsOf: tools.map {
+                    DiscoveredTool(connectorID: connector.id, info: $0)
+                })
+            } catch {
+                await client.stop()
+            }
+        }
+    }
+
+    /// Ferramentas MCP no formato do agente.
+    func agentTools() -> [any AgentTool] {
+        discoveredTools.map { MCPAgentTool(connectorID: $0.connectorID, info: $0.info) }
+    }
+
+    /// Executa uma ferramenta MCP com gate de aprovação (reusa o modo do AgentToolExecutor).
+    func executeMCPTool(connectorID: String, name: String, input: [String: String]) async -> ToolResult {
+        guard let client = clients[connectorID] else {
+            return ToolResult(success: false, output: "Conector MCP não está conectado.", metadata: [:])
+        }
+        let detail = input.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: ", ")
+        let approved = await AgentToolExecutor.shared.approveExternalTool(
+            name: name, summary: "Ferramenta MCP: \(name)", detail: detail
+        )
+        guard approved else {
+            return ToolResult(success: false, output: "Ação cancelada: o usuário recusou '\(name)'.", metadata: [:])
+        }
+        do {
+            let output = try await client.callTool(name: name, arguments: input.mapValues { $0 as Any })
+            return ToolResult(success: true, output: output, metadata: ["mcp": connectorID])
+        } catch {
+            return ToolResult(success: false, output: error.localizedDescription, metadata: [:])
+        }
+    }
 
     // MARK: - Stdio transport
 

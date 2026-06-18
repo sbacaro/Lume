@@ -16,7 +16,7 @@ final class AgentToolExecutor {
     var allowedDirectoriesPublic: Set<URL> { allowedDirectories }
     var requireShellConfirmation = true
 
-    let availableTools: [any AgentTool] = [
+    private static let builtInTools: [any AgentTool] = [
         ShellTool(),
         ReadFileTool(),
         WriteFileTool(),
@@ -31,6 +31,13 @@ final class AgentToolExecutor {
         GitHubCreateIssueTool(),
         GitHubCreateRepoTool(),
     ]
+
+    /// Ferramentas nativas + ferramentas descobertas dos servidores MCP conectados.
+    /// Como `AnthropicProvider.buildToolDefinitions()` deriva genericamente desta
+    /// lista, qualquer ferramenta MCP aparece automaticamente para o modelo.
+    var availableTools: [any AgentTool] {
+        Self.builtInTools + MCPManager.shared.agentTools()
+    }
 
     private init() {}
 
@@ -263,6 +270,12 @@ final class AgentToolExecutor {
     }
 
     // MARK: - Approval Gate
+
+    /// Gate de aprovação para ferramentas externas (MCP). Trata como destrutivo
+    /// por precaução — em modo `supervised` pede confirmação; em `strict`, sempre.
+    func approveExternalTool(name: String, summary: String, detail: String) async -> Bool {
+        await approveIfNeeded(toolName: name, summary: summary, detail: detail, isDestructive: true)
+    }
 
     /// Decide se a ação precisa de aprovação (conforme o modo) e, se precisar,
     /// suspende até o usuário aprovar/recusar.
