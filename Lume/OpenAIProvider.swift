@@ -331,228 +331,29 @@ final class OpenAIProvider: AIProvider {
 
     // MARK: - Tool Definitions
 
+    /// Gera as ferramentas no formato "tools" da API da OpenAI a partir da MESMA
+    /// fonte única usada pelo Anthropic: `AgentToolExecutor.availableTools`
+    /// (inclui as ferramentas GitHub e as descobertas via MCP). Mantém paridade
+    /// total entre os providers — toda ferramenta nova aparece automaticamente.
     private func buildToolDefinitions() -> [[String: Any]] {
-        return [
-            [
+        AgentToolExecutor.shared.availableTools.map { tool in
+            var properties: [String: Any] = [:]
+            var required: [String] = []
+            for p in tool.parameters {
+                properties[p.name] = ["type": p.type, "description": p.description]
+                if p.required { required.append(p.name) }
+            }
+            var schema: [String: Any] = ["type": "object", "properties": properties]
+            if !required.isEmpty { schema["required"] = required }
+            return [
                 "type": "function",
                 "function": [
-                    "name": "run_shell",
-                    "description": "Executa um comando shell/bash no macOS do usuário. Use para git, npm, python, compilar código, mover arquivos, instalar dependências, etc. Sempre use caminhos absolutos.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "command": [
-                                "type": "string",
-                                "description": "O comando shell completo a executar"
-                            ],
-                            "working_directory": [
-                                "type": "string",
-                                "description": "Diretório de trabalho opcional (caminho absoluto)"
-                            ]
-                        ],
-                        "required": ["command"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "read_file",
-                    "description": "Lê o conteúdo de um arquivo no disco do usuário.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "path": [
-                                "type": "string",
-                                "description": "Caminho absoluto do arquivo a ler"
-                            ]
-                        ],
-                        "required": ["path"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "write_file",
-                    "description": "Escreve ou sobrescreve um arquivo no disco do usuário.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "path": [
-                                "type": "string",
-                                "description": "Caminho absoluto do arquivo a criar/sobrescrever"
-                            ],
-                            "content": [
-                                "type": "string",
-                                "description": "Conteúdo a escrever no arquivo"
-                            ]
-                        ],
-                        "required": ["path", "content"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "list_directory",
-                    "description": "Lista arquivos e pastas em um diretório.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "path": [
-                                "type": "string",
-                                "description": "Caminho absoluto do diretório a listar"
-                            ]
-                        ],
-                        "required": ["path"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "create_directory",
-                    "description": "Cria um diretório (e subdiretórios) no disco.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "path": [
-                                "type": "string",
-                                "description": "Caminho absoluto do diretório a criar"
-                            ]
-                        ],
-                        "required": ["path"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "web_search",
-                    "description": "Busca informações na web via DuckDuckGo ou Google.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "query": [
-                                "type": "string",
-                                "description": "Termo de busca"
-                            ],
-                            "max_results": [
-                                "type": "string",
-                                "description": "Número máximo de resultados (padrão: 5)"
-                            ]
-                        ],
-                        "required": ["query"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "web_fetch",
-                    "description": "Acessa e lê o conteúdo de uma URL específica.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "url": [
-                                "type": "string",
-                                "description": "URL completa a acessar"
-                            ],
-                            "max_chars": [
-                                "type": "string",
-                                "description": "Número máximo de caracteres a retornar (padrão: 8000)"
-                            ]
-                        ],
-                        "required": ["url"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "github_list_repos",
-                    "description": "Lista os repositórios do GitHub do usuário conectado. Requer GitHub conectado em Configurações.",
-                    "parameters": ["type": "object", "properties": [:] as [String: Any]]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "github_get_repo",
-                    "description": "Mostra detalhes de um repositório do GitHub (descrição, linguagem, stars, issues abertas, branch padrão).",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "repo": ["type": "string", "description": "Repositório no formato 'owner/repo' (ou só 'repo' para o usuário conectado)"]
-                        ],
-                        "required": ["repo"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "github_list_issues",
-                    "description": "Lista issues de um repositório do GitHub (não inclui pull requests).",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "repo": ["type": "string", "description": "Repositório 'owner/repo'"],
-                            "state": ["type": "string", "description": "open, closed ou all (padrão: open)"]
-                        ],
-                        "required": ["repo"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "github_list_prs",
-                    "description": "Lista pull requests de um repositório do GitHub.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "repo": ["type": "string", "description": "Repositório 'owner/repo'"],
-                            "state": ["type": "string", "description": "open, closed ou all (padrão: open)"]
-                        ],
-                        "required": ["repo"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "github_create_issue",
-                    "description": "Cria uma nova issue em um repositório do GitHub.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "repo": ["type": "string", "description": "Repositório 'owner/repo'"],
-                            "title": ["type": "string", "description": "Título da issue"],
-                            "body": ["type": "string", "description": "Corpo/descrição (Markdown, opcional)"]
-                        ],
-                        "required": ["repo", "title"]
-                    ]
-                ]
-            ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "github_create_repo",
-                    "description": "Cria um novo repositório no GitHub do usuário conectado.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "name": ["type": "string", "description": "Nome do repositório"],
-                            "description": ["type": "string", "description": "Descrição (opcional)"],
-                            "private": ["type": "string", "description": "'true' para privado, 'false' para público (padrão: false)"]
-                        ],
-                        "required": ["name"]
-                    ]
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": schema
                 ]
             ]
-        ]
+        }
     }
 
     // MARK: - Helpers

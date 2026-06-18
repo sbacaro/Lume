@@ -7,8 +7,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Não lançado]
 
+### Adicionado
+
+- **MCP funcional (Model Context Protocol)**: novo `MCPClient` (actor) fala JSON-RPC 2.0 sobre stdio com framing newline-delimited — handshake `initialize`/`initialized`, `tools/list` e `tools/call`. As ferramentas descobertas dos servidores MCP conectados entram em `AgentToolExecutor.availableTools` (via `MCPAgentTool`) e são oferecidas ao modelo por **todos os providers**, com gate de aprovação. Em Settings → MCP há botão **Connect / Refresh** e contagem de ferramentas. +15 testes (`MCPFramingTests`).
+
 ### Alterado
 
+- **Paridade de ferramentas no OpenAI**: `OpenAIProvider.buildToolDefinitions()` deixou de ser uma lista hardcoded e passa a derivar de `AgentToolExecutor.availableTools` (mesma fonte do Anthropic) — ferramentas GitHub e MCP agora aparecem também no OpenAI automaticamente.
 - **RAG com embeddings contextuais**: `TextEmbedder` reescrito como `actor` usando **`NLContextualEmbedding`** (modelo transformer multilíngue, contextual, nativo e offline; script latino cobre PT+EN) com mean-pooling dos vetores de token, e **fallback** para `NLEmbedding` (word2vec) quando os assets do modelo não estão presentes. A dimensão do vetor é fixada na primeira carga. Embeddings de resumo passam a ser **cacheados no `index()`** (antes recomputados a cada busca). +11 testes (`RAGEngineTests`).
 - **Swift 6 de verdade**: o projeto migrou para o **Swift 6 language mode** (`SWIFT_VERSION = 6.0`) com **strict concurrency `complete`** em todos os targets. O target de testes (Swift Testing) compartilha a isolação `MainActor` do app; o `LumeUITests` (XCTest) permanece nonisolated.
 
