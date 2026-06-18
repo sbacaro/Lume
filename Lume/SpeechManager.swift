@@ -84,8 +84,8 @@ final class SpeechManager {
 // MARK: - Delegate Proxy (isola o NSObject do tipo @Observable)
 
 private final class SpeechDelegateProxy: NSObject, AVSpeechSynthesizerDelegate {
-    let onEnd: () -> Void
-    init(onEnd: @escaping () -> Void) { self.onEnd = onEnd }
+    let onEnd: @Sendable () -> Void
+    init(onEnd: @escaping @Sendable () -> Void) { self.onEnd = onEnd }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         onEnd()

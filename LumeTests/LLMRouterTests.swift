@@ -8,6 +8,7 @@
 import Testing
 @testable import Lume
 
+@MainActor
 struct LLMRouterTests {
 
     // MARK: - estimateTokens

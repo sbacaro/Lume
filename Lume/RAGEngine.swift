@@ -4,6 +4,11 @@
 //
 //  Created by Samuel Bacaro on 09/06/26.
 //
+//  Indexação e busca semântica de documentos para RAG.
+//  Embeddings via NLContextualEmbedding (transformer multilíngue, contextual,
+//  nativo e offline), com fallback para NLEmbedding (word2vec) quando os assets
+//  do modelo contextual não estão disponíveis.
+//
 
 import Foundation
 import NaturalLanguage
@@ -45,8 +50,10 @@ actor RAGEngine {
 
     private var chunks: [RAGChunk] = []
     private var documentSummaries: [String: String] = [:]
-    // Removido nonisolated(unsafe) — TextEmbedder é Sendable, não é necessário
-    private let embedder: TextEmbedder = TextEmbedder()
+    /// Embedding do resumo de cada documento — calculado no index() e reutilizado
+    /// em toda query (antes era recomputado a cada busca).
+    private var documentSummaryEmbeddings: [String: [Float]] = [:]
+    private let embedder = TextEmbedder()
     private let chunkSize = 512
     private let chunkOverlap = 64
     private let topK = 5
@@ -56,10 +63,12 @@ actor RAGEngine {
 
     func index(file: FileIngestionManager.IngestedFile) async {
         removeDocument(name: file.name)
+        await embedder.loadIfNeeded()
 
         let rawChunks = splitIntoChunks(text: file.content, name: file.name)
         let docSummary = summarize(text: file.content, maxSentences: 5)
         documentSummaries[file.name] = docSummary
+        documentSummaryEmbeddings[file.name] = await embedder.embed(text: docSummary)
 
         var indexed: [RAGChunk] = []
         for (i, chunkText) in rawChunks.enumerated() {
@@ -89,15 +98,16 @@ actor RAGEngine {
     /// Recuperação híbrida (vetorial + lexical) com fontes para citação.
     func buildRetrieval(for query: String) async -> RAGRetrieval? {
         guard !chunks.isEmpty else { return nil }
+        await embedder.loadIfNeeded()
 
         let queryEmbedding = await embedder.embed(text: query)
         let queryTerms = Self.tokenize(query)
 
-        // Documentos mais relevantes pela similaridade do resumo (semântica).
-        let rankedDocs = documentSummaries
-            .map { (name, summary) -> (String, String, Float) in
-                let summaryEmbedding = self.embedder.embedSync(text: summary)
-                return (name, summary, cosineSimilarity(queryEmbedding, summaryEmbedding))
+        // Documentos mais relevantes pela similaridade do resumo (semântica),
+        // usando os embeddings de resumo já cacheados no index().
+        let rankedDocs = documentSummaryEmbeddings
+            .map { (name, emb) -> (String, String, Float) in
+                (name, documentSummaries[name] ?? "", Self.cosineSimilarity(queryEmbedding, emb))
             }
             .sorted { $0.2 > $1.2 }
             .prefix(summaryTopK)
@@ -107,7 +117,7 @@ actor RAGEngine {
         guard !candidateChunks.isEmpty else { return nil }
 
         // Pontuação por chunk: cosine (semântica) + lexical (BM25-lite), normalizada.
-        let cosineScores = candidateChunks.map { cosineSimilarity(queryEmbedding, $0.embedding) }
+        let cosineScores = candidateChunks.map { Self.cosineSimilarity(queryEmbedding, $0.embedding) }
         let lexicalRaw = candidateChunks.map { Self.lexicalScore(queryTerms: queryTerms, text: $0.content) }
         let lexNorm = Self.normalize(lexicalRaw)
 
@@ -149,6 +159,7 @@ actor RAGEngine {
     func removeDocument(name: String) {
         chunks.removeAll { $0.documentName == name }
         documentSummaries.removeValue(forKey: name)
+        documentSummaryEmbeddings.removeValue(forKey: name)
     }
 
     // MARK: - Private
@@ -186,7 +197,9 @@ actor RAGEngine {
         return picked.joined(separator: " ")
     }
 
-    private func cosineSimilarity(_ a: [Float], _ b: [Float]) -> Float {
+    // MARK: - Pure scoring helpers (nonisolated — testáveis)
+
+    static func cosineSimilarity(_ a: [Float], _ b: [Float]) -> Float {
         guard a.count == b.count, !a.isEmpty else { return 0 }
         let dot = zip(a, b).map(*).reduce(0, +)
         let normA = sqrt(a.map { $0 * $0 }.reduce(0, +))
@@ -194,8 +207,6 @@ actor RAGEngine {
         guard normA > 0, normB > 0 else { return 0 }
         return dot / (normA * normB)
     }
-
-    // MARK: - Lexical (BM25-lite) helpers
 
     /// Tokeniza em termos minúsculos com 3+ caracteres.
     static func tokenize(_ text: String) -> [String] {
@@ -232,20 +243,91 @@ actor RAGEngine {
 
 // MARK: - TextEmbedder
 
-final class TextEmbedder: Sendable {
-    private nonisolated(unsafe) let embedding: NLEmbedding?
+/// Gera embeddings de texto. Prioriza `NLContextualEmbedding` (transformer
+/// multilíngue, contextual) e cai para `NLEmbedding` (word2vec, média de
+/// vetores por palavra) quando os assets do modelo contextual não existem.
+///
+/// É um `actor` para confinar o estado não-`Sendable` dos modelos do
+/// NaturalLanguage sob strict concurrency. A dimensão do vetor é fixada na
+/// primeira carga e mantida durante toda a sessão (índice + queries casam).
+actor TextEmbedder {
 
-    nonisolated init() {
-        self.embedding = NLEmbedding.wordEmbedding(for: .english)
-            ?? NLEmbedding.wordEmbedding(for: .portuguese)
+    private enum Backend {
+        case contextual(NLContextualEmbedding)
+        case word(NLEmbedding)
+        case none
+    }
+
+    private var backend: Backend = .none
+    private var loaded = false
+    /// Dimensão do vetor produzido (definida na carga).
+    private(set) var dimension = 512
+
+    /// Carrega o melhor backend disponível uma única vez.
+    func loadIfNeeded() async {
+        guard !loaded else { return }
+        loaded = true
+
+        // 1) Modelo contextual multilíngue (script latino cobre PT + EN).
+        //    load() carrega os assets se já presentes no sistema; se ainda não
+        //    baixados, lança e caímos no fallback word-embedding nesta sessão.
+        if let ce = NLContextualEmbedding(script: .latin), (try? ce.load()) != nil {
+            backend = .contextual(ce)
+            dimension = ce.dimension
+            return
+        }
+
+        // 2) Fallback: word embedding (legado).
+        if let we = NLEmbedding.wordEmbedding(for: .english)
+            ?? NLEmbedding.wordEmbedding(for: .portuguese) {
+            backend = .word(we)
+            dimension = we.dimension
+            return
+        }
+
+        backend = .none
     }
 
     func embed(text: String) async -> [Float] {
-        embedSync(text: text)
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return zeros }
+
+        switch backend {
+        case .contextual(let ce):
+            return contextualVector(ce, text: trimmed)
+        case .word(let we):
+            return wordMeanVector(we, text: trimmed)
+        case .none:
+            return zeros
+        }
     }
 
-    nonisolated func embedSync(text: String) -> [Float] {
-        guard let embedding else { return Array(repeating: 0, count: 300) }
+    private var zeros: [Float] { Array(repeating: 0, count: dimension) }
+
+    // MARK: - Contextual (transformer) — mean pooling dos vetores de token
+
+    private func contextualVector(_ ce: NLContextualEmbedding, text: String) -> [Float] {
+        let language = NLLanguageRecognizer.dominantLanguage(for: text) ?? .english
+        guard let result = try? ce.embeddingResult(for: text, language: language) else {
+            return zeros
+        }
+        var mean = [Double](repeating: 0, count: dimension)
+        var count = 0
+        result.enumerateTokenVectors(in: text.startIndex..<text.endIndex) { vector, _ in
+            if vector.count == self.dimension {
+                for i in 0..<self.dimension { mean[i] += vector[i] }
+                count += 1
+            }
+            return true
+        }
+        guard count > 0 else { return zeros }
+        let n = Double(count)
+        return mean.map { Float($0 / n) }
+    }
+
+    // MARK: - Word2vec (fallback) — média dos vetores de palavra
+
+    private func wordMeanVector(_ embedding: NLEmbedding, text: String) -> [Float] {
         let tagger = NLTagger(tagSchemes: [.tokenType])
         tagger.string = text
         var vectors: [[Double]] = []
@@ -258,9 +340,9 @@ final class TextEmbedder: Sendable {
             if let vector = embedding.vector(for: word) { vectors.append(vector) }
             return true
         }
-        guard !vectors.isEmpty else { return Array(repeating: 0, count: 300) }
+        guard !vectors.isEmpty else { return zeros }
         let dim = vectors[0].count
-        var mean = Array(repeating: Double(0), count: dim)
+        var mean = [Double](repeating: 0, count: dim)
         for v in vectors { for i in 0..<dim { mean[i] += v[i] } }
         let n = Double(vectors.count)
         return mean.map { Float($0 / n) }

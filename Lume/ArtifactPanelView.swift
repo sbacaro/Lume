@@ -127,7 +127,7 @@ struct ArtifactWebView: NSViewRepresentable {
     class Coordinator: NSObject, WKNavigationDelegate {
         func webView(_ webView: WKWebView,
                      decidePolicyFor action: WKNavigationAction,
-                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+                     decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
             if action.navigationType == .linkActivated,
                let url = action.request.url {
                 NSWorkspace.shared.open(url)

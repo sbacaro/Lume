@@ -471,7 +471,7 @@ struct ProjectDetailView: View {
         let manager = providerManager
         let ragProject = project
 
-        Task.detached { @MainActor in
+        Task { @MainActor in
             let files = ProjectManager.shared.listFiles(in: ragProject)
             for url in files {
                 if let file = try? await FileIngestionManager.shared.ingest(url: url) {

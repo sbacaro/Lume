@@ -64,7 +64,7 @@ final class TaskScheduler {
     private func startPolling() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            self?.checkTasks()
+            Task { @MainActor in self?.checkTasks() }
         }
     }
 

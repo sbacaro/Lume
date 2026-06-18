@@ -5,6 +5,24 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [Não lançado]
+
+### Alterado
+
+- **RAG com embeddings contextuais**: `TextEmbedder` reescrito como `actor` usando **`NLContextualEmbedding`** (modelo transformer multilíngue, contextual, nativo e offline; script latino cobre PT+EN) com mean-pooling dos vetores de token, e **fallback** para `NLEmbedding` (word2vec) quando os assets do modelo não estão presentes. A dimensão do vetor é fixada na primeira carga. Embeddings de resumo passam a ser **cacheados no `index()`** (antes recomputados a cada busca). +11 testes (`RAGEngineTests`).
+- **Swift 6 de verdade**: o projeto migrou para o **Swift 6 language mode** (`SWIFT_VERSION = 6.0`) com **strict concurrency `complete`** em todos os targets. O target de testes (Swift Testing) compartilha a isolação `MainActor` do app; o `LumeUITests` (XCTest) permanece nonisolated.
+
+### Adicionado
+
+- **Cobertura de testes** (Swift Testing): 48 testes cobrindo `LLMRouter` (roteamento/heurísticas), `ModelPricing` (custo/formatação), `ModelCapabilities` (visão), `ArtifactDetector` (detecção em markdown) e `JSONValue` (Codable/acessores/subscripts).
+
+### Corrigido
+
+- **Concorrência sob strict `complete`**: `WKNavigationDelegate.decisionHandler` marcado `@MainActor` em `ArtifactPanelView` (a assinatura antiga "quase casava" e o delegate podia nem ser chamado); `Task.detached` → `Task` em `ProjectDetailView` para não enviar `@Model` não-`Sendable` entre actors; `SpeechDelegateProxy.onEnd` agora é `@Sendable`; `TaskScheduler` pula para o `MainActor` antes de `checkTasks()` no callback do `Timer`.
+- **Código morto removido**: `SSEParser` (não referenciado; os providers consomem o SSE direto via `URLSession.bytes`).
+
+---
+
 ## [1.3.4] — 2026-06-16
 
 ### Adicionado
