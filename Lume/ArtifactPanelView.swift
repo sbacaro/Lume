@@ -13,8 +13,29 @@ struct ArtifactPanelView: View {
     @State private var selectedTab: ArtifactTab = .preview
     @State private var copied = false
     @State private var webViewID = UUID() // força reload
+    @State private var versionIndex: Int? = nil   // nil = versão atual
 
     enum ArtifactTab { case preview, source }
+
+    /// Total de versões (anteriores + atual).
+    private var versionCount: Int { artifact.versions.count + 1 }
+    /// Conteúdo exibido: versão histórica selecionada ou a atual.
+    private var displayedContent: String {
+        if let i = versionIndex, artifact.versions.indices.contains(i) {
+            return artifact.versions[i].content
+        }
+        return artifact.content
+    }
+    /// Posição 1-based exibida (a versão atual é a última).
+    private var displayedPosition: Int { (versionIndex ?? artifact.versions.count) + 1 }
+    private func showOlder() {
+        let current = versionIndex ?? artifact.versions.count
+        if current > 0 { versionIndex = current - 1 }
+    }
+    private func showNewer() {
+        guard let i = versionIndex else { return }
+        versionIndex = (i + 1 >= artifact.versions.count) ? nil : i + 1
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,10 +44,10 @@ struct ArtifactPanelView: View {
 
             switch selectedTab {
             case .preview:
-                ArtifactWebView(artifact: artifact)
-                    .id(webViewID)
+                ArtifactWebView(content: displayedContent, type: artifact.type)
+                    .id("\(webViewID)-\(versionIndex.map(String.init) ?? "cur")")
             case .source:
-                ArtifactSourceView(content: artifact.content)
+                ArtifactSourceView(content: displayedContent)
             }
         }
         .background(Color(.windowBackgroundColor))
@@ -49,6 +70,26 @@ struct ArtifactPanelView: View {
                 .lineLimit(1)
 
             Spacer()
+
+            if !artifact.versions.isEmpty {
+                HStack(spacing: 4) {
+                    Button { showOlder() } label: {
+                        Image(systemName: "chevron.left").font(.system(size: 10))
+                    }
+                    .buttonStyle(.plain).disabled(displayedPosition <= 1)
+                    .help("Versão anterior")
+
+                    Text("v\(displayedPosition)/\(versionCount)")
+                        .font(.system(size: 10, weight: .medium).monospacedDigit())
+                        .foregroundStyle(.secondary)
+
+                    Button { showNewer() } label: {
+                        Image(systemName: "chevron.right").font(.system(size: 10))
+                    }
+                    .buttonStyle(.plain).disabled(versionIndex == nil)
+                    .help("Versão mais recente")
+                }
+            }
 
             // Reload
             Button {
@@ -96,7 +137,7 @@ struct ArtifactPanelView: View {
 
     private func copySource() {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(artifact.content, forType: .string)
+        NSPasteboard.general.setString(displayedContent, forType: .string)
         withAnimation { copied = true }
         Task {
             try? await Task.sleep(for: .seconds(2))
@@ -108,7 +149,8 @@ struct ArtifactPanelView: View {
 // MARK: - WebView
 
 struct ArtifactWebView: NSViewRepresentable {
-    let artifact: Artifact
+    let content: String
+    let type: ArtifactType
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -139,22 +181,22 @@ struct ArtifactWebView: NSViewRepresentable {
     }
 
     private func buildHTML() -> String {
-        switch artifact.type {
+        switch type {
         case .html:
-            return injectBase(into: artifact.content)
+            return injectBase(into: content)
 
         case .svg:
             return """
             <!DOCTYPE html><html><head><meta charset="utf-8">
             <style>body{margin:0;display:flex;align-items:center;justify-content:center;
             min-height:100vh;background:#fff;}svg{max-width:100%;height:auto;}</style>
-            </head><body>\(artifact.content)</body></html>
+            </head><body>\(content)</body></html>
             """
 
         case .css:
             return """
             <!DOCTYPE html><html><head><meta charset="utf-8">
-            <style>\(artifact.content)</style></head>
+            <style>\(content)</style></head>
             <body>
             <div class="preview">
               <h1>Heading 1</h1><h2>Heading 2</h2>
@@ -176,7 +218,7 @@ struct ArtifactWebView: NSViewRepresentable {
             </head><body>
             <div id="root"></div>
             <script type="text/babel">
-            \(artifact.content)
+            \(content)
             const rootEl = document.getElementById('root');
             const root = ReactDOM.createRoot(rootEl);
             // Try to find exported/declared component
@@ -196,7 +238,7 @@ struct ArtifactWebView: NSViewRepresentable {
             justify-content:center;}
             .mermaid{max-width:100%;}</style>
             </head><body>
-            <div class="mermaid">\(artifact.content)</div>
+            <div class="mermaid">\(content)</div>
             <script>mermaid.initialize({startOnLoad:true,theme:'default'});</script>
             </body></html>
             """
@@ -213,14 +255,14 @@ struct ArtifactWebView: NSViewRepresentable {
               document.getElementById('output').textContent+=a.map(String).join(' ')+'\\n';
               _log(...a);
             };
-            try{\(artifact.content)}catch(e){
+            try{\(content)}catch(e){
               document.getElementById('output').textContent='Error: '+e.message;
             }
             </script></body></html>
             """
 
         default:
-            return "<html><body><pre>\(artifact.content)</pre></body></html>"
+            return "<html><body><pre>\(content)</pre></body></html>"
         }
     }
 

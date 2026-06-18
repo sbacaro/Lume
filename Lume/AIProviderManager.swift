@@ -245,7 +245,7 @@ final class AIProviderManager {
             streamingMessageID = assistantMsg.id
             await streamCachedResponse(cached, into: assistantMsg)
             streamingMessageID = nil
-            detectAndAttachArtifact(to: assistantMsg, response: cached)
+            detectAndAttachArtifact(to: assistantMsg, response: cached, conversation: conversation)
             autoRenameConversation(conversation, from: content)
             return cached
         }
@@ -526,7 +526,7 @@ final class AIProviderManager {
         if !skipCache {
             await SemanticCache.shared.set(prompt: cacheKey, model: provider.defaultModel, response: fullResponse)
         }
-        detectAndAttachArtifact(to: assistantMsg, response: fullResponse)
+        detectAndAttachArtifact(to: assistantMsg, response: fullResponse, conversation: conversation)
         autoRenameConversation(conversation, from: content)
 
         return fullResponse
@@ -813,11 +813,20 @@ final class AIProviderManager {
         return "\(ctx)|\(content)"
     }
 
-    private func detectAndAttachArtifact(to message: Message, response: String) {
-        if let detected = ArtifactDetector.detect(in: response) {
-            let artifact = Artifact(title: detected.title, type: detected.type, content: detected.content)
-            message.artifact = artifact
-            latestArtifactMessageID = message.id
+    private func detectAndAttachArtifact(to message: Message, response: String, conversation: Conversation) {
+        guard let detected = ArtifactDetector.detect(in: response) else { return }
+        let artifact = Artifact(title: detected.title, type: detected.type, content: detected.content)
+        // Histórico: herda as versões do artifact anterior do mesmo tipo na conversa e
+        // adiciona o conteúdo dele como a versão mais recente do encadeamento.
+        if let prevArtifact = conversation.messages
+            .filter({ $0.id != message.id })
+            .sorted(by: { $0.timestamp < $1.timestamp })
+            .last(where: { $0.artifact?.type == detected.type })?
+            .artifact {
+            artifact.versions = prevArtifact.versions
+                + [ArtifactVersion(content: prevArtifact.content, createdAt: prevArtifact.createdAt)]
         }
+        message.artifact = artifact
+        latestArtifactMessageID = message.id
     }
 }
