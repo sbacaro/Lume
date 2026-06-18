@@ -11,7 +11,9 @@ build/
 # Release
 release/
 
-# macOS
+# macOS / FUSE / cloud-sync artifacts
+.fuse_hidden*
+*.fuse_hidden*
 .DS_Store
 .AppleDouble
 .LSOverride
