@@ -8,12 +8,12 @@ public enum JSONValue: Codable, Equatable, Sendable {
     case array([JSONValue])
     case object([String: JSONValue])
     case null
-    
+
     // MARK: - Codable
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        
+
         if container.decodeNil() {
             self = .null
         } else if let bool = try? container.decode(Bool.self) {
@@ -28,10 +28,10 @@ public enum JSONValue: Codable, Equatable, Sendable {
             self = .object(try container.decode([String: JSONValue].self))
         }
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        
+
         switch self {
         case .bool(let bool):
             try container.encode(bool)
@@ -47,56 +47,58 @@ public enum JSONValue: Codable, Equatable, Sendable {
             try container.encodeNil()
         }
     }
-    
+
     // MARK: - Convenience Accessors
-    
+    // `nonisolated` — JSONValue é um tipo de dado puro (Sendable) e seus acessores
+    // devem ser usáveis de qualquer domínio de isolamento (actors, etc.), não só MainActor.
+
     /// Returns a boolean value for this JSON value, or `nil` if not a boolean.
-    var bool: Bool? {
+    nonisolated var bool: Bool? {
         if case .bool(let value) = self { return value }
         return nil
     }
-    
+
     /// Returns a numeric value for this JSON value, or `nil` if not a number.
-    var number: Double? {
+    nonisolated var number: Double? {
         if case .number(let value) = self { return value }
         return nil
     }
-    
+
     /// Returns a string value for this JSON value, or `nil` if not a string.
-    var string: String? {
+    nonisolated var string: String? {
         if case .string(let value) = self { return value }
         return nil
     }
-    
+
     /// Returns a string value for this JSON value, or `nil` if not a string.
     /// Computed property for backward compatibility during migration.
-    var stringValue: String? {
+    nonisolated var stringValue: String? {
         if case .string(let value) = self { return value }
         return nil
     }
-    
+
     /// Returns an array value for this JSON value, or `nil` if not an array.
-    var array: [JSONValue]? {
+    nonisolated var array: [JSONValue]? {
         if case .array(let value) = self { return value }
         return nil
     }
-    
+
     /// Returns an object value for this JSON value, or `nil` if not an object.
-    var object: [String: JSONValue]? {
+    nonisolated var object: [String: JSONValue]? {
         if case .object(let value) = self { return value }
         return nil
     }
-    
+
     /// Returns whether this JSON value is null.
-    var isNull: Bool {
+    nonisolated var isNull: Bool {
         if case .null = self { return true }
         return false
     }
-    
+
     // MARK: - Subscript
-    
+
     /// Accesses the value associated with the given key for object JSON values.
-    subscript(key: String) -> JSONValue? {
+    nonisolated subscript(key: String) -> JSONValue? {
         get {
             return object?[key]
         }
@@ -111,9 +113,9 @@ public enum JSONValue: Codable, Equatable, Sendable {
             }
         }
     }
-    
+
     /// Accesses the value at the given index for array JSON values.
-    subscript(index: Int) -> JSONValue? {
+    nonisolated subscript(index: Int) -> JSONValue? {
         get {
             return array?[index]
         }
