@@ -416,15 +416,23 @@ final class AIProviderManager {
         if !isCustomProvider &&
            contextManager.needsSummarization(messages: contextMessages, systemPrompt: optimizedSystemPrompt) {
             let oldMessages = Array(contextMessages.dropLast(contextManager.config.recentMessageCount))
-            if !oldMessages.isEmpty,
-               let summary = try? await provider.sendMessage(
-                   content: contextManager.buildSummarizationPrompt(for: oldMessages),
-                   conversationHistory: [],
-                   systemPrompt: "Você é um assistente de sumarização. Seja breve e factual."
-               ) {
-                let summaryMsg = Message(role: .system, content: "[Resumo anterior]\n" + summary)
-                let recent = Array(contextMessages.suffix(contextManager.config.recentMessageCount))
-                contextMessages = [summaryMsg] + recent
+            if !oldMessages.isEmpty {
+                let summarizationPrompt = contextManager.buildSummarizationPrompt(for: oldMessages)
+                // 1) Tenta o modelo on-device (grátis, offline, privado — não gasta tokens da API).
+                var summary = await OnDeviceSummarizer.summarize(transcript: summarizationPrompt)
+                // 2) Fallback: sumarização via API (custa tokens) quando o on-device não está disponível.
+                if summary == nil {
+                    summary = try? await provider.sendMessage(
+                        content: summarizationPrompt,
+                        conversationHistory: [],
+                        systemPrompt: "Você é um assistente de sumarização. Seja breve e factual."
+                    )
+                }
+                if let summary {
+                    let summaryMsg = Message(role: .system, content: "[Resumo anterior]\n" + summary)
+                    let recent = Array(contextMessages.suffix(contextManager.config.recentMessageCount))
+                    contextMessages = [summaryMsg] + recent
+                }
             }
         }
 

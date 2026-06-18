@@ -9,6 +9,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ### Adicionado
 
+- **Sumarização de contexto on-device**: novo `OnDeviceSummarizer` (Apple Foundation Models, macOS 26+) resume o histórico antigo da conversa **localmente** — grátis, offline e privado. O `AIProviderManager` tenta o modelo on-device primeiro e só cai para a sumarização via API (que custa tokens) quando o modelo local não está disponível. Reduz consumo de tokens em conversas longas, sem regressão.
 - **MCP funcional (Model Context Protocol)**: novo `MCPClient` (actor) fala JSON-RPC 2.0 sobre stdio com framing newline-delimited — handshake `initialize`/`initialized`, `tools/list` e `tools/call`. As ferramentas descobertas dos servidores MCP conectados entram em `AgentToolExecutor.availableTools` (via `MCPAgentTool`) e são oferecidas ao modelo por **todos os providers**, com gate de aprovação. Em Settings → MCP há botão **Connect / Refresh** e contagem de ferramentas. +15 testes (`MCPFramingTests`).
 
 ### Alterado
