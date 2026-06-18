@@ -123,6 +123,14 @@ struct LumeApp: App {
         WindowGroup {
             ContentView()
             .task { FullDiskAccessHelper.requestAccessIfNeeded() }
+            .task {
+                // Conecta os servidores MCP habilitados no launch, para que suas
+                // ferramentas já fiquem disponíveis ao agente sem abrir as Settings.
+                let descriptor = FetchDescriptor<MCPConnector>()
+                if let connectors = try? sharedModelContainer.mainContext.fetch(descriptor) {
+                    await MCPManager.shared.syncConnectors(connectors)
+                }
+            }
                 .environment(\.lumeConfig, config)
                 .environmentObject(sparkle)
                 .withWindowOpenerSetup(showSettings: $showSettings, showNewProject: $showNewProject)

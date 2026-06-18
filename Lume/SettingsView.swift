@@ -622,9 +622,29 @@ struct MCPConnectorRow: View {
                     .font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
+            statusBadge(connector.id)
             Toggle("", isOn: $connector.isEnabled).labelsHidden()
         }
         .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func statusBadge(_ id: String) -> some View {
+        switch MCPManager.shared.statuses[id] {
+        case .connecting?:
+            ProgressView().controlSize(.small)
+        case .connected(let n)?:
+            Text("\(n) tools")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.green)
+        case .failed(let msg)?:
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 11))
+                .foregroundStyle(.orange)
+                .help(msg)
+        case nil:
+            EmptyView()
+        }
     }
 }
 

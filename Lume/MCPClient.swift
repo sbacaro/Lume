@@ -238,6 +238,53 @@ actor MCPClient {
     }
 }
 
+// MARK: - Transporte HTTP
+
+/// Cliente HTTP do MCP (JSON-RPC sobre POST). Cada chamada é um POST independente
+/// para o endpoint do servidor. Assume respostas `application/json` (não trata
+/// streaming SSE — servidores que respondem apenas via `text/event-stream` não são
+/// suportados por este caminho). `nonisolated` — não toca estado isolado.
+enum MCPHTTP {
+
+    private nonisolated static func rpc(baseURL: String, method: String, params: [String: Any]) async throws -> JSONValue {
+        guard let url = URL(string: baseURL) else { throw MCPError.notRunning }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "jsonrpc": "2.0", "id": 1, "method": method, "params": params
+        ])
+        let (data, _) = try await URLSession.shared.data(for: req)
+        guard let resp = MCPFraming.decode(data) else { throw MCPError.decoding }
+        if let err = resp.error { throw MCPError.server(err.message) }
+        return resp.result ?? .null
+    }
+
+    nonisolated static func initialize(baseURL: String) async throws {
+        _ = try await rpc(baseURL: baseURL, method: "initialize", params: [
+            "protocolVersion": "2024-11-05",
+            "capabilities": [String: Any](),
+            "clientInfo": ["name": "Lume", "version": "1.0"]
+        ])
+    }
+
+    nonisolated static func listTools(baseURL: String) async throws -> [MCPToolInfo] {
+        let result = try await rpc(baseURL: baseURL, method: "tools/list", params: [:])
+        return (result["tools"]?.array ?? []).compactMap { MCPToolInfo(json: $0) }
+    }
+
+    nonisolated static func callTool(baseURL: String, name: String, arguments: [String: String]) async throws -> String {
+        let result = try await rpc(baseURL: baseURL, method: "tools/call",
+                                   params: ["name": name, "arguments": arguments])
+        if let content = result["content"]?.array {
+            let text = content.compactMap { $0["text"]?.string }.joined(separator: "\n")
+            if !text.isEmpty { return text }
+        }
+        return result.string ?? "[sem saída]"
+    }
+}
+
 // MARK: - Ponte para o agente
 
 /// Adapta uma ferramenta MCP descoberta para o protocolo `AgentTool`, de modo que

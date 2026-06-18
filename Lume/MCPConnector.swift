@@ -37,8 +37,12 @@ final class MCPManager {
 
     /// Clientes stdio conectados, por id de conector.
     private var clients: [String: MCPClient] = [:]
+    /// Endpoints HTTP conectados (id de conector → base URL).
+    private var httpEndpoints: [String: String] = [:]
     /// Ferramentas descobertas (conector + descrição), expostas ao agente.
     private(set) var discoveredTools: [DiscoveredTool] = []
+    /// Status de conexão por conector (para feedback na UI).
+    private(set) var statuses: [String: ConnectorStatus] = [:]
 
     struct DiscoveredTool: Identifiable {
         let connectorID: String
@@ -46,35 +50,65 @@ final class MCPManager {
         var id: String { "\(connectorID)/\(info.name)" }
     }
 
+    enum ConnectorStatus: Equatable, Sendable {
+        case connecting
+        case connected(tools: Int)
+        case failed(String)
+    }
+
     private init() {}
 
-    // MARK: - Conexão (stdio) + descoberta de ferramentas
+    // MARK: - Conexão (stdio + HTTP) + descoberta de ferramentas
 
-    /// Conecta os conectores stdio habilitados que ainda não estão ativos e
-    /// atualiza a lista de ferramentas descobertas. Idempotente.
+    /// Conecta os conectores habilitados (stdio ou HTTP) ainda não ativos e
+    /// atualiza ferramentas/status. Idempotente — pode ser chamado repetidamente.
     func syncConnectors(_ connectors: [MCPConnector]) async {
-        // Desconecta os que foram desabilitados/removidos (itera sobre um snapshot).
-        let enabledIDs = Set(connectors.filter { $0.isEnabled && $0.transport == "stdio" }.map { $0.id })
-        let toRemove = clients.filter { !enabledIDs.contains($0.key) }
-        for (id, client) in toRemove {
+        let enabled = connectors.filter { $0.isEnabled }
+        let enabledIDs = Set(enabled.map { $0.id })
+
+        // Desconecta o que foi desabilitado/removido (snapshot para iterar com segurança).
+        for (id, client) in clients where !enabledIDs.contains(id) {
             await client.stop()
             clients.removeValue(forKey: id)
-            discoveredTools.removeAll { $0.connectorID == id }
         }
+        httpEndpoints = httpEndpoints.filter { enabledIDs.contains($0.key) }
+        discoveredTools.removeAll { !enabledIDs.contains($0.connectorID) }
+        statuses = statuses.filter { enabledIDs.contains($0.key) }
+
         // Conecta os novos.
-        for connector in connectors where connector.isEnabled && connector.transport == "stdio" {
-            guard clients[connector.id] == nil else { continue }
+        for connector in enabled where clients[connector.id] == nil && httpEndpoints[connector.id] == nil {
+            statuses[connector.id] = .connecting
+            do {
+                let tools = try await connect(connector)
+                discoveredTools.append(contentsOf: tools.map {
+                    DiscoveredTool(connectorID: connector.id, info: $0)
+                })
+                statuses[connector.id] = .connected(tools: tools.count)
+            } catch {
+                statuses[connector.id] = .failed(error.localizedDescription)
+            }
+        }
+    }
+
+    /// Conecta um conector e devolve suas ferramentas. Limpa recursos em caso de falha.
+    private func connect(_ connector: MCPConnector) async throws -> [MCPToolInfo] {
+        switch connector.transport {
+        case "http":
+            try await MCPHTTP.initialize(baseURL: connector.url)
+            let tools = try await MCPHTTP.listTools(baseURL: connector.url)
+            httpEndpoints[connector.id] = connector.url
+            return tools
+        default: // stdio
             let client = MCPClient(connectorID: connector.id)
             do {
                 try await client.start(command: connector.command)
                 try await client.initialize()
                 let tools = try await client.listTools()
                 clients[connector.id] = client
-                discoveredTools.append(contentsOf: tools.map {
-                    DiscoveredTool(connectorID: connector.id, info: $0)
-                })
+                return tools
             } catch {
                 await client.stop()
+                throw error
             }
         }
     }
@@ -86,7 +120,7 @@ final class MCPManager {
 
     /// Executa uma ferramenta MCP com gate de aprovação (reusa o modo do AgentToolExecutor).
     func executeMCPTool(connectorID: String, name: String, input: [String: String]) async -> ToolResult {
-        guard let client = clients[connectorID] else {
+        guard clients[connectorID] != nil || httpEndpoints[connectorID] != nil else {
             return ToolResult(success: false, output: "Conector MCP não está conectado.", metadata: [:])
         }
         let detail = input.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: ", ")
@@ -97,7 +131,14 @@ final class MCPManager {
             return ToolResult(success: false, output: "Ação cancelada: o usuário recusou '\(name)'.", metadata: [:])
         }
         do {
-            let output = try await client.callTool(name: name, arguments: input)
+            let output: String
+            if let client = clients[connectorID] {
+                output = try await client.callTool(name: name, arguments: input)
+            } else if let url = httpEndpoints[connectorID] {
+                output = try await MCPHTTP.callTool(baseURL: url, name: name, arguments: input)
+            } else {
+                output = "Conector MCP não está conectado."
+            }
             return ToolResult(success: true, output: output, metadata: ["mcp": connectorID])
         } catch {
             return ToolResult(success: false, output: error.localizedDescription, metadata: [:])
