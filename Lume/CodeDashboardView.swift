@@ -23,11 +23,7 @@ struct CodeDashboardView: View {
     let onNewConversation: () -> Void
 
     @State private var gitStatus: GitManager.GitStatus? = nil
-    @State private var showTerminal = false
     @State private var showGitPanel = false
-    @State private var showCodeSearch = false
-    @State private var showTestRunner = false
-    @State private var showMCPPanel = false
 
     @State private var workspaceURL: URL? = {
         if let path = UserDefaults.standard.string(forKey: "code_workspace_path") {
@@ -56,26 +52,11 @@ struct CodeDashboardView: View {
                 codeDashboard
             }
         }
-        // ✅ Escuta notificações da sidebar
-        .onReceive(NotificationCenter.default.publisher(for: .openTerminal))   { _ in showTerminal   = true }
-        .onReceive(NotificationCenter.default.publisher(for: .openGitPanel))   { _ in showGitPanel   = true }
-        .onReceive(NotificationCenter.default.publisher(for: .openCodeSearch)) { _ in showCodeSearch = true }
-        .onReceive(NotificationCenter.default.publisher(for: .openTestRunner)) { _ in showTestRunner = true }
-        .onReceive(NotificationCenter.default.publisher(for: .openMCPPanel))   { _ in showMCPPanel   = true }
-        .sheet(isPresented: $showTerminal) {
-            TerminalSheetView(workingDirectory: workspaceURL?.path)
-        }
+        // Git é a única ferramenta de painel do Code. Shell, busca e testes o agente
+        // já executa via tools — a saída aparece na própria conversa, sem painel à parte.
+        .onReceive(NotificationCenter.default.publisher(for: .openGitPanel)) { _ in showGitPanel = true }
         .sheet(isPresented: $showGitPanel) {
             GitPanelView()
-        }
-        .sheet(isPresented: $showCodeSearch) {
-            CodeSearchView(workspacePath: workspaceURL?.path)
-        }
-        .sheet(isPresented: $showTestRunner) {
-            TestRunnerView()
-        }
-        .sheet(isPresented: $showMCPPanel) {
-            MCPQuickView()
         }
     }
 
@@ -268,11 +249,7 @@ struct CodeDashboardView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Tools").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
             HStack(spacing: 8) {
-                toolButton(icon: "terminal.fill",            label: "Terminal", color: .green)         { showTerminal   = true }
-                toolButton(icon: "arrow.triangle.branch",    label: "Git",      color: .orange)        { showGitPanel   = true }
-                toolButton(icon: "doc.text.magnifyingglass", label: String(localized: "Search"),    color: .blue)          { showCodeSearch = true }
-                toolButton(icon: "testtube.2",               label: String(localized: "Tests"),   color: .purple)        { showTestRunner = true }
-                toolButton(icon: "puzzlepiece.extension",    label: "MCP",      color: LumeTheme.clay) { showMCPPanel   = true }
+                toolButton(icon: "arrow.triangle.branch", label: "Git", color: .orange) { showGitPanel = true }
             }
         }
     }

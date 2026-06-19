@@ -240,7 +240,6 @@ struct ContentView: View {
                 sidebarNavItem(icon: "folder.badge.plus", label: "New Project") {
                     showNewProject = true
                 }
-                sidebarNavItem(icon: "calendar.badge.clock", label: "Agendadas") { }
                 sidebarNavItem(icon: "rectangle.split.2x1", label: "Live Artifacts") {
                     if let conv = allConversations.first(where: { $0.messages.contains { $0.artifact != nil } }) {
                         selectedConversation = conv; selectedProject = nil
@@ -521,24 +520,12 @@ struct ContentView: View {
                 Divider().padding(.vertical, 8).padding(.horizontal, 12)
 
                 HStack {
-                    Text("Tools").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                    Text("Repository").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
                     Spacer()
                 }.padding(.horizontal, 14).padding(.bottom, 4)
 
-                sidebarNavItem(icon: "terminal", label: "Terminal") {
-                    NotificationCenter.default.post(name: .openTerminal, object: nil)
-                }
                 sidebarNavItem(icon: "arrow.triangle.branch", label: "Git") {
                     NotificationCenter.default.post(name: .openGitPanel, object: nil)
-                }
-                sidebarNavItem(icon: "doc.text.magnifyingglass", label: String(localized: "Code search")) {
-                    NotificationCenter.default.post(name: .openCodeSearch, object: nil)
-                }
-                sidebarNavItem(icon: "testtube.2", label: String(localized: "Tests & Lint")) {
-                    NotificationCenter.default.post(name: .openTestRunner, object: nil)
-                }
-                sidebarNavItem(icon: "puzzlepiece.extension", label: "MCP Connectors") {
-                    NotificationCenter.default.post(name: .openMCPPanel, object: nil)
                 }
 
                 Divider().padding(.vertical, 8).padding(.horizontal, 12)

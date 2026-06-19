@@ -7,6 +7,14 @@
 
 import Foundation
 
+// MARK: - Modo do app
+
+/// Modo ativo do Lume. Define quais ferramentas são expostas ao modelo:
+/// Chat = conversa pura (web); Cowork = automação sobre arquivos; Code = engenharia.
+enum LumeMode: Sendable {
+    case chat, cowork, code
+}
+
 // MARK: - Tool Protocol
 
 protocol AgentTool: Sendable {

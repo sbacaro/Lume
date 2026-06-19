@@ -19,8 +19,6 @@ struct ChatDetailView: View {
     @State private var messageText = ""
     @State private var activeArtifact: Artifact? = nil
     @State private var activeToolCalls: [String: [ToolCall]] = [:]
-    @State private var workspaceURL: URL? = nil
-    @State private var showTerminal = false
     @State private var showInspector = true
     @State private var dictation = VoiceDictationManager()
     @State private var attachedFiles: [FileIngestionManager.IngestedFile] = []
@@ -55,6 +53,7 @@ struct ChatDetailView: View {
                 }
                 
                 // Input fixo na base
+                modeCapabilityChip
                 ChatInputView(
                     text: $messageText,
                     placeholder: inputPlaceholder,
@@ -127,9 +126,6 @@ struct ChatDetailView: View {
             allowedContentTypes: allowedFileTypes,
             allowsMultipleSelection: true
         ) { handleFileImport(result: $0) }
-        .sheet(isPresented: $showTerminal) {
-            TerminalSheetView(workingDirectory: workspaceURL?.path)
-        }
         .sheet(item: $editingMessage) { msg in
             EditMessageSheet(message: msg) { newContent in
                 restartConversation(from: msg, withNewContent: newContent)
@@ -282,8 +278,6 @@ struct ChatDetailView: View {
                 .background(.ultraThinMaterial, in: Capsule())
                 .transition(.opacity)
             }
-
-            headerButton(icon: "terminal", isActive: false) { showTerminal = true }.help("Terminal")
 
             if latestArtifactInConversation != nil {
                 headerButton(icon: "rectangle.split.2x1", isActive: activeArtifact != nil) {
@@ -491,15 +485,81 @@ struct ChatDetailView: View {
 
     // MARK: - Inspector Panel
 
+    /// Modo da conversa, derivado como na navegação (tags/projeto).
+    private var mode: LumeMode {
+        if conversation.tags.contains("code") { return .code }
+        if conversation.project != nil { return .cowork }
+        return .chat
+    }
+
+    private var modeIcon: String {
+        switch mode {
+        case .chat:   return "message"
+        case .cowork: return "square.grid.2x2"
+        case .code:   return "chevron.left.forwardslash.chevron.right"
+        }
+    }
+
+    /// Rótulo honesto do que o agente pode fazer no modo atual (reflete o gating de tools).
+    private var modeCapabilityLabel: String {
+        switch mode {
+        case .chat:   return "Chat — pesquisa na web"
+        case .cowork: return "Cowork — arquivos, sandbox, MCP"
+        case .code:   return "Code — shell, Git, arquivos"
+        }
+    }
+
+    /// Faixa fina acima do input indicando o modo e suas capacidades.
+    private var modeCapabilityChip: some View {
+        HStack(spacing: 6) {
+            Image(systemName: modeIcon).font(.system(size: 10))
+            Text(modeCapabilityLabel).font(.system(size: 11))
+            Spacer()
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+    }
+
+    /// Seção "Repository" do inspector (modo Code): arquivos referenciados na sessão.
+    private var codeRepoContent: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if conversation.referencedFiles.isEmpty {
+                Text("Nenhum arquivo referenciado ainda.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            } else {
+                ForEach(conversation.referencedFiles.prefix(8), id: \.self) { path in
+                    HStack(spacing: 6) {
+                        Image(systemName: fileIcon(for: path))
+                            .font(.system(size: 10)).foregroundStyle(.secondary)
+                        Text(URL(fileURLWithPath: path).lastPathComponent)
+                            .font(.system(size: 11)).lineLimit(1)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private var inspectorPanel: some View {
         ScrollView {
             VStack(spacing: 12) {
-                InspectorSection(title: "Progresso", icon: "checkmark.circle") {
-                    progressContent
+                // Progresso/tarefas: trabalho orientado a tarefas (Cowork e Code).
+                if mode != .chat {
+                    InspectorSection(title: "Progresso", icon: "checkmark.circle") {
+                        progressContent
+                    }
                 }
-                if let project = conversation.project {
+                // Arquivos do projeto: só no Cowork.
+                if mode == .cowork, let project = conversation.project {
                     InspectorSection(title: project.name, icon: project.icon) {
                         projectFilesContent(project)
+                    }
+                }
+                // Repositório: só no Code.
+                if mode == .code {
+                    InspectorSection(title: "Repository", icon: "arrow.triangle.branch") {
+                        codeRepoContent
                     }
                 }
                 InspectorSection(title: "Contexto", icon: "doc.text.magnifyingglass") {

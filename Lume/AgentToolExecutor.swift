@@ -32,11 +32,39 @@ final class AgentToolExecutor {
         GitHubCreateRepoTool(),
     ]
 
-    /// Ferramentas nativas + ferramentas descobertas dos servidores MCP conectados.
-    /// Como `AnthropicProvider.buildToolDefinitions()` deriva genericamente desta
-    /// lista, qualquer ferramenta MCP aparece automaticamente para o modelo.
+    /// Modo ativo — define o conjunto de ferramentas exposto ao modelo. É ajustado
+    /// pelo `AIProviderManager` antes de cada streaming, conforme a conversa.
+    var activeMode: LumeMode = .cowork
+
+    /// Em quais modos cada ferramenta nativa é oferecida ao modelo.
+    /// Chat = só web (conversa pura); Cowork = arquivos + web (automação);
+    /// Code = tudo, incluindo Git/GitHub (engenharia).
+    private static let toolModes: [String: Set<LumeMode>] = [
+        "web_search":         [.chat, .cowork, .code],
+        "web_fetch":          [.chat, .cowork, .code],
+        "run_shell":          [.cowork, .code],
+        "read_file":          [.cowork, .code],
+        "write_file":         [.cowork, .code],
+        "list_directory":     [.cowork, .code],
+        "create_directory":   [.cowork, .code],
+        "github_list_repos":  [.code],
+        "github_get_repo":    [.code],
+        "github_list_issues": [.code],
+        "github_list_prs":    [.code],
+        "github_create_issue":[.code],
+        "github_create_repo": [.code],
+    ]
+
+    /// Ferramentas disponíveis para o modo ativo. Ferramentas MCP entram em Cowork e
+    /// Code (ferramentas externas), nunca em Chat. Como os providers derivam
+    /// genericamente desta lista, o gating vale para Anthropic e OpenAI.
     var availableTools: [any AgentTool] {
-        Self.builtInTools + MCPManager.shared.agentTools()
+        let mode = activeMode
+        let builtins = Self.builtInTools.filter {
+            (Self.toolModes[$0.name] ?? [.chat, .cowork, .code]).contains(mode)
+        }
+        let mcp = mode == .chat ? [] : MCPManager.shared.agentTools()
+        return builtins + mcp
     }
 
     private init() {}

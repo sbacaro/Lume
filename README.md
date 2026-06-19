@@ -118,7 +118,7 @@ Lume/
 
 - [ ] Computer Use mode (screen control via Anthropic API) / Modo Computer Use (controle de tela via Anthropic API)
 - [ ] Native spreadsheets / Planilhas nativas
-- [ ] Artifact version history / Histórico de versões de artifacts
+- [x] Artifact version history / Histórico de versões de artifacts
 - [ ] Project export / Exportação de projetos
 - [ ] Custom themes / Temas de cor customizáveis
 

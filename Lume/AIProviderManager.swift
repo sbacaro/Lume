@@ -379,6 +379,17 @@ final class AIProviderManager {
         }
         baseSystemPrompt = modeHeader + "\n\n" + baseSystemPrompt
 
+        // Gating de ferramentas por modo: o conjunto de tools exposto ao modelo passa a
+        // depender do modo da conversa — Chat = só web; Cowork = arquivos+web+MCP;
+        // Code = tudo (inclui Git/GitHub). Antes, todas as tools ficavam expostas sempre.
+        if conversation.tags.contains("code") {
+            AgentToolExecutor.shared.activeMode = .code
+        } else if conversation.project != nil {
+            AgentToolExecutor.shared.activeMode = .cowork
+        } else {
+            AgentToolExecutor.shared.activeMode = .chat
+        }
+
         let optimizedSystemPrompt = baseSystemPrompt
 
         // ── BUSCA WEB (apenas para providers não-custom) ─────────

@@ -7,6 +7,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Não lançado]
 
+### Alterado (UI)
+
+- **Chat por modo (inspector + input)**: o painel direito agora muda conforme o modo — Chat mostra só Contexto/Notas; Cowork mantém Progresso + arquivos do projeto; Code ganha uma seção "Repository" com os arquivos referenciados. Acima do input, uma faixa indica o modo e suas capacidades reais (Chat = web; Cowork = arquivos/sandbox/MCP; Code = shell/Git/arquivos), refletindo o gating de ferramentas.
+- **Ferramentas por modo**: o conjunto de ferramentas exposto ao modelo agora depende do modo da conversa — **Chat** só pesquisa na web (conversa pura, sem acesso a arquivos/shell); **Cowork** tem arquivos, shell de sandbox, web e MCP (automação); **Code** tem tudo, incluindo Git/GitHub. Antes, todas as ferramentas ficavam disponíveis em qualquer modo. Vale para Anthropic e OpenAI.
+- **Limpeza da área Code**: removidas as ferramentas decorativas Terminal, Code search e Tests & Lint (o agente já executa shell/busca/testes via tools, com a saída na própria conversa). A sidebar do Code passou a ser "Repository" com Git; o MCP, que era redundante ali, fica em Settings → MCP.
+- **Terminal removido do chat**: o botão/sheet de terminal interativo saiu do `ChatDetailView` (Chat e Cowork) — Chat é conversa pura; no Code o "terminal" é a saída dos comandos do agente.
+- **Cowork**: removido o item "Agendadas" que não tinha ação (as tarefas agendadas já aparecem no dashboard do Cowork).
+
 ### Adicionado
 
 - **Histórico de versões de artifacts**: quando o agente revisa um artifact (mesmo tipo na conversa), o conteúdo anterior é preservado como versão. O painel de artifact ganhou um navegador (◀ vN/M ▶) para visualizar versões anteriores no preview e no código, sem perder a atual.
