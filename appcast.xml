@@ -4,6 +4,14 @@
         <title>Lume</title>
         <item>
             <title>1.4.1</title>
+            <pubDate>Fri, 19 Jun 2026 15:24:14 -0300</pubDate>
+            <sparkle:version>16</sparkle:version>
+            <sparkle:shortVersionString>1.4.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.5</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/sbacaro/Lume/releases/download/v1.4.1/Lume-1.4.1.dmg" length="10019173" type="application/octet-stream"/>
+        </item>
+        <item>
+            <title>1.4.1</title>
             <pubDate>Fri, 19 Jun 2026 14:56:19 -0300</pubDate>
             <sparkle:version>15</sparkle:version>
             <sparkle:shortVersionString>1.4.1</sparkle:shortVersionString>
@@ -17,14 +25,6 @@
             <sparkle:shortVersionString>1.4.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.5</sparkle:minimumSystemVersion>
             <enclosure length="10000398" sparkle:edSignature="R+3/rhHrL+B70X3AfmM5c4k2NPgCRLooW3Aw9HPMYigAcodj0ACPcD5ejjWJbTn3cvzYoepqv43e/bhWOPL0BA==" url="https://github.com/sbacaro/Lume/releases/download/v1.4.1/Lume-1.4.1.dmg" type="application/octet-stream"/>
-        </item>
-        <item>
-            <title>1.4.0</title>
-            <pubDate>Thu, 18 Jun 2026 22:16:01 -0300</pubDate>
-            <sparkle:version>13</sparkle:version>
-            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>26.5</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/sbacaro/Lume/releases/download/v1.4.0/Lume-1.4.0.dmg" length="10537648" type="application/octet-stream"/>
         </item>
     </channel>
 </rss>
