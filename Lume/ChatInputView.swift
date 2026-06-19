@@ -460,8 +460,14 @@ struct ChatInputView: View {
                 lineWidth: 1
             )
             if isLoading {
-                glowRing(lineWidth: 6).blur(radius: 10).opacity(0.75)  // halo (sombra animada)
-                glowRing(lineWidth: 2).blur(radius: 2.5)               // borda iridescente
+                // `drawingGroup()` rasteriza o glow animado (gradiente + máscara + blur) numa
+                // ÚNICA camada Metal, em vez de o SwiftUI recompor o blur na árvore de views a
+                // cada frame. Isso corta o jank durante a resposta, sobretudo em telas ProMotion.
+                ZStack {
+                    glowRing(lineWidth: 6).blur(radius: 10).opacity(0.75)  // halo (sombra animada)
+                    glowRing(lineWidth: 2).blur(radius: 2.5)               // borda iridescente
+                }
+                .drawingGroup()
             }
         }
     }

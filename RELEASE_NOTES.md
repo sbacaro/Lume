@@ -52,6 +52,9 @@ responds, and every button and toggle across the app finally follows one consist
 - Removed the blinking text cursor that trailed the response while streaming.
 
 ### Fixed
+- **Smoother responses**: the animated glow around the input no longer drops frames while the
+  model is replying — the effect is now rasterized into a single GPU layer instead of being
+  recomposed every frame (noticeable on ProMotion displays).
 - **Crash when attaching an image**: local image analysis (Vision OCR + classification) no longer
   crashes the app. The Vision completion handlers were being run off the main actor under strict
   concurrency; results are now read synchronously on a background queue instead.
