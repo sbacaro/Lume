@@ -16,6 +16,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Refined start screens**: each mode's capability list is now a centered two-column block under the title and actions, so Cowork and Code read as balanced layouts instead of left-shifted bullets.
 - **Accent color** standardized on **#F09980** (the logo peach), tuned to sit well in both light and dark appearances.
 
+### Fixed
+
+- **Update checker stuck after dismiss**: `UpdateManager.checkForUpdates(force:)` now distinguishes an explicit user check (the About "Check" button → `checkForUpdatesForced()`) from an automatic one. A forced check ignores the 6h throttle **and** the previously dismissed version, and clears the dismissal — so the available version stops being suppressed forever after the sidebar notification was closed once. When no newer version exists, `availableRelease` is reset to `nil`.
+- **Signed appcast (EdDSA)**: `release.sh` now guarantees `sparkle:edSignature` for the published DMG. `generate_appcast` does not re-sign an entry that already exists in the appcast (it only refreshes metadata), which had shipped an unsigned appcast and caused Sparkle to reject updates with "improperly signed and could not be validated." The script now signs the DMG with `sign_update` and injects the signature into the enclosure, and aborts if the app requires signing but no signature could be produced.
+
 ---
 
 ## [1.4.0] — 2026-06-18

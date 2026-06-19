@@ -41,9 +41,13 @@ final class UpdateManager {
 
     // MARK: - Check for updates
 
-    func checkForUpdates() async {
+    /// `force == true` é um check EXPLÍCITO do usuário (botão "Check"): ignora o
+    /// throttle de 6h e a dispensa anterior — quem clica quer ver a versão nova.
+    /// `force == false` é o check automático/agendado: respeita o intervalo e a
+    /// versão dispensada (não reabre um aviso que o usuário já fechou).
+    func checkForUpdates(force: Bool = false) async {
         guard !isChecking else { return }
-        if let last = lastChecked, Date().timeIntervalSince(last) < checkInterval { return }
+        if !force, let last = lastChecked, Date().timeIntervalSince(last) < checkInterval { return }
 
         isChecking = true
         error = nil
@@ -52,8 +56,17 @@ final class UpdateManager {
         do {
             let release = try await fetchLatestRelease()
             lastChecked = Date()
-            if isNewer(release.version, than: currentVersion) && release.version != dismissedVersion {
-                availableRelease = release
+            if isNewer(release.version, than: currentVersion) {
+                if force {
+                    // Check explícito: sempre mostra e desfaz a dispensa dessa versão.
+                    if release.version == dismissedVersion { clearDismissed() }
+                    availableRelease = release
+                } else if release.version != dismissedVersion {
+                    availableRelease = release
+                }
+            } else {
+                // Já estamos na última (ou mais nova): nada a oferecer.
+                availableRelease = nil
             }
         } catch {
             self.error = error.localizedDescription
@@ -63,7 +76,7 @@ final class UpdateManager {
     func checkForUpdatesForced() async {
         lastChecked = nil
         availableRelease = nil
-        await checkForUpdates()
+        await checkForUpdates(force: true)
     }
 
     func dismiss() {
@@ -72,6 +85,11 @@ final class UpdateManager {
             UserDefaults.standard.set(version, forKey: "lume_dismissed_update_version")
         }
         availableRelease = nil
+    }
+
+    private func clearDismissed() {
+        dismissedVersion = nil
+        UserDefaults.standard.removeObject(forKey: "lume_dismissed_update_version")
     }
 
     func openDownloadPage() {

@@ -5,7 +5,7 @@ A design-focused follow-up to 1.4.0. Lume's control layer now speaks Apple's **L
 responds, and every button and toggle across the app finally follows one consistent pill style.
 
 **Release date:** 2026-06-19
-**Version:** v1.4.1 (build 14)
+**Version:** v1.4.1 (build 15)
 **Type:** Design & polish
 
 ---
@@ -37,6 +37,13 @@ responds, and every button and toggle across the app finally follows one consist
 ### Accent color
 - Standardized on **#F09980** (the logo peach) as the app accent, tuned to sit well in both
   light and dark appearances.
+
+### Fixed
+- **Update check no longer gets stuck**: an explicit "Check" now always reveals a newer version
+  and clears any previous "dismiss", instead of reporting "You're on the latest version" forever
+  after the notification was closed once. Automatic checks still respect a dismissed version.
+- **Signed auto-updates**: the appcast is now reliably signed (EdDSA), fixing the
+  "improperly signed and could not be validated" error when installing an update via Sparkle.
 
 ---
 
