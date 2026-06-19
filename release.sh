@@ -219,22 +219,87 @@ OSA
   echo "DMG: $OUT_DMG ($(du -h "$OUT_DMG" | cut -f1))  - Lume.app esta dentro do DMG"
 fi
 
-# ---- 3b) Appcast do Sparkle (so se o pacote + chaves existirem) -----------
-# Se o Sparkle ja foi adicionado ao projeto (SETUP_SPARKLE.md), gera e assina o
-# appcast.xml apontando o download para o asset do release. Sem Sparkle, pula
-# sem abortar (a atualizacao automatica fica inativa ate concluir o setup).
-GEN="$(find "$HOME/Library/Developer/Xcode/DerivedData" -path '*/artifacts/sparkle/Sparkle/bin/generate_appcast' 2>/dev/null | head -1 || true)"
+# ---- 3b) Appcast do Sparkle (assinado em EdDSA) ---------------------------
+# O app exige updates ASSINADOS quando SUPublicEDKey esta no projeto. Geramos o
+# appcast.xml (estrutura/historico) e GARANTIMOS a `sparkle:edSignature` desta
+# versao via `sign_update` — injetada direto no enclosure. Nao confiamos no
+# generate_appcast pra (re)assinar: quando a entrada ja existe no appcast antigo,
+# ele so atualiza metadados e PRESERVA o estado sem assinatura, gerando o erro
+# "improperly signed and could not be validated" no Sparkle.
+REQUIRES_SIG=0
+grep -Eq 'INFOPLIST_KEY_SUPublicEDKey = "[^"]+"' "$PROJECT/project.pbxproj" 2>/dev/null && REQUIRES_SIG=1
+DMG_NAME="$(basename "$OUT_DMG")"
+DL_PREFIX="https://github.com/$OWNER/$REPO/releases/download/$TAG/"
+
+# Acha as ferramentas do Sparkle onde quer que ele as tenha colocado.
+find_tool() {
+  local t; t="$(find "$HOME/Library/Developer/Xcode/DerivedData" \
+                     "$HOME/Library/Caches/org.sparkle-project.Sparkle" \
+                     -name "$1" -type f 2>/dev/null | head -1 || true)"
+  [ -n "$t" ] || t="$(command -v "$1" 2>/dev/null || true)"
+  printf '%s' "$t"
+}
+GEN="$(find_tool generate_appcast)"
+SIGN="$(find_tool sign_update)"
+
+appcast_signed() {  # 1 se o enclosure de $DMG_NAME tem edSignature nao-vazia
+  [ -f appcast.xml ] || return 1
+  grep -F "$DMG_NAME" appcast.xml | grep -q 'sparkle:edSignature="[^"]\{20,\}"'
+}
+
 if [ -n "$GEN" ]; then
-  echo "Gerando/assinando o appcast (Sparkle)..."
+  echo "Gerando o appcast (Sparkle)..."
   ACDIR="$WORK/appcast"; mkdir -p "$ACDIR"
   cp "$OUT_DMG" "$ACDIR/"
   [ -f appcast.xml ] && cp appcast.xml "$ACDIR/appcast.xml"
-  if "$GEN" "$ACDIR" --download-url-prefix "https://github.com/$OWNER/$REPO/releases/download/$TAG/"; then
-    cp "$ACDIR/appcast.xml" appcast.xml
-    echo "appcast.xml atualizado (sera commitado e enviado abaixo)."
+  "$GEN" "$ACDIR" --download-url-prefix "$DL_PREFIX" || \
+    { echo "Aviso: generate_appcast retornou erro; sigo e tento assinar manualmente."; }
+  [ -f "$ACDIR/appcast.xml" ] && cp "$ACDIR/appcast.xml" appcast.xml
+fi
+
+# Garante a assinatura desta versao (mesmo que o generate_appcast nao tenha posto).
+if ! appcast_signed && [ -n "$SIGN" ] && [ -f appcast.xml ]; then
+  echo "Assinando $DMG_NAME com sign_update e injetando no appcast..."
+  SIG_LINE="$("$SIGN" "$OUT_DMG" 2>/dev/null || true)"   # ex.: sparkle:edSignature="..." length="..."
+  ED_SIG="$(printf '%s' "$SIG_LINE" | sed -n 's/.*edSignature="\([^"]*\)".*/\1/p')"
+  if [ -n "$ED_SIG" ]; then
+    LEN="$(printf '%s' "$SIG_LINE" | sed -n 's/.*length="\([^"]*\)".*/\1/p')"
+    [ -n "$LEN" ] || LEN="$(stat -f%z "$OUT_DMG" 2>/dev/null || wc -c <"$OUT_DMG")"
+    DMG_NAME="$DMG_NAME" ED_SIG="$ED_SIG" LEN="$LEN" python3 - appcast.xml <<'PY'
+import os, re, sys
+path = sys.argv[1]
+name, sig, length = os.environ["DMG_NAME"], os.environ["ED_SIG"], os.environ["LEN"]
+xml = open(path, encoding="utf-8").read()
+# Acha o enclosure cujo url termina com o nome do DMG e reescreve seus atributos,
+# preservando edSignature unica e length correto.
+def fix(m):
+    tag = m.group(0)
+    if name not in tag:
+        return tag
+    tag = re.sub(r'\s+sparkle:edSignature="[^"]*"', "", tag)
+    tag = re.sub(r'\s+length="[^"]*"', "", tag)
+    tag = tag.replace("<enclosure ", f'<enclosure length="{length}" sparkle:edSignature="{sig}" ', 1)
+    return tag
+new = re.sub(r"<enclosure\b[^>]*/>", fix, xml)
+if new == xml:
+    sys.exit("nao encontrei o enclosure de " + name)
+open(path, "w", encoding="utf-8").write(new)
+print("  assinatura injetada no enclosure de", name)
+PY
   else
-    echo "Aviso: generate_appcast falhou (gerou as chaves EdDSA? veja SETUP_SPARKLE.md). Seguindo sem appcast."
+    echo "Aviso: sign_update nao retornou edSignature."
   fi
+fi
+
+# Veredito final: se o app exige assinatura, ela TEM que estar la.
+if appcast_signed; then
+  echo "appcast.xml assinado (sparkle:edSignature presente para $DMG_NAME)."
+elif [ "$REQUIRES_SIG" = "1" ]; then
+  echo "ERRO: o app exige updates assinados (SUPublicEDKey definido) mas nao consegui"
+  echo "      assinar $DMG_NAME. Verifique se o Sparkle foi compilado (Cmd+B no Xcode,"
+  echo "      gera generate_appcast/sign_update em DerivedData) e se a chave privada"
+  echo "      EdDSA esta no Keychain (./setup-sparkle.sh). NAO vou publicar sem assinatura."
+  exit 1
 else
   echo "Sparkle ainda nao instalado - pulando o appcast (auto-update fica inativo ate o setup; veja SETUP_SPARKLE.md)."
 fi

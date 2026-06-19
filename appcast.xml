@@ -8,7 +8,7 @@
             <sparkle:version>14</sparkle:version>
             <sparkle:shortVersionString>1.4.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.5</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/sbacaro/Lume/releases/download/v1.4.1/Lume-1.4.1.dmg" length="10000398" type="application/octet-stream"/>
+            <enclosure length="10000398" sparkle:edSignature="R+3/rhHrL+B70X3AfmM5c4k2NPgCRLooW3Aw9HPMYigAcodj0ACPcD5ejjWJbTn3cvzYoepqv43e/bhWOPL0BA==" url="https://github.com/sbacaro/Lume/releases/download/v1.4.1/Lume-1.4.1.dmg" type="application/octet-stream"/>
         </item>
         <item>
             <title>1.4.0</title>
