@@ -26,6 +26,7 @@ struct CoworkDashboardView: View {
                 coworkDashboard
             }
         }
+        .overlay(alignment: .bottomTrailing) { VersionBadge() }
     }
 
     // MARK: - Welcome (sem projetos)

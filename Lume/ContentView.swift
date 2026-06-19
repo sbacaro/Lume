@@ -775,6 +775,21 @@ struct ContentView: View {
 
 // MARK: - Lume Logo
 
+struct VersionBadge: View {
+    private var text: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
+        return "v\(v) (\(b))"
+    }
+    var body: some View {
+        Text(text)
+            .font(.system(size: 10, weight: .medium))
+            .foregroundStyle(.tertiary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+    }
+}
+
 struct LumeLogo: View {
     var size: CGFloat = 56
     var body: some View {
@@ -852,6 +867,7 @@ struct ChatWelcomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.windowBackgroundColor))
+        .overlay(alignment: .bottomTrailing) { VersionBadge() }
     }
 }
 

@@ -54,6 +54,7 @@ struct CodeDashboardView: View {
         .sheet(isPresented: $showGitPanel) {
             GitPanelView()
         }
+        .overlay(alignment: .bottomTrailing) { VersionBadge() }
     }
 
     // MARK: - Welcome (sem workspace)

@@ -5,7 +5,7 @@ with its own tools, start screen, and side panel. MCP works end to end, RAG gain
 contextual embeddings with on-disk caching, and the codebase moved to Swift 6.
 
 **Release date:** 2026-06-18
-**Version:** v1.4.0 (build 11)
+**Version:** v1.4.0 (build 12)
 **Type:** Features
 
 ---
@@ -40,6 +40,15 @@ contextual embeddings with on-disk caching, and the codebase moved to Swift 6.
 ### Artifact version history
 - Revised artifacts keep their previous versions; the artifact panel gained a navigator to
   step back and compare.
+
+### Fixes & polish
+- Fixed the in-app updater: the appcast feed URL is now provided via the Sparkle delegate,
+  resolving the "must specify SUFeedURL" error.
+- Each mode's start screen now shows the app version in the bottom-right corner.
+- Switching modes always returns to that mode's start screen instead of keeping the previous
+  conversation open.
+- Inspector cleanup: removed a stray divider line, and the project files list now scrolls
+  within a fixed height instead of truncating.
 
 ## 🔧 Quality
 - Migrated to the **Swift 6 language mode** with strict concurrency set to `complete`, plus a

@@ -17,9 +17,6 @@ import SwiftUI
 import Combine
 import Sparkle
 
-/// URL do appcast (fonte de verdade do feed de atualização).
-private let lumeAppcastURL = "https://raw.githubusercontent.com/sbacaro/Lume/main/appcast.xml"
-
 /// Wrapper observável sobre o updater padrão do Sparkle.
 ///
 /// Fornece a URL do appcast pelo delegate (`feedURLString(for:)`) — assim o feed é
@@ -47,7 +44,7 @@ final class SparkleUpdater: NSObject, ObservableObject, SPUUpdaterDelegate {
 
     /// Sparkle pergunta a URL do feed aqui — independente do Info.plist.
     nonisolated func feedURLString(for updater: SPUUpdater) -> String? {
-        lumeAppcastURL
+        "https://raw.githubusercontent.com/sbacaro/Lume/main/appcast.xml"
     }
 
     /// Checagem manual — mostra a UI padrão do Sparkle (download, install, relaunch).
