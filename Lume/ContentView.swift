@@ -94,11 +94,11 @@ struct ContentView: View {
                     .keyboardShortcut("n", modifiers: .command)
                 Button("") { withAnimation { showSearch = true } }
                     .keyboardShortcut("f", modifiers: .command)
-                Button("") { withAnimation { sidebarMode = .chat } }
+                Button("") { switchMode(.chat) }
                     .keyboardShortcut("1", modifiers: .command)
-                Button("") { withAnimation { sidebarMode = .cowork } }
+                Button("") { switchMode(.cowork) }
                     .keyboardShortcut("2", modifiers: .command)
-                Button("") { withAnimation { sidebarMode = .code } }
+                Button("") { switchMode(.code) }
                     .keyboardShortcut("3", modifiers: .command)
             }
             .opacity(0)
@@ -158,11 +158,19 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.15), value: sidebarMode)
     }
 
+    private func switchMode(_ mode: SidebarMode) {
+        withAnimation(.easeInOut(duration: 0.18)) {
+            sidebarMode = mode
+            selectedConversation = nil
+            selectedProject = nil
+        }
+    }
+
     private var modePicker: some View {
         HStack(spacing: 0) {
             ForEach(SidebarMode.allCases, id: \.self) { mode in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.18)) { sidebarMode = mode }
+                    switchMode(mode)
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: mode.icon).font(.system(size: 11, weight: .medium))
@@ -603,12 +611,7 @@ struct ContentView: View {
         if let conv = selectedConversation {
             ChatDetailView(conversation: conv, providerManager: providerManager)
         } else {
-            LumeWelcomeView(
-                onStartChat:   { startConversation(text: $0, mode: .chat) },
-                onStartCowork: { startConversation(text: $0, mode: .cowork) },
-                onStartCode:   { startConversation(text: $0, mode: .code) },
-                onNewProject:  { showNewProject = true }
-            )
+            ChatWelcomeView(onStart: { startConversation(text: $0, mode: .chat) })
         }
     }
 
@@ -794,63 +797,25 @@ struct LumeLogo: View {
 
 // MARK: - Welcome View
 
-struct LumeWelcomeView: View {
-    var onStartChat: (String) -> Void
-    var onStartCowork: (String) -> Void
-    var onStartCode: (String) -> Void
-    var onNewProject: () -> Void
+struct ChatWelcomeView: View {
+    var onStart: (String) -> Void
 
-    @State private var selectedTab: WelcomeTab = .chat
-
-    enum WelcomeTab: Int, CaseIterable {
-        case chat, cowork, code
-        var label: String {
-            switch self { case .chat: return "Chat"; case .cowork: return "Cowork"; case .code: return "Code" }
-        }
-        var icon: String {
-            switch self {
-            case .chat:   return "bubble.left.and.text.bubble.right"
-            case .cowork: return "checklist"
-            case .code:   return "chevron.left.forwardslash.chevron.right"
-            }
-        }
-        var color: Color {
-            switch self {
-            case .chat:   return Color(red: 0.40, green: 0.60, blue: 1.00)
-            case .cowork: return Color(red: 0.30, green: 0.78, blue: 0.60)
-            case .code:   return Color(red: 0.99, green: 0.56, blue: 0.28)
-            }
-        }
-    }
-
-    private let chatItems: [(icon: String, title: String, subtitle: String, prompt: String)] = [
-        ("text.bubble",              String(localized: "Ask a question"),   String(localized: "Ask anything"),        String(localized: "Hi! I have a question about")),
-        ("doc.text.magnifyingglass", String(localized: "Summarize a text"),   String(localized: "Paste an article or document"),    String(localized: "Please summarize the following text:\n\n")),
-        ("translate",                String(localized: "Translate content"),  String(localized: "Between languages"),                  "Translate the following to English:\n\n"),
-        ("lightbulb",                "Brainstorm",         String(localized: "Explore possibilities"),         String(localized: "Help me generate ideas for")),
-        ("pencil.and.outline",       String(localized: "Write something"),      String(localized: "Emails, posts, creative writing"),       String(localized: "Write for me:")),
-        ("questionmark.circle",      String(localized: "Explore a topic"),   String(localized: "Learn about anything"), String(localized: "Explain it to me simply:")),
-    ]
-    private let coworkItems: [(icon: String, title: String, subtitle: String, prompt: String)] = [
-        ("folder.badge.plus",     String(localized: "Create a project"),      String(localized: "Organize conversations by topic"),  ""),
-        ("list.bullet.clipboard", String(localized: "Plan tasks"),      String(localized: "Break goals into steps"),   String(localized: "Help me plan the tasks for:")),
-        ("arrow.triangle.branch", String(localized: "Manage deliveries"),    String(localized: "Track progress"),          String(localized: "Create a delivery plan for:")),
-        ("person.2",              String(localized: "Prepare a presentation"), String(localized: "Structure your ideas"),        String(localized: "Outline a presentation about:")),
-        ("doc.richtext",          String(localized: "Draft a document"),     String(localized: "Reports, proposals, specs"), String(localized: "Help me draft a document about:")),
-        ("calendar.badge.clock",  String(localized: "Schedule a task"),    String(localized: "AI reminders"),             ""),
-    ]
-    private let codeItems: [(icon: String, title: String, subtitle: String, prompt: String)] = [
-        ("chevron.left.forwardslash.chevron.right", String(localized: "Write code"), String(localized: "In any language"), String(localized: "Write code that")),
-        ("ant.circle",               String(localized: "Debug an error"),    String(localized: "Find and fix bugs"),          String(localized: "I have an error. Can you help?\n\n")),
-        ("arrow.2.squarepath",       String(localized: "Refactor code"), String(localized: "Improve quality and readability"), "Refactor this code:\n\n"),
-        ("doc.text.magnifyingglass", String(localized: "Review code"),   String(localized: "Review with suggestions"),            "Review this code:\n\n"),
-        ("testtube.2",               String(localized: "Write tests"),  String(localized: "Unit tests and coverage"),           "Write unit tests for:\n\n"),
-        ("terminal",                 String(localized: "Create script"),     String(localized: "Shell, Python, automations"),        String(localized: "Create a script that")),
+    private let starters: [(icon: String, title: String, subtitle: String, prompt: String)] = [
+        ("text.bubble",              String(localized: "Ask a question"),   String(localized: "Ask anything"),                String(localized: "I have a question about ")),
+        ("doc.text.magnifyingglass", String(localized: "Summarize a text"), String(localized: "Paste an article or document"), String(localized: "Please summarize the following text:\n\n")),
+        ("globe",                    String(localized: "Search the web"),   String(localized: "Up-to-date information"),        String(localized: "Search the web for ")),
+        ("character.bubble",         String(localized: "Translate"),        String(localized: "Between languages"),            String(localized: "Translate to English:\n\n")),
+        ("lightbulb",                "Brainstorm",                          String(localized: "Explore possibilities"),        String(localized: "Help me come up with ideas for ")),
+        ("pencil.and.outline",       String(localized: "Write something"),  String(localized: "Emails, posts, drafts"),        String(localized: "Write for me: ")),
     ]
 
     private func greeting() -> String {
         let h = Calendar.current.component(.hour, from: Date())
-        switch h { case 5..<12: return String(localized: "Good morning"); case 12..<18: return String(localized: "Good afternoon"); default: return String(localized: "Good evening") }
+        switch h {
+        case 5..<12:  return String(localized: "Good morning")
+        case 12..<18: return String(localized: "Good afternoon")
+        default:      return String(localized: "Good evening")
+        }
     }
 
     var body: some View {
@@ -858,74 +823,35 @@ struct LumeWelcomeView: View {
             Spacer()
             VStack(spacing: 14) {
                 LumeLogo(size: 64)
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     Text(greeting())
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
-                    Text("What do you want to do today?")
-                        .font(.system(size: 15))
+                    Text(String(localized: "Chat — a pure conversation. Ask, write, brainstorm and search the web. No file or shell access in this mode."))
+                        .font(.system(size: 14))
                         .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(3)
+                        .frame(maxWidth: 460)
                 }
             }
             .padding(.bottom, 28)
 
-            HStack(spacing: 8) {
-                ForEach(WelcomeTab.allCases, id: \.self) { tab in
-                    Button {
-                        withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) { selectedTab = tab }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: tab.icon).font(.system(size: 12, weight: .semibold))
-                            Text(tab.label).font(.system(size: 13, weight: .semibold))
-                        }
-                        .foregroundStyle(selectedTab == tab ? .white : tab.color)
-                        .padding(.horizontal, 18).padding(.vertical, 9)
-                        .background(selectedTab == tab ? AnyShapeStyle(tab.color) : AnyShapeStyle(tab.color.opacity(0.10)), in: Capsule())
-                        .contentShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .animation(.spring(response: 0.28, dampingFraction: 0.75), value: selectedTab)
-                }
-            }
-            .padding(.bottom, 24)
-
-            let items = selectedTab == .chat ? chatItems : selectedTab == .cowork ? coworkItems : codeItems
-
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                    LumeWelcomeCard(icon: item.icon, title: item.title, subtitle: item.subtitle, color: selectedTab.color) {
-                        switch selectedTab {
-                        case .chat:   onStartChat(item.prompt)
-                        case .cowork: item.prompt.isEmpty ? onNewProject() : onStartCowork(item.prompt)
-                        case .code:   onStartCode(item.prompt)
-                        }
+                ForEach(Array(starters.enumerated()), id: \.offset) { _, item in
+                    LumeWelcomeCard(icon: item.icon, title: item.title, subtitle: item.subtitle,
+                                    color: Color(red: 0.40, green: 0.60, blue: 1.00)) {
+                        onStart(item.prompt)
                     }
                 }
             }
             .frame(maxWidth: 660).padding(.horizontal, 24)
-            .animation(.easeInOut(duration: 0.18), value: selectedTab)
-
-            HStack(spacing: 6) {
-                ForEach(WelcomeTab.allCases, id: \.self) { tab in
-                    Circle()
-                        .fill(selectedTab == tab ? selectedTab.color : Color.primary.opacity(0.15))
-                        .frame(width: selectedTab == tab ? 8 : 5, height: selectedTab == tab ? 8 : 5)
-                        .animation(.spring(response: 0.28, dampingFraction: 0.7), value: selectedTab)
-                }
-            }.padding(.top, 18)
 
             Spacer()
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.windowBackgroundColor))
-        .gesture(DragGesture(minimumDistance: 40).onEnded { v in
-            if v.translation.width < -60, let n = WelcomeTab(rawValue: selectedTab.rawValue + 1) {
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) { selectedTab = n }
-            } else if v.translation.width > 60, let p = WelcomeTab(rawValue: selectedTab.rawValue - 1) {
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) { selectedTab = p }
-            }
-        })
     }
 }
 

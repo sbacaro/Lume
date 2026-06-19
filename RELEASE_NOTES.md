@@ -1,50 +1,49 @@
-# 🚀 Lume v1.4.0 — Modos de verdade, MCP, RAG melhor e IA on-device
+# 🚀 Lume v1.4.0 — Real modes, MCP, smarter RAG, and on-device AI
 
-A maior atualização desde o lançamento. Os modos **Chat, Cowork e Code** deixaram de ser
-só "sidebars diferentes" e passaram a ser experiências distintas; o **MCP** ficou funcional
-ponta a ponta; o **RAG** ganhou embeddings contextuais e cache em disco; e a base migrou
-para **Swift 6**.
+Lume's biggest update yet. **Chat, Cowork, and Code** are now distinct experiences — each
+with its own tools, start screen, and side panel. MCP works end to end, RAG gained
+contextual embeddings with on-disk caching, and the codebase moved to Swift 6.
 
-**Data de lançamento:** 2026-06-18
-**Versão:** v1.4.0 (build 10)
-**Tipo:** Funcionalidades
+**Release date:** 2026-06-18
+**Version:** v1.4.0 (build 11)
+**Type:** Features
 
 ---
 
-## ✨ Novidades
+## ✨ Highlights
 
-### Três modos com funções próprias
-- O conjunto de ferramentas agora depende do modo: **Chat** só pesquisa na web (conversa
-  pura), **Cowork** atua sobre arquivos (ler/escrever, sandbox, MCP) e **Code** tem tudo,
-  incluindo Git. O painel direito (inspector) e a faixa de capacidade acima do input
-  refletem o modo ativo.
-- Limpeza: removidas as áreas decorativas do Code (Terminal/Search/Tests isolados) e o
-  terminal interativo do chat — no Code, a saída dos comandos do agente aparece na própria
-  conversa.
+### Three modes, each purpose-built
+- Tools are now scoped to the mode: **Chat** only searches the web (pure conversation),
+  **Cowork** works on your files (read/write, sandbox, MCP), and **Code** has everything,
+  including Git. The right-hand inspector and the capability strip above the input reflect
+  the active mode.
+- Each mode has its own start screen that explains what it does, and switching modes always
+  returns to that start screen.
+- Removed dead areas: the standalone Terminal / Search / Tests panels and the interactive
+  terminal in chat. In Code, the agent's command output now appears right in the conversation.
 
-### MCP funcional (Model Context Protocol)
-- Cliente JSON-RPC sobre **stdio e HTTP**: handshake, descoberta (`tools/list`) e execução
-  (`tools/call`). As ferramentas dos servidores conectados ficam disponíveis ao agente nos
-  dois providers (Anthropic e OpenAI), com gate de aprovação. Status por conector e conexão
-  automática no launch.
+### Functional MCP (Model Context Protocol)
+- A JSON-RPC client over **stdio and HTTP**: handshake, `tools/list`, and `tools/call`.
+  Tools from connected servers are offered to the agent in both providers (Anthropic and
+  OpenAI), gated by approval, with per-connector status and auto-connect on launch.
 
-### RAG mais inteligente e persistente
-- Embeddings **contextuais** (NLContextualEmbedding, multilíngue e offline) no lugar da
-  média de vetores por palavra, com fallback automático.
-- O índice agora é **cacheado em disco**: documentos inalterados não são reprocessados a
-  cada abertura do app.
+### Smarter, persistent RAG
+- **Contextual embeddings** (NLContextualEmbedding — multilingual and offline) replace
+  word-vector averaging, with automatic fallback.
+- The index is now **cached on disk**, so unchanged documents are not re-embedded on every
+  launch.
 
-### IA on-device (Apple Foundation Models)
-- **Sumarização de contexto** e **roteamento por complexidade** (opcional) rodando no modelo
-  local — grátis, offline e privado, economizando tokens da API.
+### On-device AI (Apple Foundation Models)
+- **Context summarization** and optional **complexity-based model routing** run on the local
+  model — free, offline, and private — saving API tokens.
 
-### Histórico de versões de artifacts
-- Ao revisar um artifact, as versões anteriores são preservadas; o painel ganhou um
-  navegador para voltar e comparar.
+### Artifact version history
+- Revised artifacts keep their previous versions; the artifact panel gained a navigator to
+  step back and compare.
 
-## 🔧 Qualidade
-- Projeto migrado para o **Swift 6 language mode** com strict concurrency `complete`, e uma
-  suíte de **~76 testes** cobrindo roteamento, custo, RAG, MCP, JSON e detecção de artifacts.
+## 🔧 Quality
+- Migrated to the **Swift 6 language mode** with strict concurrency set to `complete`, plus a
+  suite of **~76 tests** covering routing, pricing, RAG, MCP, JSON, and artifact detection.
 
 ---
 

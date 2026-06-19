@@ -93,7 +93,7 @@ struct CodeDashboardView: View {
                         featureRow(icon: "arrow.2.squarepath",    color: .orange, text: String(localized: "Refactor and improve code quality"))
                         featureRow(icon: "testtube.2",            color: .purple, text: String(localized: "Write and run tests"))
                         featureRow(icon: "arrow.triangle.branch", color: .orange, text: String(localized: "View Git status and make commits"))
-                        featureRow(icon: "terminal.fill",         color: .green,  text: "Executar comandos no terminal integrado")
+                        featureRow(icon: "terminal.fill",         color: .green,  text: String(localized: "Run shell commands — output appears in the conversation"))
                     }
                     .padding(14)
                     .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12, style: .continuous))

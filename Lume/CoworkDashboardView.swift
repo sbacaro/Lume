@@ -53,7 +53,7 @@ struct CoworkDashboardView: View {
                 VStack(spacing: 8) {
                     Text("Cowork")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text(String(localized: "Organize your work with projects, persistent context,\nand progress tracking."))
+                    Text(String(localized: "Work on your files with the agent — read and write documents,\nrun code in a sandbox, connect tools, and track progress."))
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

@@ -518,7 +518,8 @@ struct ChatDetailView: View {
         }
         .foregroundStyle(.secondary)
         .padding(.horizontal, 16)
-        .padding(.top, 6)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
     }
 
     /// Seção "Repository" do inspector (modo Code): arquivos referenciados na sessão.
@@ -582,7 +583,9 @@ struct ChatDetailView: View {
             .padding(12)
         }
         .background(Color(.controlBackgroundColor).opacity(0.5))
-        .overlay(Divider(), alignment: .leading)
+        .overlay(alignment: .leading) {
+            Rectangle().fill(Color.primary.opacity(0.08)).frame(width: 1)
+        }
     }
 
     // MARK: - Progresso
@@ -680,22 +683,22 @@ struct ChatDetailView: View {
                 )) ?? []
                 let sorted = files.filter { !$0.hasDirectoryPath }
                     .sorted { $0.lastPathComponent < $1.lastPathComponent }
-                    .prefix(12)
-                ForEach(Array(sorted.enumerated()), id: \.offset) { _, url in
-                    projectFileRow(icon: fileIcon(for: url.path), name: url.lastPathComponent,
-                                   color: .secondary, action: { NSWorkspace.shared.open(url) })
+                // Área de arquivos com altura limitada e scroll interno (sem truncar).
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(sorted.enumerated()), id: \.offset) { _, url in
+                            projectFileRow(icon: fileIcon(for: url.path), name: url.lastPathComponent,
+                                           color: .secondary, action: { NSWorkspace.shared.open(url) })
+                        }
+                    }
                 }
-                if files.count > 12 {
-                    Text("+ \(files.count - 12) files")
-                        .font(.system(size: 10)).foregroundStyle(.tertiary)
-                        .padding(.leading, 22).padding(.top, 2)
-                }
-                Divider().opacity(0.4).padding(.vertical, 4)
+                .frame(maxHeight: 180)
                 Button { NSWorkspace.shared.open(localURL) } label: {
                     Label("Open project folder", systemImage: "folder")
                         .font(.system(size: 11)).foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
+                .padding(.top, 6)
             }
         }
     }
