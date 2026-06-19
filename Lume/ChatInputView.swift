@@ -418,9 +418,11 @@ struct ChatInputView: View {
         !text.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    /// Estado "vibrante" (fundo animado intenso): processando E sem texto.
-    /// Quando o usuário digita, a caixa clareia e o texto volta a ser legível.
-    private var composerVibrant: Bool { isLoading && !isTyping }
+    /// O campo de escrita usa vidro NEUTRO em qualquer estado (o "respondendo" é
+    /// mostrado só pela borda animada). Por isso o texto sempre acompanha o tema —
+    /// preto no claro, branco no escuro — em vez de forçar branco ao gerar resposta,
+    /// o que o deixava invisível no tema claro.
+    private var composerVibrant: Bool { false }
 
     /// Cor de acento do tema atual (concreta — base da animação).
     private var themeAccent: Color { (AccentChoice(rawValue: accentRaw) ?? .clay).color }

@@ -691,7 +691,7 @@ struct VersionBadge: View {
     private var text: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
-        return "v\(v) (\(b))"
+        return "v\(v).\(b)"
     }
     var body: some View {
         Text(text)

@@ -118,11 +118,18 @@ final class AnthropicProvider: AIProvider {
 
                     // Loop combinado: cobre auto-continuação (stop_reason == "max_tokens")
                     // e rodadas de ferramentas (stop_reason == "tool_use").
-                    var iterationCount = 0
-                    let maxIterations = 20
+                    //
+                    // O limite se REINICIA a cada progresso (ferramenta executada, ou texto/
+                    // thinking entregue): uma tarefa longa e produtiva continua até a resposta
+                    // final, sem parar no meio. Só interrompe se ficar várias rodadas SEGUIDAS
+                    // sem progredir (proteção contra loop), com uma trava absoluta de segurança.
+                    var idleRounds = 0
+                    let maxIdleRounds = 8
+                    var totalRounds = 0
+                    let hardCap = 200
 
-                    while iterationCount < maxIterations {
-                        iterationCount += 1
+                    while idleRounds < maxIdleRounds && totalRounds < hardCap {
+                        totalRounds += 1
 
                         var payload: [String: Any] = [
                             "model": model,
@@ -171,7 +178,7 @@ final class AnthropicProvider: AIProvider {
                             let lower = body.lowercased()
                             if toolsEnabled && (lower.contains("tool") || lower.contains("not supported")) {
                                 toolsEnabled = false
-                                iterationCount -= 1
+                                totalRounds -= 1
                                 continue
                             }
                             continuation.finish(throwing: AIProviderError.unknown("HTTP \(http.statusCode): \(body)"))
@@ -248,6 +255,16 @@ final class AnthropicProvider: AIProvider {
                             default:
                                 break
                             }
+                        }
+
+                        // Progresso desta rodada reinicia o limite (ver topo do loop):
+                        // ferramenta executada, ou texto/thinking entregue.
+                        let producedThinking = blockType.values.contains("thinking")
+                        let producedText = !chunkText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        if !toolUses.isEmpty || producedText || producedThinking {
+                            idleRounds = 0
+                        } else {
+                            idleRounds += 1
                         }
 
                         // Nenhuma ferramenta chamada → fluxo de texto puro

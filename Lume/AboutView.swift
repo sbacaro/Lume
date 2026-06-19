@@ -20,8 +20,6 @@ struct AboutView: View {
     private let issuesURL    = URL(string: "https://github.com/sbacaro/Lume/issues")!
     private let licenseURL   = URL(string: "https://github.com/sbacaro/Lume/blob/main/LICENSE")!
 
-    private var version: String { updater.currentVersion }
-    private var build: String   { updater.currentBuild }
     private var copyrightYear: String {
         String(Calendar.current.component(.year, from: Date()))
     }
@@ -62,7 +60,7 @@ struct AboutView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text(String(localized: "Version \(version) (build \(build))"))
+            Text(String(localized: "Version \(updater.fullVersion)"))
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 10).padding(.vertical, 4)

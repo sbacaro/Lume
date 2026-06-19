@@ -5,7 +5,7 @@ A design-focused follow-up to 1.4.0. Lume's control layer now speaks Apple's **L
 responds, and every button and toggle across the app finally follows one consistent pill style.
 
 **Release date:** 2026-06-19
-**Version:** v1.4.1 (build 15)
+**Version:** 1.4.1.16
 **Type:** Design & polish
 
 ---
@@ -38,6 +38,19 @@ responds, and every button and toggle across the app finally follows one consist
 - Standardized on **#F09980** (the logo peach) as the app accent, tuned to sit well in both
   light and dark appearances.
 
+### Added
+- **Installs missing command-line tools on its own**: when the agent needs a CLI that isn't on
+  your Mac, Lume now installs it via Homebrew during the task — bootstrapping Homebrew itself on
+  first use with a single native admin authentication (Touch ID / password), then `brew install`.
+  No more dead ends when a tool like `radare2` or `ffmpeg` is missing.
+
+### Changed
+- **Long tasks don't stop midway**: the agent's tool loop no longer hits a fixed ceiling that
+  felt like a timeout and required typing "continue". The limit now resets on every step that
+  makes progress (a tool runs, or text/thinking is produced), so multi-step work runs through to
+  the final answer; a safety stop still catches genuinely stuck loops.
+- Removed the blinking text cursor that trailed the response while streaming.
+
 ### Fixed
 - **Update check no longer gets stuck**: an explicit "Check" now always reveals a newer version
   and clears any previous "dismiss", instead of reporting "You're on the latest version" forever
@@ -54,7 +67,7 @@ with its own tools, start screen, and side panel. MCP works end to end, RAG gain
 contextual embeddings with on-disk caching, and the codebase moved to Swift 6.
 
 **Release date:** 2026-06-18
-**Version:** v1.4.0 (build 13)
+**Version:** 1.4.0.13
 **Type:** Features
 
 ---

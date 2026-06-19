@@ -384,6 +384,73 @@ enum Shell {
         return (out.isEmpty ? err : out, process.terminationStatus)
     }
 
+    // MARK: - Provisionamento de ferramentas (Homebrew)
+
+    /// Caminho do `brew` se já instalado (prefixos padrão das duas arquiteturas).
+    nonisolated static func brewPath() -> String? {
+        for p in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] {
+            if FileManager.default.isExecutableFile(atPath: p) { return p }
+        }
+        return nil
+    }
+
+    /// Garante o Homebrew no prefixo PADRÃO (para usar pacotes pré-compilados/bottles).
+    /// Em Apple Silicon, instala em `/opt/homebrew` com UM pedido de autenticação nativo
+    /// (cria o diretório e passa a posse ao usuário); o download do brew roda como usuário,
+    /// sem `sudo` — evitando o erro de TTY que trava o instalador oficial em apps GUI.
+    /// O caminho do brew volta em `metadata["brew"]`.
+    nonisolated static func ensureHomebrew(onOutput: (@Sendable (String) -> Void)? = nil) -> ToolResult {
+        if let brew = brewPath() {
+            return success("Homebrew já disponível em \(brew)", metadata: ["brew": brew])
+        }
+        let arch = run(command: "uname -m", workingDirectory: nil)
+            .output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard arch.contains("arm64") else {
+            return failure("""
+            Instalação automática do Homebrew suportada em Apple Silicon (/opt/homebrew). \
+            Neste Mac Intel, instale uma vez manualmente:
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            """)
+        }
+        let prefix = "/opt/homebrew"
+        onOutput?("Instalando o Homebrew em \(prefix)…")
+        let whoami = run(command: "whoami", workingDirectory: nil)
+            .output.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 1) ÚNICO prompt de admin: cria o prefixo e passa a posse ao usuário.
+        let prep = runAdmin(
+            command: "mkdir -p \(prefix) && chown -R \(whoami):admin \(prefix)",
+            workingDirectory: nil)
+        guard prep.success else {
+            return failure("Não foi possível preparar \(prefix): \(prep.output)")
+        }
+        // 2) Baixa o Homebrew como usuário (sem sudo) no prefixo padrão.
+        let dl = run(
+            command: "curl -fsSL https://github.com/Homebrew/brew/tarball/master | tar xz --strip-components 1 -C \(prefix)",
+            workingDirectory: nil, onOutput: onOutput)
+        guard let brew = brewPath() else {
+            return failure("Falha ao baixar o Homebrew: \(dl.output)")
+        }
+        onOutput?("Inicializando o Homebrew…")
+        _ = run(command: "\(brew) update --force --quiet 2>/dev/null; true",
+                workingDirectory: nil, onOutput: onOutput)
+        return success("Homebrew instalado em \(brew)", metadata: ["brew": brew])
+    }
+
+    /// Garante uma ferramenta de CLI: assegura o Homebrew e instala a fórmula (idempotente —
+    /// se já estiver instalada, o brew apenas confirma). Output ao vivo via `onOutput`.
+    nonisolated static func installFormula(_ formula: String, onOutput: (@Sendable (String) -> Void)? = nil) -> ToolResult {
+        let brewResult = ensureHomebrew(onOutput: onOutput)
+        guard brewResult.success, let brew = brewResult.metadata["brew"] else { return brewResult }
+        onOutput?("brew install \(formula)…")
+        // Tenta como fórmula; se for um app GUI, cai para cask.
+        let r = run(command: "\(brew) install \(formula) || \(brew) install --cask \(formula)",
+                    workingDirectory: nil, onOutput: onOutput)
+        if r.success {
+            return success("\(formula) instalado via Homebrew.\n\(r.output)", metadata: ["formula": formula])
+        }
+        return failure("Falha ao instalar \(formula): \(r.output)")
+    }
+
     // MARK: - ToolResult factories
 
     nonisolated static func success(_ output: String, metadata: [String: String] = [:]) -> ToolResult {

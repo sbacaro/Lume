@@ -16,6 +16,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Refined start screens**: each mode's capability list is now a centered two-column block under the title and actions, so Cowork and Code read as balanced layouts instead of left-shifted bullets.
 - **Accent color** standardized on **#F09980** (the logo peach), tuned to sit well in both light and dark appearances.
 
+### Added
+
+- **Automatic CLI tool provisioning** (`install_tool`): a new agent tool installs a missing command-line tool via Homebrew during a task. On first use it bootstraps Homebrew at the standard prefix (`/opt/homebrew` on Apple Silicon) with a single native admin authentication — it creates and chowns the prefix via the macOS admin dialog, then downloads Homebrew as the user (no `sudo`/TTY, which is what makes the official installer fail inside a GUI app). `Shell.ensureHomebrew()`/`Shell.installFormula(_:)` back it; `run_shell`'s description now routes missing-tool cases here instead of manual curl/sudo. Available in Cowork and Code modes.
+
+### Changed
+
+- **Agent tool loop resets on progress instead of a hard cap**: `AnthropicProvider`/`OpenAIProvider` replaced the fixed `maxIterations = 20` (which ended the stream mid-task and required the user to type "continue") with an idle-rounds counter that resets whenever a round makes progress — a tool runs, or text/thinking is produced. Long multi-step tasks now run to the final answer; a `maxIdleRounds` watchdog plus an absolute `hardCap` still stop genuinely stuck loops.
+- **Removed the streaming text cursor** (`▋`) that trailed the last block while a message streamed (`MarkdownParagraphView`/`MarkdownBulletView`).
+
 ### Fixed
 
 - **Update checker stuck after dismiss**: `UpdateManager.checkForUpdates(force:)` now distinguishes an explicit user check (the About "Check" button → `checkForUpdatesForced()`) from an automatic one. A forced check ignores the 6h throttle **and** the previously dismissed version, and clears the dismissal — so the available version stops being suppressed forever after the sidebar notification was closed once. When no newer version exists, `availableRelease` is reset to `nil`.

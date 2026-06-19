@@ -18,6 +18,7 @@ final class AgentToolExecutor {
 
     private static let builtInTools: [any AgentTool] = [
         ShellTool(),
+        InstallToolTool(),
         ReadFileTool(),
         WriteFileTool(),
         ListDirectoryTool(),
@@ -43,6 +44,7 @@ final class AgentToolExecutor {
         "web_search":         [.chat, .cowork, .code],
         "web_fetch":          [.chat, .cowork, .code],
         "run_shell":          [.cowork, .code],
+        "install_tool":       [.cowork, .code],
         "read_file":          [.cowork, .code],
         "write_file":         [.cowork, .code],
         "list_directory":     [.cowork, .code],
@@ -109,6 +111,9 @@ final class AgentToolExecutor {
                                   workingDirectory: input["working_directory"],
                                   onStream: onStream)
         }
+        if toolName == "install_tool", let name = input["name"] {
+            return await installTool(name: name, onStream: onStream)
+        }
         return await execute(toolName: toolName, input: input)
     }
 
@@ -162,6 +167,23 @@ final class AgentToolExecutor {
             Shell.run(command: command, workingDirectory: workingDirectory,
                       onOutput: onStream, extraEnv: extraEnv,
                       redirectDeletionToTrash: true)
+        }.value
+    }
+
+    /// Instala uma ferramenta de CLI que falta, via Homebrew (instalando o próprio
+    /// Homebrew na 1ª vez, com UM diálogo de admin nativo). Transmite a saída ao vivo.
+    func installTool(name: String, onStream: (@Sendable (String) -> Void)? = nil) async -> ToolResult {
+        let formula = name.trimmingCharacters(in: .whitespaces)
+        // Só nomes de fórmula/cask válidos (evita injeção no comando).
+        guard formula.range(of: "^[A-Za-z0-9._+@/-]+$", options: .regularExpression) != nil else {
+            return ToolResult(success: false, output: "Nome de ferramenta inválido: \(name)", metadata: [:])
+        }
+        guard await approveIfNeeded(toolName: "install_tool",
+                                    summary: String(localized: "Install tool via Homebrew"),
+                                    detail: "brew install \(formula)", isDestructive: true)
+        else { return cancelledResult("install_tool") }
+        return await Task.detached {
+            Shell.installFormula(formula, onOutput: onStream)
         }.value
     }
 

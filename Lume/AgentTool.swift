@@ -65,7 +65,7 @@ struct ToolCall: Identifiable, Sendable {
 
 struct ShellTool: AgentTool {
     let name = "run_shell"
-    let description = "Executes a shell command on the user's Mac. Supports pipes, redirection and chaining. You CAN run commands that require root: just prefix with `sudo` — Lume runs them through the native macOS administrator authentication dialog (Touch ID / admin password), so never refuse a privileged command for lack of access. Always attempt the command rather than saying you cannot. SECURITY: any file deletion (rm/rmdir/unlink) ALWAYS requires explicit user approval and is automatically sent to the macOS Trash (never permanently deleted) — this is enforced and cannot be bypassed, so just use `rm` normally."
+    let description = "Executes a shell command on the user's Mac. Supports pipes, redirection and chaining. You CAN run commands that require root: just prefix with `sudo` — Lume runs them through the native macOS administrator authentication dialog (Touch ID / admin password), so never refuse a privileged command for lack of access. Always attempt the command rather than saying you cannot. MISSING TOOLS: if a needed command-line tool is not installed (e.g. `command not found`, `which` fails), do NOT try to install Homebrew or the tool yourself with curl/sudo — call the `install_tool` tool with the Homebrew formula name; Lume bootstraps Homebrew automatically and installs it. SECURITY: any file deletion (rm/rmdir/unlink) ALWAYS requires explicit user approval and is automatically sent to the macOS Trash (never permanently deleted) — this is enforced and cannot be bypassed, so just use `rm` normally."
     let parameters: [ToolParameter] = [
         ToolParameter(name: "command", description: "Shell command", type: "string", required: true),
         ToolParameter(name: "working_directory", description: "Working directory", type: "string", required: false)
@@ -73,6 +73,18 @@ struct ShellTool: AgentTool {
     func execute(with input: [String: String]) async throws -> ToolResult {
         guard let command = input["command"] else { return makeFailure("Missing: command") }
         return await AgentToolExecutor.shared.runShell(command: command, workingDirectory: input["working_directory"])
+    }
+}
+
+struct InstallToolTool: AgentTool {
+    let name = "install_tool"
+    let description = "Installs a command-line tool the user's Mac is missing, via Homebrew. Use this whenever a needed CLI is not found (e.g. `which` fails or a command returns 'command not found') instead of installing Homebrew or tools manually with curl/sudo. On first use Lume installs Homebrew automatically (one native admin authentication), then runs `brew install`. Pass the Homebrew formula name (or cask name for GUI apps). The tool the user's machine already has is detected automatically, so it's safe to call even if unsure."
+    let parameters: [ToolParameter] = [
+        ToolParameter(name: "name", description: "Homebrew formula or cask name (e.g. 'radare2', 'hexedit', 'ripgrep', 'ffmpeg')", type: "string", required: true)
+    ]
+    func execute(with input: [String: String]) async throws -> ToolResult {
+        guard let name = input["name"], !name.isEmpty else { return makeFailure("Missing: name") }
+        return await AgentToolExecutor.shared.installTool(name: name)
     }
 }
 

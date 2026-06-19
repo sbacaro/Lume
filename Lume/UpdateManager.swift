@@ -107,6 +107,11 @@ final class UpdateManager {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
     }
 
+    /// Versão unificada para exibição: marketing + build juntos (ex.: "1.4.1.16").
+    var fullVersion: String {
+        "\(currentVersion).\(currentBuild)"
+    }
+
     // MARK: - GitHub API
 
     private func fetchLatestRelease() async throws -> AppRelease {

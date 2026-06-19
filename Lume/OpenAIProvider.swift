@@ -106,15 +106,21 @@ final class OpenAIProvider: AIProvider {
                 // Detecta se o modelo suporta function calling antes de enviar
                 var modelSupportsTools = self.modelSupportsTools(model)
 
-                var iterationCount = 0
-                let maxIterations = 20
+                // Limite que se REINICIA a cada progresso (ferramenta executada, ou texto/
+                // raciocínio entregue): tarefas longas seguem até a resposta final, sem parar
+                // no meio. Só interrompe após várias rodadas SEGUIDAS sem progresso (proteção
+                // contra loop), com uma trava absoluta de segurança.
+                var idleRounds = 0
+                let maxIdleRounds = 8
+                var totalRounds = 0
+                let hardCap = 200
                 var consecutiveToolFailures = 0
                 let maxConsecutiveFailures = 5
                 // Acumula texto entre iterações para auto-continuação silenciosa
                 var accumulatedResponseText = ""
 
-                while iterationCount < maxIterations {
-                    iterationCount += 1
+                while idleRounds < maxIdleRounds && totalRounds < hardCap {
+                    totalRounds += 1
 
                     var payload: [String: Any] = [
                         "model": model,
@@ -162,13 +168,14 @@ final class OpenAIProvider: AIProvider {
                             bodyStr.lowercased().contains("not supported")
                         if modelSupportsTools && toolRelatedError {
                             modelSupportsTools = false
-                            iterationCount -= 1 // não conta essa iteração
+                            totalRounds -= 1 // não conta essa iteração
                             continue
                         }
                         throw AIProviderError.unknown("HTTP \(http.statusCode): \(bodyStr)")
                     }
 
                     var textBuffer = ""
+                    var producedReasoning = false
                     var toolCalls: [Int: ToolCallAccumulator] = [:]
                     var finishReason = ""
                     var inReasoning = false
@@ -193,6 +200,7 @@ final class OpenAIProvider: AIProvider {
                         if let reasoning = (delta["reasoning_content"] as? String) ?? (delta["reasoning"] as? String),
                            !reasoning.isEmpty {
                             if !inReasoning { inReasoning = true; continuation.yield("<think>") }
+                            producedReasoning = true
                             continuation.yield(reasoning)
                         }
 
@@ -218,6 +226,16 @@ final class OpenAIProvider: AIProvider {
 
                     // Fecha o bloco de raciocínio se ainda estiver aberto.
                     if inReasoning { continuation.yield("</think>"); inReasoning = false }
+
+                    // Progresso desta rodada reinicia o limite (ver topo do loop):
+                    // ferramenta chamada, ou texto/raciocínio entregue.
+                    if !toolCalls.isEmpty
+                        || !textBuffer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        || producedReasoning {
+                        idleRounds = 0
+                    } else {
+                        idleRounds += 1
+                    }
 
                     // Auto-continuação silenciosa: quando o modelo atingiu max_tokens
                     if finishReason == "length" {
@@ -364,6 +382,7 @@ final class OpenAIProvider: AIProvider {
         case "web_search":      return "Pesquisando na web…"
         case "web_fetch":       return "Lendo página…"
         case "run_shell":       return "Executando comando…"
+        case "install_tool":    return "Instalando ferramenta…"
         case "write_file":      return String(localized: "Writing file…")
         case "read_file":       return String(localized: "Reading file…")
         case "list_directory":  return "Listando arquivos…"

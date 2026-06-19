@@ -1100,7 +1100,7 @@ struct MarkdownParagraphView: View {
                 // `AttributedString(markdown:)` nele 12x/s é O(n²) e satura a CPU.
                 // Renderiza texto puro enquanto escreve; o parse rico acontece
                 // uma única vez quando a mensagem finaliza (showCursor = false).
-                Text(content + " ▋")
+                Text(content)
             } else {
                 Text(renderInline(content)).textSelection(.enabled)
             }
@@ -1132,7 +1132,7 @@ struct MarkdownBulletView: View {
             Text(marker).foregroundStyle(.secondary).frame(minWidth: 12)
             Group {
                 if showCursor {
-                    Text(content + " ▋")   // texto puro durante o streaming (ver MarkdownParagraphView)
+                    Text(content)   // texto puro durante o streaming (ver MarkdownParagraphView)
                 } else {
                     Text(renderInline(content)).textSelection(.enabled)
                 }
