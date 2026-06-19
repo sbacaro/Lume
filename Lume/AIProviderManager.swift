@@ -412,19 +412,22 @@ final class AIProviderManager {
 
         // ── COMPRESSÃO DE CONTEXTO ───────────────────────────────
         let rawMessages = conversation.messages.filter { $0.role != .assistant || !$0.content.isEmpty }
-        // Usa a janela de contexto real do modelo ou o limite configurado pelo usuário
         let modelContextWindow = LLMRouter.maxContextWindow(for: provider.defaultModel)
         let configuredMax = lumeConfig.maxContextTokens
-        // Para custom providers usa a janela máxima do modelo; para outros, o mínimo entre
-        // o configurado e metade da janela do modelo (reservando espaço para a resposta)
-        let targetTokens: Int
-        if isCustomProvider {
-            targetTokens = max(modelContextWindow > 4096 ? modelContextWindow / 2 : 100_000,
-                               configuredMax)
-        } else {
-            let halfWindow = modelContextWindow > 0 ? modelContextWindow / 2 : 60_000
-            targetTokens = min(configuredMax, halfWindow)
-        }
+
+        // Orçamento do HISTÓRICO dimensionado pela janela REAL do modelo, descontando o que
+        // mais ocupa o pacote enviado: o system prompt, os contextos injetados (data/RAG/web/
+        // arquivos, que vão dentro do finalContent) e a reserva da resposta. Assim a soma
+        // (system + histórico + injeções + resposta) cabe na janela e não estoura o limite.
+        let window = modelContextWindow > 4096 ? modelContextWindow : 128_000
+        let systemTokens = contextManager.estimateTokens(optimizedSystemPrompt)
+        let injectedTokens = max(0, contextManager.estimateTokens(finalContent) - contextManager.estimateTokens(content))
+        let responseReserve = provider.maxTokens > 0 ? provider.maxTokens : 8_192
+        let safetyMargin = max(4_000, window / 20)
+        let windowBudget = max(8_000, window - systemTokens - injectedTokens - responseReserve - safetyMargin)
+        // Respeita também o teto que o usuário configurou, quando for menor.
+        let targetTokens = configuredMax > 0 ? min(configuredMax, windowBudget) : windowBudget
+
         let compressionResult = ContextCompressor.shared.compress(
             messages: rawMessages,
             query: content,
@@ -436,8 +439,12 @@ final class AIProviderManager {
         var contextMessages = compressionResult.messages
 
         // ── SUMARIZAÇÃO SE NECESSÁRIO ────────────────────────────
-        if !isCustomProvider &&
-           contextManager.needsSummarization(messages: contextMessages, systemPrompt: optimizedSystemPrompt) {
+        // Vale para TODOS os providers (inclusive custom/GLM): se o histórico ainda não cabe
+        // no orçamento real, resume o trecho antigo num bloco [Resumo anterior]. O resumo
+        // on-device é grátis; o fallback usa o próprio provider ativo.
+        if contextManager.needsSummarization(messages: contextMessages,
+                                              systemPrompt: optimizedSystemPrompt,
+                                              budget: targetTokens) {
             let oldMessages = Array(contextMessages.dropLast(contextManager.config.recentMessageCount))
             if !oldMessages.isEmpty {
                 let summarizationPrompt = contextManager.buildSummarizationPrompt(for: oldMessages)

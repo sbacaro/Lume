@@ -119,8 +119,21 @@ final class OpenAIProvider: AIProvider {
                 // Acumula texto entre iterações para auto-continuação silenciosa
                 var accumulatedResponseText = ""
 
+                // Orçamento do pacote para CABER na janela do modelo durante o loop. No formato
+                // OpenAI o system já está em `messages`, então a estimativa cobre tudo. O histórico
+                // é aparado antes de cada chamada (saídas de ferramenta antigas truncadas).
+                let ctxWindow = LLMRouter.maxContextWindow(for: model)
+                let win = ctxWindow > 4096 ? ctxWindow : 128_000
+                let respReserve = maxTokens > 0 ? maxTokens : 8_192
+                let loopBudget = max(8_000, win - respReserve - max(4_000, win / 20))
+                var contextRetries = 0
+                let maxContextRetries = 4
+
                 while idleRounds < maxIdleRounds && totalRounds < hardCap {
                     totalRounds += 1
+
+                    // Mantém o pacote dentro da janela antes de cada chamada.
+                    OpenAIProvider.trimMessagesToBudget(&messages, budgetTokens: loopBudget)
 
                     var payload: [String: Any] = [
                         "model": model,
@@ -169,6 +182,18 @@ final class OpenAIProvider: AIProvider {
                         if modelSupportsTools && toolRelatedError {
                             modelSupportsTools = false
                             totalRounds -= 1 // não conta essa iteração
+                            continue
+                        }
+                        // Limite de contexto estourado → comprime mais forte e re-tenta.
+                        let lowerBody = bodyStr.lowercased()
+                        let ctxErr = (http.statusCode == 400 || http.statusCode == 413)
+                            && (lowerBody.contains("context") || lowerBody.contains("too long")
+                                || lowerBody.contains("maximum") || lowerBody.contains("token"))
+                        if ctxErr && contextRetries < maxContextRetries {
+                            contextRetries += 1
+                            let tighter = max(4_000, loopBudget / (1 + contextRetries))
+                            OpenAIProvider.trimMessagesToBudget(&messages, budgetTokens: tighter, keepRecent: 4)
+                            totalRounds -= 1
                             continue
                         }
                         throw AIProviderError.unknown("HTTP \(http.statusCode): \(bodyStr)")
@@ -377,6 +402,33 @@ final class OpenAIProvider: AIProvider {
     // MARK: - Helpers
 
     /// Rótulo de atividade exibido ao usuário durante a execução de uma ferramenta.
+    // MARK: - Orçamento de contexto (janela do modelo)
+
+    nonisolated static func charCount(_ any: Any) -> Int {
+        if let s = any as? String { return s.count }
+        if let arr = any as? [Any] { return arr.reduce(0) { $0 + charCount($1) } }
+        if let dict = any as? [String: Any] { return dict.values.reduce(0) { $0 + charCount($1) } }
+        return 0
+    }
+    nonisolated static func estTokens(_ any: Any) -> Int { charCount(any) / 4 }
+
+    /// Mantém o pacote dentro do orçamento durante o loop de ferramentas truncando o
+    /// CONTEÚDO das mensagens `tool` mais antigas (que dominam o tamanho), preservando a
+    /// ordem assistant→tool e as últimas `keepRecent` mensagens intactas.
+    nonisolated static func trimMessagesToBudget(_ messages: inout [[String: Any]], budgetTokens: Int, keepRecent: Int = 6) {
+        func total() -> Int { messages.reduce(0) { $0 + estTokens($1["content"] ?? "") } }
+        guard total() > budgetTokens else { return }
+        let cutoff = max(0, messages.count - keepRecent)
+        for i in 0..<cutoff {
+            if total() <= budgetTokens { break }
+            if (messages[i]["role"] as? String) == "tool",
+               let c = messages[i]["content"] as? String, c.count > 240 {
+                messages[i]["content"] = String(c.prefix(240))
+                    + "\n…[saída de ferramenta antiga truncada para caber no contexto]"
+            }
+        }
+    }
+
     static func statusLabel(for toolName: String) -> String {
         switch toolName {
         case "web_search":      return "Pesquisando na web…"

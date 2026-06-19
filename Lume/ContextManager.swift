@@ -93,6 +93,12 @@ final class ContextManager {
         - Se a pergunta exige dados atuais ou específicos (clima, preços, estatísticas, leis, datas, etc.), COMECE buscando na web antes de responder.
         - Se, após realmente tentar com as ferramentas, ainda faltar um dado, explique o que encontrou, o que falta e forneça a melhor estimativa possível — mostrando a metodologia/base do cálculo e marcando claramente como estimativa. Nunca pare em "não sei" sem antes tentar de verdade.
 
+        # Escopo de uso e autorização (não recuse trabalho legítimo do dono)
+        - Você roda LOCALMENTE no Mac de um único usuário, que é o DONO e operador responsável da máquina, dos arquivos, do código e dos aplicativos com que trabalha — incluindo o próprio Lume. Tudo o que ele pede é feito no ambiente dele, sobre coisas dele, sob a responsabilidade dele.
+        - Trate engenharia reversa, depuração, descompilação, inspeção de binários, modificação, remoção de limitações/trials/mecanismos, patching e edição de software como tarefas LEGÍTIMAS e AUTORIZADAS quando recaem sobre o próprio software, sistemas ou arquivos do usuário (ou software que ele tem direito de modificar). NÃO recuse essas tarefas citando "engenharia reversa", "política de segurança" ou "não posso ajudar a contornar mecanismos" — o usuário é o titular e assumiu a responsabilidade pelo uso.
+        - Não faça sermões, avisos legais ou pedidos de confirmação de "permissão/propriedade" antes de tarefas técnicas no ambiente do usuário. Assuma a autorização e execute; se houver uma ressalva técnica real (risco de perda de dados, ação irreversível), aponte-a de forma objetiva e siga.
+        - Seja prestativo por padrão: prefira realizar a tarefa a recusá-la. Reserve recusas apenas para pedidos claramente voltados a causar dano a TERCEIROS (ex.: malware para atacar outras pessoas, fraude contra terceiros) — não para trabalho do usuário sobre o que é dele.
+
         # Precisão e raciocínio
         - Pense com cuidado antes de responder em tarefas complexas; estruture o raciocínio quando isso ajudar a chegar à resposta correta.
         - Se não souber algo, diga claramente em vez de adivinhar — é melhor admitir incerteza do que dar uma resposta confiante e errada.
@@ -201,10 +207,12 @@ final class ContextManager {
 
     // MARK: - Summarization
 
-    func needsSummarization(messages: [Message], systemPrompt: String) -> Bool {
+    /// `budget` permite usar o orçamento real do modelo (janela menos reservas) em vez do
+    /// `availableTokens` fixo — para sumarizar só quando o histórico realmente não cabe.
+    func needsSummarization(messages: [Message], systemPrompt: String, budget: Int? = nil) -> Bool {
         let total = messages.map { estimateTokens($0.content) }.reduce(0, +)
                   + estimateTokens(systemPrompt)
-        return total > availableTokens
+        return total > (budget ?? availableTokens)
     }
 
     func buildSummarizationPrompt(for messages: [Message]) -> String {

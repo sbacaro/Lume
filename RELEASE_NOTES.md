@@ -5,7 +5,7 @@ A design-focused follow-up to 1.4.0. Lume's control layer now speaks Apple's **L
 responds, and every button and toggle across the app finally follows one consistent pill style.
 
 **Release date:** 2026-06-19
-**Version:** 1.4.1.16
+**Version:** 1.4.1.17
 **Type:** Design & polish
 
 ---
@@ -52,6 +52,20 @@ responds, and every button and toggle across the app finally follows one consist
 - Removed the blinking text cursor that trailed the response while streaming.
 
 ### Fixed
+- **Crash when attaching an image**: local image analysis (Vision OCR + classification) no longer
+  crashes the app. The Vision completion handlers were being run off the main actor under strict
+  concurrency; results are now read synchronously on a background queue instead.
+- **Replies no longer hidden inside the collapsed reasoning panel**: if a model wrapped its actual
+  answer in a `<think>` block (or never closed one), the response is now shown normally instead of
+  being tucked away in the collapsed "Reasoning" panel — so you don't have to expand it to see what
+  the model asked or said.
+- **No more hard context-limit failures**: Lume now keeps the request within the model's real
+  context window instead of letting a long, tool-heavy task overflow it (e.g. 200k). Conversation
+  summarization runs for every provider — including custom/OpenAI-compatible ones like GLM, where
+  it was previously skipped; the budget is sized off the real window minus the system prompt,
+  injected context (RAG/web/files) and the response reserve; the agent loop trims older tool
+  output as it approaches the limit; and an over-limit API error now triggers a tighter retry
+  instead of failing.
 - **Update check no longer gets stuck**: an explicit "Check" now always reveals a newer version
   and clears any previous "dismiss", instead of reporting "You're on the latest version" forever
   after the notification was closed once. Automatic checks still respect a dismissed version.

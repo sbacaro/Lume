@@ -18,12 +18,11 @@ enum VisionOCR {
             return ""
         }
         return await withCheckedContinuation { continuation in
-            let request = VNRecognizeTextRequest { req, _ in
-                let text = (req.results as? [VNRecognizedTextObservation])?
-                    .compactMap { $0.topCandidates(1).first?.string }
-                    .joined(separator: "\n") ?? ""
-                continuation.resume(returning: text)
-            }
+            // Sem completion handler: o Vision invocaria a closure na PRÓPRIA fila, mas sob
+            // a isolação MainActor padrão do projeto a closure seria @MainActor e o runtime
+            // abortaria (dispatch_assert_queue_fail). Rodamos `perform` na fila de fundo e
+            // lemos `request.results` ali mesmo — síncrono, sem closure isolada.
+            let request = VNRecognizeTextRequest()
             request.recognitionLevel = .accurate
             request.usesLanguageCorrection = true
             request.recognitionLanguages = ["pt-BR", "en-US"]
@@ -32,6 +31,10 @@ enum VisionOCR {
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
                     try handler.perform([request])
+                    let text = (request.results as? [VNRecognizedTextObservation])?
+                        .compactMap { $0.topCandidates(1).first?.string }
+                        .joined(separator: "\n") ?? ""
+                    continuation.resume(returning: text)
                 } catch {
                     continuation.resume(returning: "")
                 }
@@ -61,18 +64,22 @@ enum VisionOCR {
             return []
         }
         return await withCheckedContinuation { continuation in
-            let request = VNClassifyImageRequest { req, _ in
-                let labels = (req.results as? [VNClassificationObservation])?
-                    .filter { $0.confidence >= minConfidence }
-                    .sorted { $0.confidence > $1.confidence }
-                    .prefix(maxLabels)
-                    .map { $0.identifier.replacingOccurrences(of: "_", with: " ") } ?? []
-                continuation.resume(returning: Array(labels))
-            }
+            // Sem completion handler (ver recognizeText): evita o crash de isolação ao ler
+            // os resultados na própria fila de fundo após o `perform` síncrono.
+            let request = VNClassifyImageRequest()
             let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
             DispatchQueue.global(qos: .userInitiated).async {
-                do { try handler.perform([request]) }
-                catch { continuation.resume(returning: []) }
+                do {
+                    try handler.perform([request])
+                    let labels = (request.results as? [VNClassificationObservation])?
+                        .filter { $0.confidence >= minConfidence }
+                        .sorted { $0.confidence > $1.confidence }
+                        .prefix(maxLabels)
+                        .map { $0.identifier.replacingOccurrences(of: "_", with: " ") } ?? []
+                    continuation.resume(returning: Array(labels))
+                } catch {
+                    continuation.resume(returning: [])
+                }
             }
         }
     }

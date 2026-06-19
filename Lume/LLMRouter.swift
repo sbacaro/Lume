@@ -320,8 +320,10 @@ enum LLMRouter {
         // Inferência por padrão de nome para modelos não catalogados
         let lower = bare.lowercased()
         if lower.contains("gemini") || lower.contains("claude") { return 200_000 }
+        if lower.contains("glm") { return 200_000 }           // GLM-4.5/4.6 (ex.: globant_dgx/GLM-4.6)
         if lower.contains("gpt-4") || lower.contains("gpt-5") { return 128_000 }
-        if lower.contains("llama") { return 128_000 }
+        if lower.contains("llama") || lower.contains("qwen")
+            || lower.contains("deepseek") || lower.contains("mistral") { return 128_000 }
         return 32_000 // conservador para modelos desconhecidos
     }
 }

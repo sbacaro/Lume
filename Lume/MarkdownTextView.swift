@@ -59,7 +59,7 @@ struct MarkdownTextView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Extrai o "processo" (raciocínio + ferramentas, em ordem) e a resposta final.
-            let (events, answer) = extractProcess(text)
+            let (events, answer) = extractProcess(text, isStreaming: isStreaming)
 
             if !events.isEmpty {
                 ProcessTimelineView(events: events, isStreaming: isStreaming)
@@ -134,7 +134,7 @@ struct MarkdownTextView: View {
 
     /// Extrai o processo (raciocínio `<think>` + ferramentas `[[TOOL:]]`, na ordem)
     /// e devolve também a resposta final já sem esses marcadores.
-    func extractProcess(_ raw: String) -> (events: [ProcessEvent], answer: String) {
+    func extractProcess(_ raw: String, isStreaming: Bool = false) -> (events: [ProcessEvent], answer: String) {
         var events: [ProcessEvent] = []
         var answer = ""
         var rest = Substring(raw)
@@ -157,8 +157,16 @@ struct MarkdownTextView: View {
                     if !content.isEmpty { events.append(ProcessEvent(kind: .reasoning(content))) }
                     rest = after[end.upperBound...]
                 } else {
+                    // `<think>` sem `</think>`. Durante o streaming, é raciocínio ainda chegando
+                    // (mostra ao vivo). Depois que o stream termina, um bloco nunca fechado é, na
+                    // prática, a RESPOSTA que o modelo escreveu dentro do `<think>` — então ela
+                    // vira o answer (visível), em vez de ficar escondida no painel colapsado.
                     let content = String(after).trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !content.isEmpty { events.append(ProcessEvent(kind: .reasoning(content))) }
+                    if isStreaming {
+                        if !content.isEmpty { events.append(ProcessEvent(kind: .reasoning(content))) }
+                    } else {
+                        answer += content
+                    }
                     rest = Substring()
                 }
             } else {
@@ -174,7 +182,32 @@ struct MarkdownTextView: View {
                 }
             }
         }
-        return (events, answer.trimmingCharacters(in: .whitespacesAndNewlines))
+        var finalAnswer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Rede de segurança: se o stream terminou e NÃO sobrou resposta visível, mas há
+        // raciocínio, promove o raciocínio a resposta — assim o conteúdo nunca fica preso
+        // só no painel colapsado (ex.: modelo que enfia a resposta inteira no <think>).
+        if !isStreaming && finalAnswer.isEmpty {
+            let reasoningTexts: [String] = events.compactMap {
+                if case .reasoning(let t) = $0.kind { return t } else { return nil }
+            }
+            let hasTools = events.contains { if case .tool = $0.kind { return true } else { return false } }
+            if !hasTools, !reasoningTexts.isEmpty {
+                finalAnswer = reasoningTexts.joined(separator: "\n\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                events.removeAll { if case .reasoning = $0.kind { return true } else { return false } }
+            }
+        }
+
+        // Remove tags `<think>`/`</think>` residuais que tenham vazado para a resposta
+        // (ex.: bloco duplicado ou aninhado), para não aparecerem como texto literal.
+        if !isStreaming {
+            finalAnswer = finalAnswer
+                .replacingOccurrences(of: "<think>", with: "")
+                .replacingOccurrences(of: "</think>", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        return (events, finalAnswer)
     }
 
     /// Decodifica um campo (input/output) de um tool block. O formato atual é

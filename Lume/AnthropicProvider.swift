@@ -128,8 +128,22 @@ final class AnthropicProvider: AIProvider {
                     var totalRounds = 0
                     let hardCap = 200
 
+                    // Orçamento do pacote para CABER na janela do modelo durante o loop. O
+                    // histórico (system é separado, no systemBlock) é aparado antes de cada
+                    // chamada — as saídas de ferramenta antigas, que mais incham, são truncadas.
+                    let ctxWindow = LLMRouter.maxContextWindow(for: model)
+                    let win = ctxWindow > 4096 ? ctxWindow : 128_000
+                    let sysTok = AnthropicProvider.estTokens(systemBlock)
+                    let respReserve = maxTokens > 0 ? maxTokens : 8_192
+                    let loopBudget = max(8_000, win - sysTok - respReserve - max(4_000, win / 20))
+                    var contextRetries = 0
+                    let maxContextRetries = 4
+
                     while idleRounds < maxIdleRounds && totalRounds < hardCap {
                         totalRounds += 1
+
+                        // Mantém o pacote dentro da janela antes de cada chamada.
+                        AnthropicProvider.trimMessagesToBudget(&messages, budgetTokens: loopBudget)
 
                         var payload: [String: Any] = [
                             "model": model,
@@ -178,6 +192,18 @@ final class AnthropicProvider: AIProvider {
                             let lower = body.lowercased()
                             if toolsEnabled && (lower.contains("tool") || lower.contains("not supported")) {
                                 toolsEnabled = false
+                                totalRounds -= 1
+                                continue
+                            }
+                            // Limite de contexto estourado → comprime mais forte e re-tenta,
+                            // em vez de falhar a resposta.
+                            let ctxErr = (http.statusCode == 400 || http.statusCode == 413)
+                                && (lower.contains("context") || lower.contains("too long")
+                                    || lower.contains("maximum") || lower.contains("token"))
+                            if ctxErr && contextRetries < maxContextRetries {
+                                contextRetries += 1
+                                let tighter = max(4_000, loopBudget / (1 + contextRetries))
+                                AnthropicProvider.trimMessagesToBudget(&messages, budgetTokens: tighter, keepRecent: 4)
                                 totalRounds -= 1
                                 continue
                             }
@@ -346,6 +372,40 @@ final class AnthropicProvider: AIProvider {
                     continuation.finish(throwing: error)
                 }
             }
+        }
+    }
+
+    // MARK: - Orçamento de contexto (janela do modelo)
+
+    nonisolated static func charCount(_ any: Any) -> Int {
+        if let s = any as? String { return s.count }
+        if let arr = any as? [Any] { return arr.reduce(0) { $0 + charCount($1) } }
+        if let dict = any as? [String: Any] { return dict.values.reduce(0) { $0 + charCount($1) } }
+        return 0
+    }
+    nonisolated static func estTokens(_ any: Any) -> Int { charCount(any) / 4 }
+
+    /// Mantém o pacote dentro do orçamento durante o loop de ferramentas truncando o
+    /// CONTEÚDO dos `tool_result` mais antigos (que dominam o tamanho), preservando o
+    /// pareamento tool_use/tool_result e as últimas `keepRecent` mensagens intactas.
+    nonisolated static func trimMessagesToBudget(_ messages: inout [[String: Any]], budgetTokens: Int, keepRecent: Int = 6) {
+        func total() -> Int { messages.reduce(0) { $0 + estTokens($1["content"] ?? "") } }
+        guard total() > budgetTokens else { return }
+        let cutoff = max(0, messages.count - keepRecent)
+        for i in 0..<cutoff {
+            if total() <= budgetTokens { break }
+            guard let content = messages[i]["content"] as? [[String: Any]] else { continue }
+            var newContent = content
+            var changed = false
+            for j in newContent.indices {
+                if (newContent[j]["type"] as? String) == "tool_result",
+                   let c = newContent[j]["content"] as? String, c.count > 240 {
+                    newContent[j]["content"] = String(c.prefix(240))
+                        + "\n…[saída de ferramenta antiga truncada para caber no contexto]"
+                    changed = true
+                }
+            }
+            if changed { messages[i]["content"] = newContent }
         }
     }
 
