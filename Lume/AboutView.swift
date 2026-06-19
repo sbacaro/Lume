@@ -129,8 +129,7 @@ struct AboutView: View {
             .disabled(updater.isChecking)
         }
         .padding(14)
-        .background(Color.primary.opacity(0.04),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private var updateStatusText: String {
@@ -155,8 +154,7 @@ struct AboutView: View {
             Divider().opacity(0.35)
             linkRow(String(localized: "MIT License"), systemImage: "checkmark.seal", url: licenseURL)
         }
-        .background(Color.primary.opacity(0.04),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private func linkRow(_ title: String, systemImage: String, url: URL) -> some View {

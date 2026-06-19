@@ -139,7 +139,7 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal, 10).padding(.vertical, 7)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .padding(.horizontal, 12).padding(.bottom, 8)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -180,7 +180,7 @@ struct ContentView: View {
                     .foregroundStyle(sidebarMode == mode ? .primary : .secondary)
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
                     .background(
-                        sidebarMode == mode ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color.clear),
+                        sidebarMode == mode ? AnyShapeStyle(Color.primary.opacity(0.10)) : AnyShapeStyle(Color.clear),
                         in: Capsule(style: .continuous)
                     )
                     .contentShape(Capsule(style: .continuous))
@@ -188,7 +188,7 @@ struct ContentView: View {
             }
         }
         .padding(3)
-        .background(Color.primary.opacity(0.06), in: Capsule(style: .continuous))
+        .glassEffect(.regular, in: Capsule(style: .continuous))
         .frame(minWidth: 240)
     }
 
@@ -484,7 +484,7 @@ struct ContentView: View {
                         Circle().fill(Color.green).frame(width: 5, height: 5).shadow(color: .green.opacity(0.6), radius: 2)
                         Text(config.name).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 7).padding(.vertical, 3).background(.ultraThinMaterial, in: Capsule())
+                    .padding(.horizontal, 7).padding(.vertical, 3).glassEffect(.regular, in: Capsule())
                 }
             }
         }
@@ -855,7 +855,7 @@ enum SidebarMode: String, CaseIterable {
     var icon: String {
         switch self {
         case .chat:   return "bubble.left.and.text.bubble.right"
-        case .cowork: return "checklist"
+        case .cowork: return "square.grid.2x2.fill"
         case .code:   return "chevron.left.forwardslash.chevron.right"
         }
     }
@@ -877,7 +877,7 @@ struct ProjectRowView: View {
                 .foregroundStyle(isSelected ? Color.accentColor : .primary)
             Spacer()
             Text("\(project.conversations.count)").font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
-                .padding(.horizontal, 5).padding(.vertical, 2).background(.ultraThinMaterial, in: Capsule())
+                .padding(.horizontal, 5).padding(.vertical, 2).glassEffect(.regular, in: Capsule())
         }
         .padding(.vertical, 5).padding(.horizontal, 4)
     }

@@ -257,7 +257,7 @@ struct MessageRowView: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
             .frame(maxWidth: 340)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.07), lineWidth: 1)

@@ -311,15 +311,21 @@ struct ProviderDetailView: View {
                                 .onSubmit { applyMaxTokens() }
                                 .onChange(of: maxTokensText) { _, _ in applyMaxTokens() }
                             ForEach([0, 4096, 8192, 32768], id: \.self) { val in
+                                let isSelected = provider.maxTokens == val
                                 Button(val == 0 ? "Auto" : "\(val/1024)k") {
                                     provider.maxTokens = val
                                     maxTokensText = val == 0 ? "" : "\(val)"
                                     saveProvider()
                                 }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .font(.system(size: 10))
-                                .foregroundStyle(provider.maxTokens == val ? Color.accentColor : Color.secondary)
+                                .buttonStyle(.plain)
+                                .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                                .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+                                .padding(.horizontal, 12).padding(.vertical, 5)
+                                .background(
+                                    isSelected ? AnyShapeStyle(Color.accentColor.opacity(0.20)) : AnyShapeStyle(Color.primary.opacity(0.06)),
+                                    in: Capsule()
+                                )
+                                .contentShape(Capsule())
                             }
                         }
                     }

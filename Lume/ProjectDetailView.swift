@@ -230,7 +230,7 @@ struct ProjectDetailView: View {
                                                             Text(artifact.title).font(.system(size: 10))
                                                         }
                                                         .padding(.horizontal, 6).padding(.vertical, 2)
-                                                        .background(.ultraThinMaterial,
+                                                        .glassEffect(.regular,
                                                                     in: RoundedRectangle(cornerRadius: 4))
                                                         .foregroundStyle(.secondary)
                                                     }

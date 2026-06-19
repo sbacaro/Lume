@@ -117,7 +117,7 @@ struct SettingsView: View {
                 .padding(.bottom, 12)
             }
             .frame(width: 190)
-            .background(.ultraThinMaterial)
+            .background(Color(.controlBackgroundColor))
 
             Divider().opacity(0.5)
 
@@ -135,7 +135,7 @@ struct SettingsView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.windowBackgroundColor).opacity(0.6))
+            .background(Color(.windowBackgroundColor))
         }
         .frame(minWidth: 640, idealWidth: 720, maxWidth: .infinity,
                minHeight: 440, idealHeight: 500, maxHeight: .infinity)
@@ -790,14 +790,13 @@ struct AdvancedSettingsView: View {
                             Text("Text size")
                                 .font(.system(size: 13, weight: .medium))
                             Spacer()
-                            Picker("", selection: $messageFontScale) {
-                                Text("Small").tag(0.85)
-                                Text("Default").tag(1.0)
-                                Text("Large").tag(1.15)
-                                Text("Extra").tag(1.3)
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(width: 280)
+                            PillSegmented(options: [
+                                (label: "Small", value: 0.85),
+                                (label: "Default", value: 1.0),
+                                (label: "Large", value: 1.15),
+                                (label: "Extra", value: 1.3),
+                            ], selection: $messageFontScale)
+                            .frame(width: 300)
                         }
                         Text("Preview")
                             .font(.system(size: 10, weight: .semibold))
@@ -816,12 +815,11 @@ struct AdvancedSettingsView: View {
                         HStack {
                             Text("Appearance").font(.system(size: 12, weight: .medium))
                             Spacer()
-                            Picker("", selection: $appearanceRaw) {
-                                ForEach(AppearanceChoice.allCases) { c in
-                                    Label(c.label, systemImage: c.icon).tag(c.rawValue)
-                                }
-                            }
-                            .pickerStyle(.segmented).frame(width: 260)
+                            PillSegmented(
+                                options: AppearanceChoice.allCases.map { (label: $0.label, value: $0.rawValue) },
+                                selection: $appearanceRaw
+                            )
+                            .frame(width: 260)
                         }
                     }
                 }
@@ -895,7 +893,7 @@ struct AdvancedSettingsView: View {
                         .buttonStyle(.lumeSecondaryCompact)
                     }
                     .padding(10)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
 
                 settingsSection(String(localized: "Getting Started")) {
@@ -1012,7 +1010,7 @@ func settingsSection<Content: View>(
             content()
         }
         .padding(12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)

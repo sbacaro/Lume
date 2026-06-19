@@ -57,23 +57,25 @@ struct LumeButtonStyle: ButtonStyle {
 
     private var foreground: Color {
         switch role {
-        case .primary, .destructive: return .white
-        case .secondary:             return .primary
+        case .primary:     return .white
+        case .destructive: return .red     // padrão macOS: texto vermelho, não pill vermelho cheio
+        case .secondary:   return .primary
         }
     }
 
     private func background(pressed: Bool) -> Color {
         switch role {
         case .primary:     return Color.accentColor.opacity(pressed ? 0.82 : 1)
-        case .destructive: return Color.red.opacity(pressed ? 0.82 : 1)
+        case .destructive: return Color.red.opacity(pressed ? 0.20 : 0.10)
         case .secondary:   return Color.primary.opacity(pressed ? 0.12 : 0.07)
         }
     }
 
     private var borderColor: Color {
         switch role {
-        case .primary, .destructive: return .clear
-        case .secondary:             return Color.primary.opacity(0.12)
+        case .primary:     return .clear
+        case .destructive: return Color.red.opacity(0.30)
+        case .secondary:   return Color.primary.opacity(0.12)
         }
     }
 }

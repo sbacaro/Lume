@@ -100,7 +100,7 @@ struct ChatDetailView: View {
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(Color.accentColor)
                                 .padding(.horizontal, 14).padding(.vertical, 8)
-                                .background(.ultraThinMaterial, in: Capsule())
+                                .glassEffect(.regular, in: Capsule())
                         )
                         .padding(8)
                         .allowsHitTesting(false)
@@ -269,7 +269,7 @@ struct ChatDetailView: View {
                     Text("Recording…").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(.ultraThinMaterial, in: Capsule())
+                .glassEffect(.regular, in: Capsule())
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
 
@@ -283,7 +283,7 @@ struct ChatDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(.ultraThinMaterial, in: Capsule())
+                .glassEffect(.regular, in: Capsule())
                 .transition(.opacity)
             }
 
@@ -1159,7 +1159,7 @@ struct ChatDetailView: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
             .frame(maxWidth: 440)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.orange.opacity(0.35), lineWidth: 1))
             .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
@@ -1213,7 +1213,7 @@ struct ChatDetailView: View {
             }
         }
         .padding(12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
             .strokeBorder((pending.isDestructive ? Color.orange : Color.accentColor).opacity(0.35), lineWidth: 1))
         .padding(.horizontal, 14)

@@ -78,7 +78,7 @@ struct SuggestionCardsView: View {
                     }
                 }
             }
-            .background(.ultraThinMaterial,
+            .glassEffect(.regular,
                         in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)

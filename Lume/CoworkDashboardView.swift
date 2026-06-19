@@ -43,13 +43,13 @@ struct CoworkDashboardView: View {
                 Text("A project connects a folder Lume can read, write, and organize.")
                     .font(.system(size: 12)).foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center).frame(maxWidth: 360)
-                VStack(spacing: 10) {
-                    CapabilityRow(icon: "doc.on.doc", text: "Read & write your files", accent: LumeTheme.clay)
-                    CapabilityRow(icon: "terminal", text: "Run code in a sandbox", accent: LumeTheme.clay)
-                    CapabilityRow(icon: "puzzlepiece.extension", text: "Connect MCP tools", accent: LumeTheme.clay)
-                    CapabilityRow(icon: "checklist", text: "Track tasks & progress", accent: LumeTheme.clay)
-                }
-                .frame(maxWidth: 320).padding(.top, 4)
+                CapabilityGrid(items: [
+                    (icon: "doc.on.doc", text: "Read & write your files"),
+                    (icon: "terminal", text: "Run code in a sandbox"),
+                    (icon: "puzzlepiece.extension", text: "Connect MCP tools"),
+                    (icon: "checklist", text: "Track tasks & progress"),
+                ], accent: LumeTheme.clay)
+                .padding(.top, 4)
             }
             .padding(.horizontal, 24)
             Spacer()

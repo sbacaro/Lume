@@ -1,279 +1,292 @@
 # Changelog — Lume
 
-Todas as mudanças notáveis do projeto são documentadas aqui.
-Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
+All notable changes to this project are documented here.
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [1.4.1] — 2026-06-19
+
+### Changed (UI)
+
+- **Liquid Glass on the floating layer**: the chat input bar, sidebar controls, and the primary/secondary actions on each start screen now use macOS 26's `glassEffect` — translucent, light-refracting chrome floating above the content. Glass is applied only to the floating control layer, never to content panels, so text and lists stay crisp.
+- **Apple-Intelligence-style glow while responding**: while the model is generating, the chat input field is wrapped in a soft, slowly rotating iridescent glow with a matching halo. It animates only during a response, then settles back to a clean hairline border so you always know where the input begins and ends.
+- **One control language — pills everywhere**: every action button is now a rounded pill (capsule). The mix of square and rounded controls is gone, including the **Max tokens** selector in Providers, which is now a pill row. Segmented controls (Text size, Appearance) use a native-feeling pill segmented style.
+- **Button colors**: primary actions use the accent color with white text; destructive actions follow the macOS standard (red text, not a heavy red fill).
+- **Refined start screens**: each mode's capability list is now a centered two-column block under the title and actions, so Cowork and Code read as balanced layouts instead of left-shifted bullets.
+- **Accent color** standardized on **#F09980** (the logo peach), tuned to sit well in both light and dark appearances.
 
 ---
 
 ## [1.4.0] — 2026-06-18
 
-### Alterado (UI)
+### Changed (UI)
 
-- **Tela inicial por modo**: cada modo passou a ter uma tela inicial própria que diz o que ele faz — Chat ganhou uma `ChatWelcomeView` (conversa pura + pesquisa web) no lugar do lançador genérico; Cowork enfatiza automação sobre arquivos; e o Code corrigiu a descrição (a saída de comandos do agente aparece na conversa, sem terminal isolado).
-- **Chat por modo (inspector + input)**: o painel direito agora muda conforme o modo — Chat mostra só Contexto/Notas; Cowork mantém Progresso + arquivos do projeto; Code ganha uma seção "Repository" com os arquivos referenciados. Acima do input, uma faixa indica o modo e suas capacidades reais (Chat = web; Cowork = arquivos/sandbox/MCP; Code = shell/Git/arquivos), refletindo o gating de ferramentas.
-- **Ferramentas por modo**: o conjunto de ferramentas exposto ao modelo agora depende do modo da conversa — **Chat** só pesquisa na web (conversa pura, sem acesso a arquivos/shell); **Cowork** tem arquivos, shell de sandbox, web e MCP (automação); **Code** tem tudo, incluindo Git/GitHub. Antes, todas as ferramentas ficavam disponíveis em qualquer modo. Vale para Anthropic e OpenAI.
-- **Limpeza da área Code**: removidas as ferramentas decorativas Terminal, Code search e Tests & Lint (o agente já executa shell/busca/testes via tools, com a saída na própria conversa). A sidebar do Code passou a ser "Repository" com Git; o MCP, que era redundante ali, fica em Settings → MCP.
-- **Terminal removido do chat**: o botão/sheet de terminal interativo saiu do `ChatDetailView` (Chat e Cowork) — Chat é conversa pura; no Code o "terminal" é a saída dos comandos do agente.
-- **Cowork**: removido o item "Agendadas" que não tinha ação (as tarefas agendadas já aparecem no dashboard do Cowork).
+- **Per-mode start screen**: each mode now has its own start screen that explains what it does — Chat got a `ChatWelcomeView` (pure conversation + web search) in place of the generic launcher; Cowork emphasizes file automation; and Code fixed its description (the agent's command output appears in the conversation, no isolated terminal).
+- **Per-mode chat (inspector + input)**: the right-hand panel now changes with the mode — Chat shows only Context/Notes; Cowork keeps Progress + project files; Code gains a "Repository" section with referenced files. Above the input, a strip indicates the mode and its real capabilities (Chat = web; Cowork = files/sandbox/MCP; Code = shell/Git/files), reflecting the tool gating.
+- **Per-mode tools**: the set of tools exposed to the model now depends on the conversation's mode — **Chat** only searches the web (pure conversation, no file/shell access); **Cowork** has files, sandbox shell, web, and MCP (automation); **Code** has everything, including Git/GitHub. Previously, all tools were available in any mode. Applies to both Anthropic and OpenAI.
+- **Code area cleanup**: removed the decorative Terminal, Code search, and Tests & Lint tools (the agent already runs shell/search/tests via tools, with output in the conversation). The Code sidebar became "Repository" with Git; MCP, redundant there, lives in Settings → MCP.
+- **Terminal removed from chat**: the interactive terminal button/sheet was removed from `ChatDetailView` (Chat and Cowork) — Chat is pure conversation; in Code the "terminal" is the agent's command output.
+- **Cowork**: removed the "Scheduled" item that had no action (scheduled tasks already appear in the Cowork dashboard).
 
-### Adicionado
+### Added
 
-- **Histórico de versões de artifacts**: quando o agente revisa um artifact (mesmo tipo na conversa), o conteúdo anterior é preservado como versão. O painel de artifact ganhou um navegador (◀ vN/M ▶) para visualizar versões anteriores no preview e no código, sem perder a atual.
-- **Persistência do índice RAG entre sessões**: os embeddings indexados agora são cacheados em disco (Application Support/Lume/RAGIndex), um arquivo por documento, com invalidação por hash de conteúdo (SHA-256) e identidade do backend/dimensão de embedding. Ao reabrir o app, documentos inalterados são carregados do cache em vez de re-embedados — sem reprocessar tudo a cada sessão. +2 testes.
-- **Seleção de modelo por complexidade (on-device)**: novo toggle opcional (desligado por padrão) "Auto-select model by complexity". Quando ligado, o `LLMRouter` classifica a complexidade do prompt com o modelo on-device (`OnDeviceComplexity`, Foundation Models) — com fallback para a heurística — e escolhe um modelo mais barato ou mais forte dentro do provider. Sem o toggle, o modelo escolhido permanece soberano (comportamento inalterado). +2 testes.
-- **Sumarização de contexto on-device**: novo `OnDeviceSummarizer` (Apple Foundation Models, macOS 26+) resume o histórico antigo da conversa **localmente** — grátis, offline e privado. O `AIProviderManager` tenta o modelo on-device primeiro e só cai para a sumarização via API (que custa tokens) quando o modelo local não está disponível. Reduz consumo de tokens em conversas longas, sem regressão.
-- **MCP funcional (Model Context Protocol)**: novo `MCPClient` (actor) fala JSON-RPC 2.0 sobre stdio com framing newline-delimited — handshake `initialize`/`initialized`, `tools/list` e `tools/call`. As ferramentas descobertas dos servidores MCP conectados entram em `AgentToolExecutor.availableTools` (via `MCPAgentTool`) e são oferecidas ao modelo por **todos os providers**, com gate de aprovação. Em Settings → MCP há botão **Connect / Refresh** e contagem de ferramentas. +15 testes (`MCPFramingTests`).
+- **Artifact version history**: when the agent revises an artifact (same type in the conversation), the previous content is preserved as a version. The artifact panel gained a navigator (◀ vN/M ▶) to view earlier versions in both the preview and the code, without losing the current one.
+- **Persistent RAG index across sessions**: indexed embeddings are now cached on disk (Application Support/Lume/RAGIndex), one file per document, with invalidation by content hash (SHA-256) and backend/embedding-dimension identity. On relaunch, unchanged documents are loaded from cache instead of being re-embedded — no reprocessing every session. +2 tests.
+- **Complexity-based model selection (on-device)**: a new optional toggle (off by default) "Auto-select model by complexity". When on, `LLMRouter` classifies the prompt's complexity with the on-device model (`OnDeviceComplexity`, Foundation Models) — with a heuristic fallback — and picks a cheaper or stronger model within the provider. Without the toggle, the chosen model stays sovereign (unchanged behavior). +2 tests.
+- **On-device context summarization**: a new `OnDeviceSummarizer` (Apple Foundation Models, macOS 26+) summarizes old conversation history **locally** — free, offline, and private. `AIProviderManager` tries the on-device model first and only falls back to API summarization (which costs tokens) when the local model is unavailable. Reduces token usage in long conversations, with no regression.
+- **Functional MCP (Model Context Protocol)**: a new `MCPClient` (actor) speaks JSON-RPC 2.0 over stdio with newline-delimited framing — `initialize`/`initialized` handshake, `tools/list`, and `tools/call`. Tools discovered from connected MCP servers enter `AgentToolExecutor.availableTools` (via `MCPAgentTool`) and are offered to the model across **all providers**, gated by approval. Settings → MCP has a **Connect / Refresh** button and a tool count. +15 tests (`MCPFramingTests`).
 
-### Alterado
+### Changed
 
-- **Paridade de ferramentas no OpenAI**: `OpenAIProvider.buildToolDefinitions()` deixou de ser uma lista hardcoded e passa a derivar de `AgentToolExecutor.availableTools` (mesma fonte do Anthropic) — ferramentas GitHub e MCP agora aparecem também no OpenAI automaticamente.
-- **RAG com embeddings contextuais**: `TextEmbedder` reescrito como `actor` usando **`NLContextualEmbedding`** (modelo transformer multilíngue, contextual, nativo e offline; script latino cobre PT+EN) com mean-pooling dos vetores de token, e **fallback** para `NLEmbedding` (word2vec) quando os assets do modelo não estão presentes. A dimensão do vetor é fixada na primeira carga. Embeddings de resumo passam a ser **cacheados no `index()`** (antes recomputados a cada busca). +11 testes (`RAGEngineTests`).
-- **Swift 6 de verdade**: o projeto migrou para o **Swift 6 language mode** (`SWIFT_VERSION = 6.0`) com **strict concurrency `complete`** em todos os targets. O target de testes (Swift Testing) compartilha a isolação `MainActor` do app; o `LumeUITests` (XCTest) permanece nonisolated.
+- **Tool parity on OpenAI**: `OpenAIProvider.buildToolDefinitions()` is no longer a hardcoded list and now derives from `AgentToolExecutor.availableTools` (the same source as Anthropic) — GitHub and MCP tools now show up on OpenAI automatically.
+- **RAG with contextual embeddings**: `TextEmbedder` rewritten as an `actor` using **`NLContextualEmbedding`** (a multilingual, contextual, native, offline transformer model; the Latin script covers PT+EN) with mean-pooling of token vectors, and a **fallback** to `NLEmbedding` (word2vec) when the model assets aren't present. The vector dimension is fixed on first load. Summary embeddings are now **cached in `index()`** (previously recomputed on every search). +11 tests (`RAGEngineTests`).
+- **Real Swift 6**: the project migrated to **Swift 6 language mode** (`SWIFT_VERSION = 6.0`) with **strict concurrency `complete`** across all targets. The test target (Swift Testing) shares the app's `MainActor` isolation; `LumeUITests` (XCTest) stays nonisolated.
 
-### Adicionado
+### Added
 
-- **Cobertura de testes** (Swift Testing): 48 testes cobrindo `LLMRouter` (roteamento/heurísticas), `ModelPricing` (custo/formatação), `ModelCapabilities` (visão), `ArtifactDetector` (detecção em markdown) e `JSONValue` (Codable/acessores/subscripts).
+- **Test coverage** (Swift Testing): 48 tests covering `LLMRouter` (routing/heuristics), `ModelPricing` (cost/formatting), `ModelCapabilities` (vision), `ArtifactDetector` (markdown detection), and `JSONValue` (Codable/accessors/subscripts).
 
-### Corrigido
+### Fixed
 
-- **Concorrência sob strict `complete`**: `WKNavigationDelegate.decisionHandler` marcado `@MainActor` em `ArtifactPanelView` (a assinatura antiga "quase casava" e o delegate podia nem ser chamado); `Task.detached` → `Task` em `ProjectDetailView` para não enviar `@Model` não-`Sendable` entre actors; `SpeechDelegateProxy.onEnd` agora é `@Sendable`; `TaskScheduler` pula para o `MainActor` antes de `checkTasks()` no callback do `Timer`.
-- **Código morto removido**: `SSEParser` (não referenciado; os providers consomem o SSE direto via `URLSession.bytes`).
+- **Concurrency under strict `complete`**: `WKNavigationDelegate.decisionHandler` marked `@MainActor` in `ArtifactPanelView` (the old signature "nearly matched" and the delegate might not even be called); `Task.detached` → `Task` in `ProjectDetailView` so non-`Sendable` `@Model` isn't sent across actors; `SpeechDelegateProxy.onEnd` is now `@Sendable`; `TaskScheduler` hops to the `MainActor` before `checkTasks()` in the `Timer` callback.
+- **Dead code removed**: `SSEParser` (unreferenced; providers consume SSE directly via `URLSession.bytes`).
 
 ---
 
 ## [1.3.4] — 2026-06-16
 
-### Adicionado
+### Added
 
-- **Atualização automática via Sparkle**: ao detectar uma versão nova, o app baixa o `.dmg`, instala e reabre sozinho (UI padrão do Sparkle), **sem abrir o navegador**. Segurança por assinatura **EdDSA** (appcast assinado).
-- **`setup-sparkle.sh`**: configura o Sparkle de ponta a ponta no que é automatizável (resolve o pacote, gera as chaves EdDSA e injeta a chave pública no projeto).
+- **Automatic updates via Sparkle**: when a new version is detected, the app downloads the `.dmg`, installs it, and relaunches on its own (standard Sparkle UI), **without opening the browser**. Secured by **EdDSA** signatures (signed appcast).
+- **`setup-sparkle.sh`**: configures Sparkle end to end for everything automatable (resolves the package, generates the EdDSA keys, and injects the public key into the project).
 
-### Alterado
+### Changed
 
-- **`release.sh`** agora **gera e assina o appcast** automaticamente quando o Sparkle está instalado, commita o `appcast.xml` e publica o release com o **DMG** (o `Lume.app` vai dentro do DMG). O PKG foi descontinuado.
+- **`release.sh`** now **generates and signs the appcast** automatically when Sparkle is installed, commits `appcast.xml`, and publishes the release with the **DMG** (the `Lume.app` ships inside the DMG). The PKG was discontinued.
 
 ---
 
 ## [1.3.3] — 2026-06-16
 
-### Corrigido
+### Fixed
 
-- **Menu "Check for Updates…"** agora faz a verificação **dentro do app** e mostra o status na janela **Sobre**, em vez de abrir a página de releases no navegador.
-- **Renderização de chamadas de ferramenta**: conteúdos com `]]`, `|` ou quebras de linha (ex.: um script bash com `if [[ … ]]`) não quebram mais o bloco da ferramenta. O payload passou a ser codificado em **Base64**, então nada vaza como texto cru nem exibe `\n` literais na bolha.
+- **"Check for Updates…" menu** now checks **inside the app** and shows the status in the **About** window, instead of opening the releases page in the browser.
+- **Tool-call rendering**: content with `]]`, `|`, or line breaks (e.g., a bash script with `if [[ … ]]`) no longer breaks the tool block. The payload is now **Base64**-encoded, so nothing leaks as raw text or shows literal `\n` in the bubble.
 
 ---
 
 ## [1.3.2] — 2026-06-16
 
-### Corrigido
+### Fixed
 
-- O botão **"Check"** (Verificar atualizações) na tela **Sobre** agora faz a verificação **dentro do app** e mostra o status ali mesmo ("Procurando…", "Nova versão disponível: X" ou "Você está na versão mais recente."), em vez de abrir a página de releases no navegador.
+- The **"Check"** (Check for updates) button on the **About** screen now checks **inside the app** and shows the status right there ("Checking…", "New version available: X", or "You're on the latest version."), instead of opening the releases page in the browser.
 
 ---
 
 ## [1.3.1] — 2026-06-16
 
-### Adicionado
+### Added
 
-- **Notificação de atualização na sidebar**: um popup no estilo do Lume (vidro + gradiente da marca) aparece **logo acima do nome do modelo**, no rodapé da barra lateral. Toque para atualizar (via Sparkle); há um botão para dispensar.
-- **Fonte única da versão (`Version.xcconfig`)**: o número da versão passa a viver em um único arquivo, do qual o app, o About e todos os scripts derivam. Inclui `set-version.sh` para bumpar em um comando.
+- **Update notification in the sidebar**: a Lume-style popup (glass + brand gradient) appears **just above the model name**, at the bottom of the sidebar. Tap to update (via Sparkle); a button dismisses it.
+- **Single source of truth for the version (`Version.xcconfig`)**: the version number now lives in a single file, from which the app, the About screen, and all scripts derive. Includes `set-version.sh` to bump in one command.
 
-### Alterado
+### Changed
 
-- **`build-release.sh` agora é um único arquivo autocontido**: compila, gera o `.app` e produz o `Lume-<versão>.dmg` (com fundo no gradiente da marca e atalho do Applications, headless) — o antigo `build-dmg.sh` foi incorporado.
+- **`build-release.sh` is now a single self-contained file**: it compiles, builds the `.app`, and produces `Lume-<version>.dmg` (with the brand-gradient background and an Applications shortcut, headless) — the old `build-dmg.sh` was merged in.
 
-### Corrigido
+### Fixed
 
-- Correção de compilação no stub do `SparkleUpdater` (faltava `import Combine`), que impedia o build sem o pacote Sparkle adicionado.
+- Build fix in the `SparkleUpdater` stub (missing `import Combine`), which prevented the build without the Sparkle package added.
 
 ---
 
 ## [1.3.0] — 2026-06-16
 
-### Adicionado
+### Added
 
-- **Atualização automática (Sparkle)**: o menu **Verificar Atualizações…** e o botão no About baixam o `.dmg`, instalam e reiniciam o app sozinhos — na próxima abertura já na versão nova. (Requer configuração do pacote e do appcast — ver `SETUP_SPARKLE.md`.)
-- **IA ciente do modo**: o modelo agora recebe, no topo do system prompt, um cabeçalho dizendo se está em **Chat**, **Cowork** ou **Code**, com o papel, as ferramentas e o comportamento esperados de cada área.
-- **Scripts de release**:
-  - `build-release.sh` — pipeline completo: compila, gera o `.app` e entrega o `Lume-<versão>.dmg`.
-  - `build-dmg.sh` — DMG custom com **fundo no gradiente da marca**, seta e atalho do **Applications**, de forma headless (sem depender do Finder).
-  - `generate-appcast.sh` — gera e assina (EdDSA) o `appcast.xml` do Sparkle.
+- **Automatic updates (Sparkle)**: the **Check for Updates…** menu and the About button download the `.dmg`, install it, and restart the app on their own — already on the new version at next launch. (Requires package and appcast setup — see `SETUP_SPARKLE.md`.)
+- **Mode-aware AI**: the model now receives, at the top of the system prompt, a header stating whether it's in **Chat**, **Cowork**, or **Code**, with the role, tools, and expected behavior of each area.
+- **Release scripts**:
+  - `build-release.sh` — full pipeline: compiles, builds the `.app`, and delivers `Lume-<version>.dmg`.
+  - `build-dmg.sh` — custom DMG with a **brand-gradient background**, arrow, and **Applications** shortcut, headless (no Finder dependency).
+  - `generate-appcast.sh` — generates and signs (EdDSA) Sparkle's `appcast.xml`.
 
-### Alterado
+### Changed
 
-- **UI do chat unificada**: o **Cowork** agora usa o mesmo composer (caixa de digitação, menus de modelo/aprovação e bolhas) do Chat e do Code — fim das três caixas diferentes.
-- **Verificador de atualizações mais robusto**: fallback para a lista de releases quando o "latest" retorna 404, header `User-Agent` e mensagens de erro localizadas.
+- **Unified chat UI**: **Cowork** now uses the same composer (input box, model/approval menus, and bubbles) as Chat and Code — no more three different boxes.
+- **More robust update checker**: fallback to the releases list when "latest" returns 404, a `User-Agent` header, and localized error messages.
 
-### Corrigido
+### Fixed
 
-- O **contexto do workspace de Code** não vaza mais para conversas do Chat — fica restrito ao modo Code.
-- Porcentagem do progresso de tarefas formatada via **FormatStyle** (corrige o aviso de localização do Xcode).
-- Textos que ainda apareciam em português agora são localizáveis (ex.: "Verificar" → Check, "Modelo" → Model) e chaves órfãs do catálogo de strings foram removidas.
+- The **Code workspace context** no longer leaks into Chat conversations — it's restricted to Code mode.
+- Task progress percentage formatted via **FormatStyle** (fixes the Xcode localization warning).
+- Texts that still appeared in Portuguese are now localizable (e.g., "Verificar" → Check, "Modelo" → Model) and orphaned string-catalog keys were removed.
 
 ---
 
 ## [1.2.0] — 2026-06-16
 
-### Adicionado
+### Added
 
-#### Internacionalização (i18n)
-- **Suporte completo a dois idiomas**: inglês (base) e **português (Brasil)**, com catálogo de strings (`Localizable.xcstrings`) cobrindo toda a interface
-- **Seletor de idioma no app** em Configurações → Avançado → **Idioma do App**: escolha entre **Sistema**, **English** e **Português (Brasil)**, com reinício automático para aplicar
-- Por padrão, o app passa a seguir o idioma do macOS (antes ficava preso em português)
+#### Internationalization (i18n)
+- **Full two-language support**: English (base) and **Portuguese (Brazil)**, with a string catalog (`Localizable.xcstrings`) covering the entire interface.
+- **In-app language picker** in Settings → Advanced → **App Language**: choose between **System**, **English**, and **Português (Brasil)**, with automatic restart to apply.
+- By default, the app now follows the macOS language (previously it was stuck in Portuguese).
 
-### Alterado
+### Changed
 
-- **Botões padronizados em formato pílula (cápsula)** em todo o app — fim da mistura de cantos arredondados e quadrados; o seletor Chat/Cowork/Code e os botões de ação agora compartilham a mesma forma
-- Base de código migrada para **inglês como idioma de origem**, com as traduções em português movidas para o catálogo de strings (em vez de textos fixos no código)
+- **Buttons standardized to pill (capsule) shape** across the app — no more mixing of rounded and square corners; the Chat/Cowork/Code selector and the action buttons now share the same shape.
+- Codebase migrated to **English as the source language**, with the Portuguese translations moved to the string catalog (instead of hardcoded text in the code).
 
-### Corrigido
+### Fixed
 
-- **Chave de IA cadastrada no onboarding** (e no "Setup assistant") não aparecia em Configurações, exigindo novo cadastro — causado pela falta de injeção do contexto de dados (`modelContext`) nos sheets de onboarding
-- Diversos textos que estavam fixos em português e não passavam pela tradução agora são localizáveis
+- **AI key registered in onboarding** (and in the "Setup assistant") didn't appear in Settings, requiring re-registration — caused by the missing data context (`modelContext`) injection in the onboarding sheets.
+- Various texts that were hardcoded in Portuguese and not going through translation are now localizable.
 
 ---
 
 ## [1.1.0] — 2026-06-15
 
-### Adicionado
+### Added
 
-#### Sobre o app
-- Nova tela **"Sobre o Lume"** profissional, acessível pelo menu (Lume → Sobre o Lume): ícone do app, versão e número de build, descrição, requisitos técnicos e copyright
-- Atalhos diretos para **Repositório no GitHub**, **Notas de versão**, **Reportar problema** e **Licença MIT**
-- Botão **Verificar atualizações** com status ao vivo, integrado ao sistema de releases
+#### About the app
+- New professional **"About Lume"** screen, accessible from the menu (Lume → About Lume): app icon, version and build number, description, technical requirements, and copyright.
+- Direct shortcuts to **GitHub repository**, **Release notes**, **Report an issue**, and **MIT License**.
+- **Check for updates** button with live status, integrated with the release system.
 
-#### Renderização de mensagens
-- **Tabelas** markdown com cabeçalho, alinhamento por coluna (`:--`, `--:`, `:-:`), zebra e scroll horizontal
-- **Blockquotes** (`>`) com barra de acento
-- **Checkboxes** de task list (`- [ ]` / `- [x]`) com texto riscado quando concluído
-- **Listas aninhadas** com indentação e marcadores por nível (•/◦/▪)
-- **Tamanho de fonte ajustável** das mensagens (Pequeno/Padrão/Grande/Extra) em Configurações → Avançado, com pré-visualização ao vivo
+#### Message rendering
+- Markdown **tables** with a header, per-column alignment (`:--`, `--:`, `:-:`), zebra striping, and horizontal scroll.
+- **Blockquotes** (`>`) with an accent bar.
+- Task-list **checkboxes** (`- [ ]` / `- [x]`) with strikethrough text when completed.
+- **Nested lists** with indentation and per-level markers (•/◦/▪).
+- **Adjustable message font size** (Small/Default/Large/Extra) in Settings → Advanced, with a live preview.
 
-#### Inteligência e contexto
-- **Memória persistente** entre conversas: fatos do usuário injetados no system prompt, com aba de gestão (categorias, ativar/desativar, editar) e captura rápida a partir de qualquer mensagem
-- **Contexto temporal**: data e hora atuais do macOS enviadas a cada mensagem, ancorando a IA no presente
-- **Títulos de conversa on-device** via Apple Foundation Models (privado, gratuito, com fallback)
-- **RAG híbrido**: busca vetorial (cosine) combinada com lexical (BM25-lite)
-- **Citações RAG clicáveis**: seção "Fontes" nas respostas, com popover do trecho, documento e relevância
-- **Vision OCR**: texto de imagens anexadas extraído localmente (pt-BR/en) e incluído no contexto — útil até para modelos sem visão
-- **Badge de modelo e custo**: modelo escolhido pelo roteamento automático + tokens e custo estimado por conversa
+#### Intelligence and context
+- **Persistent memory** across conversations: user facts injected into the system prompt, with a management tab (categories, enable/disable, edit) and quick capture from any message.
+- **Temporal context**: the current macOS date and time sent with each message, anchoring the AI in the present.
+- **On-device conversation titles** via Apple Foundation Models (private, free, with fallback).
+- **Hybrid RAG**: vector search (cosine) combined with lexical (BM25-lite).
+- **Clickable RAG citations**: a "Sources" section in responses, with a popover for the snippet, document, and relevance.
+- **Vision OCR**: text from attached images extracted locally (pt-BR/en) and included in the context — useful even for models without vision.
+- **Model and cost badge**: the model chosen by automatic routing + tokens and estimated cost per conversation.
 
-#### Interface e UX
-- **Paleta de comandos (⌘K)** com busca global por título *e* conteúdo das mensagens, e ações rápidas
-- **Atalhos de teclado**: ⌘N (nova conversa), ⌘F (busca), ⌘1/2/3 (alternar Chat/Cowork/Code)
-- **Auto-scroll inteligente**: só acompanha o fim se o usuário já estava lá, com botão flutuante "ir ao fim"
-- **Toast de erro** transitório (substitui mensagens de erro no histórico)
-- **Velocidade de geração** (tok/s) ao vivo no header durante o streaming
-- **Timestamp** também nas respostas do assistente
-- **Thumbnails** das imagens anexadas, com remoção individual
-- **Histórico de versões (branching)**: editar/reiniciar não destrói mais o trecho anterior — ele é arquivado e pode ser restaurado de forma reversível
+#### Interface and UX
+- **Command palette (⌘K)** with global search by title *and* message content, and quick actions.
+- **Keyboard shortcuts**: ⌘N (new conversation), ⌘F (search), ⌘1/2/3 (switch Chat/Cowork/Code).
+- **Smart auto-scroll**: only follows the end if the user was already there, with a floating "go to bottom" button.
+- **Transient error toast** (replaces error messages in the history).
+- **Generation speed** (tok/s) live in the header during streaming.
+- **Timestamp** also on assistant responses.
+- **Thumbnails** of attached images, with individual removal.
+- **Version history (branching)**: editing/restarting no longer destroys the previous segment — it's archived and can be reversibly restored.
 
-#### Tema
-- **Aparência** Claro/Escuro/Sistema, aplicada em todo o app
+#### Theme
+- **Appearance** Light/Dark/System, applied across the app.
 
-#### Voz
-- **Leitura em voz alta (TTS)** das respostas via `AVSpeechSynthesizer`, com limpeza de markdown
-- Abstração de transcrição (`TranscriptionProvider`) preparada para motor local Whisper (WhisperKit)
+#### Voice
+- **Text-to-speech (TTS)** of responses via `AVSpeechSynthesizer`, with markdown cleanup.
+- Transcription abstraction (`TranscriptionProvider`) prepared for a local Whisper engine (WhisperKit).
 
-#### Exportação
-- Export de conversa como **Markdown** (arquivo) e **PDF** paginado, além de copiar para a área de transferência
+#### Export
+- Export a conversation as **Markdown** (file) and paginated **PDF**, plus copy to clipboard.
 
-### Alterado
-- **Botões das Configurações padronizados** num único sistema de estilos (primário, secundário e destrutivo) com forma, tamanho e estados consistentes em todas as abas e sheets
-- Blocos de código agora **auto-expandem** quando curtos (≤40 linhas); longos continuam colapsados
-- Largura de leitura das respostas limitada (~760pt) para legibilidade em janelas largas
-- `RAGEngine` passou de busca puramente vetorial para **recuperação híbrida** com fontes rastreáveis
-- Títulos automáticos deixaram de usar as primeiras palavras do texto, passando a usar modelo on-device
+### Changed
+- **Settings buttons standardized** into a single style system (primary, secondary, and destructive) with consistent shape, size, and states across all tabs and sheets.
+- Code blocks now **auto-expand** when short (≤40 lines); long ones stay collapsed.
+- Reading width of responses capped (~760pt) for legibility in wide windows.
+- `RAGEngine` moved from purely vector search to **hybrid retrieval** with traceable sources.
+- Automatic titles no longer use the first words of the text, switching to an on-device model.
 
-### Removido
-- **Cor de acento customizável**: a opção foi removida das Configurações; o app mantém apenas a escolha de aparência (Claro/Escuro/Sistema)
+### Removed
+- **Custom accent color**: the option was removed from Settings; the app keeps only the appearance choice (Light/Dark/System).
 
-### Corrigido
-- **Tema escuro consistente**: a tela inicial do modo Chat herdava um fundo diferente do das telas Cowork e Code; agora todas usam a mesma cor de fundo
-- **Concorrência (Swift 6)**: eliminados os avisos de mutação de variáveis capturadas em `ShellFunctions`, encapsulando o estado mutável num tipo de referência protegido por lock
-- Removidos `await` redundantes em chamadas não-assíncronas (`AIProviderManager`, `AnthropicProvider`)
+### Fixed
+- **Consistent dark theme**: the Chat mode start screen inherited a different background from the Cowork and Code screens; now they all use the same background color.
+- **Concurrency (Swift 6)**: eliminated the warnings about mutating captured variables in `ShellFunctions`, wrapping the mutable state in a lock-protected reference type.
+- Removed redundant `await`s on non-async calls (`AIProviderManager`, `AnthropicProvider`).
 
 ---
 
 ## [1.0.0] — 2025-06-26
 
-### Adicionado
+### Added
 
 #### Interface
-- Sidebar com três modos: **Chat**, **Cowork** e **Code**
-- Área de chat com streaming de tokens em tempo real
-- Syntax highlighting estilo Xcode Dark para Swift, Python, JS/TS, Bash, JSON, HTML, CSS, SQL e Rust
-- Numeração de linhas nos blocos de código
-- Diff viewer com cores para arquivos de patch
-- Blocos de código colapsados por padrão, expansíveis ao clicar
-- Mensagens do usuário com ações no hover: hora de envio, reiniciar, editar, copiar
-- Mensagens da IA com ações no hover: copiar, continuar a partir daqui
-- Seleção de texto cruzando múltiplas mensagens
-- Notificação de atualização disponível (card animado no canto inferior direito)
-- Indicador de modelo ativo na barra inferior da sidebar
+- Sidebar with three modes: **Chat**, **Cowork**, and **Code**.
+- Chat area with real-time token streaming.
+- Xcode Dark–style syntax highlighting for Swift, Python, JS/TS, Bash, JSON, HTML, CSS, SQL, and Rust.
+- Line numbers in code blocks.
+- Diff viewer with colors for patch files.
+- Code blocks collapsed by default, expandable on click.
+- User messages with hover actions: send time, restart, edit, copy.
+- AI messages with hover actions: copy, continue from here.
+- Text selection spanning multiple messages.
+- Update-available notification (animated card in the bottom-right corner).
+- Active-model indicator in the sidebar's bottom bar.
 
 #### Chat
-- Suporte a múltiplos providers: **OpenAI**, **Anthropic**, providers customizados (OpenAI-compatible)
-- Seletor de modelo por provider com modelos dinâmicos via API
-- Streaming de tokens via Server-Sent Events (SSE)
-- Cache semântico com persistência em disco (TTL de 24h)
-- Compressão de contexto usando NLEmbedding nativo do macOS
-- Sumarização automática de histórico longo
-- Roteamento automático de modelo por complexidade da query (inspirado em RouteLLM)
+- Support for multiple providers: **OpenAI**, **Anthropic**, custom providers (OpenAI-compatible).
+- Per-provider model picker with dynamic models via API.
+- Token streaming via Server-Sent Events (SSE).
+- Semantic cache with disk persistence (24h TTL).
+- Context compression using macOS-native NLEmbedding.
+- Automatic summarization of long history.
+- Automatic model routing by query complexity (inspired by RouteLLM).
 
-#### Projetos (Cowork)
-- Criação de projetos do zero com pasta local em `~/Lume/`
-- Importação de conversas existentes como projetos
-- Importação de pastas existentes
-- System prompt por projeto
-- Indexação de arquivos para RAG (PDF, imagens, texto, código)
-- Painel direito com instruções, contexto e arquivos do projeto
+#### Projects (Cowork)
+- Creating projects from scratch with a local folder in `~/Lume/`.
+- Importing existing conversations as projects.
+- Importing existing folders.
+- Per-project system prompt.
+- File indexing for RAG (PDF, images, text, code).
+- Right panel with instructions, context, and project files.
 
-#### Ferramentas do Agente
-- Busca na web via DuckDuckGo (sem chave de API)
-- Fetch de páginas web com extração de texto
-- Execução de shell commands
-- Leitura e escrita de arquivos
-- Listagem e criação de diretórios
-- Integração com Git (status de branch, arquivos staged/modified)
+#### Agent tools
+- Web search via DuckDuckGo (no API key).
+- Web page fetch with text extraction.
+- Shell command execution.
+- File reading and writing.
+- Directory listing and creation.
+- Git integration (branch status, staged/modified files).
 
-#### Infraestrutura de IA
-- Gateway compatível com LiteLLM, Portkey, Langfuse, vLLM, TGI e Ollama
-- Prompt caching nativo (Anthropic `cache_control`, OpenAI seed)
-- RAG Engine com NLEmbedding, chunking hierárquico e busca por similaridade
-- Orquestrador de agentes com grafo de steps, condicionais e loops
-- Execução paralela de subagentes
+#### AI infrastructure
+- Gateway compatible with LiteLLM, Portkey, Langfuse, vLLM, TGI, and Ollama.
+- Native prompt caching (Anthropic `cache_control`, OpenAI seed).
+- RAG Engine with NLEmbedding, hierarchical chunking, and similarity search.
+- Agent orchestrator with a graph of steps, conditionals, and loops.
+- Parallel subagent execution.
 
 #### Voice
-- Ditado por voz usando `SFSpeechRecognizer` nativo do macOS
-- Reconhecimento em português brasileiro com fallback para inglês
-- Indicador visual de gravação no header do chat
-- Envio automático após parar de gravar
+- Voice dictation using macOS-native `SFSpeechRecognizer`.
+- Brazilian Portuguese recognition with English fallback.
+- Visual recording indicator in the chat header.
+- Automatic send after recording stops.
 
 #### Multimodal
-- Arraste e solte imagens diretamente no campo de entrada
-- Cole imagens do clipboard (⌘V)
-- Envio de imagens como base64 para modelos compatíveis (GPT-4o, Claude)
+- Drag and drop images directly into the input field.
+- Paste images from the clipboard (⌘V).
+- Send images as base64 to compatible models (GPT-4o, Claude).
 
 #### Artifacts
-- Detecção automática de HTML, SVG, JavaScript, CSS, React, Mermaid e Markdown
-- Preview interativo ao lado do chat
-- O inspector fecha automaticamente ao abrir um artifact
+- Automatic detection of HTML, SVG, JavaScript, CSS, React, Mermaid, and Markdown.
+- Interactive preview next to the chat.
+- The inspector closes automatically when an artifact opens.
 
-#### Atualizações
-- Verificação automática de atualizações via GitHub Releases (a cada 6 horas)
-- Card de notificação animado com release notes expansíveis
-- Versões dispensadas são lembradas entre sessões
+#### Updates
+- Automatic update check via GitHub Releases (every 6 hours).
+- Animated notification card with expandable release notes.
+- Dismissed versions are remembered across sessions.
 
 ---
 
-## Pendente / Roadmap
+## Pending / Roadmap
 
-- [ ] Modo Computer Use (controle de tela via Anthropic API)
-- [ ] Planilhas nativas
-- [ ] Histórico de versões de artifacts
-- [ ] Exportação de projetos
-- [ ] Ditado local com Whisper (WhisperKit) — abstração pronta, falta adicionar o pacote no Xcode
-- [x] Modos de aparência (Claro/Escuro/Sistema)
-- [x] Memória persistente entre conversas
-- [x] Histórico de versões de conversas (branching)
+- [ ] Computer Use mode (screen control via the Anthropic API)
+- [ ] Native spreadsheets
+- [x] Artifact version history
+- [ ] Project export
+- [ ] Local dictation with Whisper (WhisperKit) — abstraction ready, package still to be added in Xcode
+- [x] Appearance modes (Light/Dark/System)
+- [x] Persistent memory across conversations
+- [x] Conversation version history (branching)

@@ -103,7 +103,7 @@ struct CommandPaletteView: View {
             }
         }
         .frame(width: 580, height: 440)
-        .background(.ultraThinMaterial)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onAppear { focused = true }
     }
 

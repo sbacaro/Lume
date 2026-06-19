@@ -1685,6 +1685,7 @@
       }
     },
     "Default" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -2106,9 +2107,6 @@
           }
         }
       }
-    },
-    "Extra" : {
-
     },
     "Facts the AI should remember across all conversations (e.g., \"I work at Rumo Logística\", \"I prefer concise answers in Portuguese\")." : {
       "localizations" : {
@@ -2645,6 +2643,7 @@
       }
     },
     "Large" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -4749,6 +4748,7 @@
       }
     },
     "Small" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

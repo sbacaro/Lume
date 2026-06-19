@@ -1,3 +1,45 @@
+# ✨ Lume v1.4.1 — Liquid Glass, Intelligence glow, and a unified control language
+
+A design-focused follow-up to 1.4.0. Lume's control layer now speaks Apple's **Liquid Glass**
+(macOS 26), the chat input lights up with an **Apple-Intelligence-style glow** while the model
+responds, and every button and toggle across the app finally follows one consistent pill style.
+
+**Release date:** 2026-06-19
+**Version:** v1.4.1 (build 14)
+**Type:** Design & polish
+
+---
+
+## ✨ Highlights
+
+### Liquid Glass on the floating layer
+- The chat input bar, sidebar controls, and the primary/secondary actions on each start screen
+  now use macOS 26's `glassEffect` — translucent, light-refracting chrome that floats above the
+  content. Glass is applied only to the floating control layer, never to content panels, so
+  text and lists stay crisp and readable.
+
+### Apple-Intelligence-style glow while responding
+- While the model is generating, the chat input field is wrapped in a soft, slowly rotating
+  iridescent glow with a matching halo. It's lightweight and animates only during a response,
+  then settles back to a clean hairline border so you always know where the input begins and ends.
+
+### One control language: pills everywhere
+- Every action button is now a rounded **pill** (capsule). The mix of square and rounded
+  controls is gone — including the **Max tokens** selector in Providers, which is now a pill row.
+- Primary actions use the accent color with white text; destructive actions follow the macOS
+  standard (red text, not a heavy red fill).
+- Segmented controls (Text size, Appearance) use a native-feeling pill segmented style.
+
+### Refined start screens
+- Each mode's capability list is now a centered two-column block under the title and actions,
+  so Cowork and Code read as balanced, intentional layouts instead of left-shifted bullets.
+
+### Accent color
+- Standardized on **#F09980** (the logo peach) as the app accent, tuned to sit well in both
+  light and dark appearances.
+
+---
+
 # 🚀 Lume v1.4.0 — Real modes, MCP, smarter RAG, and on-device AI
 
 Lume's biggest update yet. **Chat, Cowork, and Code** are now distinct experiences — each

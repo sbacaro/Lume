@@ -102,13 +102,13 @@ struct CodeDashboardView: View {
                         .font(.system(size: 12)).foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center).frame(maxWidth: 360)
                 }
-                VStack(spacing: 10) {
-                    CapabilityRow(icon: "terminal", text: "Run shell commands", accent: ModeAccent.code)
-                    CapabilityRow(icon: "doc.text", text: "Read & edit files", accent: ModeAccent.code)
-                    CapabilityRow(icon: "arrow.triangle.branch", text: "Git status, diffs & commits", accent: ModeAccent.code)
-                    CapabilityRow(icon: "testtube.2", text: "Write & run tests", accent: ModeAccent.code)
-                }
-                .frame(maxWidth: 320).padding(.top, 4)
+                CapabilityGrid(items: [
+                    (icon: "terminal", text: "Run shell commands"),
+                    (icon: "doc.text", text: "Read & edit files"),
+                    (icon: "arrow.triangle.branch", text: "Git status, diffs & commits"),
+                    (icon: "testtube.2", text: "Write & run tests"),
+                ], accent: ModeAccent.code)
+                .padding(.top, 4)
             }
             .padding(.horizontal, 24)
             Spacer()

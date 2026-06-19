@@ -124,7 +124,7 @@ struct UpdateNotificationCard: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
         }
-        .background(.ultraThinMaterial,
+        .glassEffect(.regular,
                     in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)

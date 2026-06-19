@@ -162,7 +162,7 @@ struct GitHubSettingsView: View {
                     }.buttonStyle(.plain).foregroundStyle(.secondary)
                 }
                 .padding(8)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                 if loadingRepos {
                     HStack { ProgressView().controlSize(.small); Text("Loading…").font(.system(size: 12)).foregroundStyle(.secondary) }

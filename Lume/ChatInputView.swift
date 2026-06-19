@@ -34,6 +34,7 @@ struct ChatInputView: View {
 
     @FocusState private var isFocused: Bool
     @State private var isDropTargeted = false
+    @State private var glowAngle: Double = 0
     @State private var approvalMode: ApprovalMode = LumeConfig.load().approvalMode
     @AppStorage(ThemeKeys.accent) private var accentRaw = AccentChoice.clay.rawValue
 
@@ -46,32 +47,23 @@ struct ChatInputView: View {
             }
 
             pillContent
-                .background { pillBackground }
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .strokeBorder(
-                            isDropTargeted
-                                ? Color.accentColor.opacity(0.6)
-                                : Color.white.opacity(0.15),
-                            lineWidth: isDropTargeted ? 2 : 1
-                        )
-                }
-                .shadow(
-                    color: isLoading
-                        ? Color.accentColor.opacity(0.25)
-                        : Color.black.opacity(0.08),
-                    radius: isLoading ? 12 : 4,
-                    y: 2
-                )
+                .glassEffect(fieldGlass, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay { fieldBorder }
+                .shadow(color: Color.black.opacity(0.08), radius: 4, y: 2)
                 .onDrop(of: [.image, .fileURL], isTargeted: $isDropTargeted) { providers in
                     handleImageDrop(providers: providers)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
         }
-        .background(.ultraThinMaterial)
-        .onAppear { isFocused = true }
+        .glassEffect(.regular, in: Rectangle())
+        .onAppear {
+            isFocused = true
+            if isLoading { startGlow() }
+        }
+        .onChange(of: isLoading) { _, loading in
+            if loading { startGlow() } else { glowAngle = 0 }
+        }
     }
 
     // MARK: - Image Preview Bar
@@ -432,6 +424,53 @@ struct ChatInputView: View {
 
     /// Cor de acento do tema atual (concreta — base da animação).
     private var themeAccent: Color { (AccentChoice(rawValue: accentRaw) ?? .clay).color }
+
+    /// Vidro do campo de escrita — neutro (o "estado respondendo" é mostrado pela borda animada).
+    private var fieldGlass: Glass { .regular.interactive() }
+
+    /// Cores do glow (iridescente, estilo Apple Intelligence).
+    private var glowGradient: Gradient {
+        Gradient(colors: [
+            Color(red: 0.46, green: 0.36, blue: 0.96),
+            Color(red: 0.93, green: 0.40, blue: 0.71),
+            Color(red: 0.36, green: 0.72, blue: 0.98),
+            Color(red: 0.30, green: 0.86, blue: 0.76),
+            Color(red: 0.46, green: 0.36, blue: 0.96),
+        ])
+    }
+
+    /// Anel do gradiente girando, mascarado no contorno (usado para borda e halo).
+    private func glowRing(lineWidth: CGFloat) -> some View {
+        AngularGradient(gradient: glowGradient, center: .center)
+            .scaleEffect(1.5)
+            .rotationEffect(.degrees(glowAngle))
+            .mask(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(lineWidth: lineWidth))
+    }
+
+    /// Borda do campo. Base sempre visível (delimita a área de escrita); ao responder, ganha
+    /// um glow iridescente girando + um halo difuso que funciona como sombra que acompanha a animação.
+    @ViewBuilder
+    private var fieldBorder: some View {
+        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
+        ZStack {
+            shape.strokeBorder(
+                isDropTargeted ? Color.accentColor.opacity(0.6) : Color.primary.opacity(0.18),
+                lineWidth: 1
+            )
+            if isLoading {
+                glowRing(lineWidth: 6).blur(radius: 10).opacity(0.75)  // halo (sombra animada)
+                glowRing(lineWidth: 2).blur(radius: 2.5)               // borda iridescente
+            }
+        }
+    }
+
+    /// Inicia o giro contínuo da borda enquanto o modelo responde.
+    private func startGlow() {
+        glowAngle = 0
+        withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+            glowAngle = 360
+        }
+    }
 
     /// Variações dentro da mesma paleta (mesmo matiz, brilho/saturação variando)
     /// para uma animação fluida e on-brand durante o processamento.

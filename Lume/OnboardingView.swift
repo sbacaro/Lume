@@ -283,7 +283,7 @@ struct OnboardingView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
-        .background(.ultraThinMaterial, in: Capsule())
+        .glassEffect(.regular, in: Capsule())
         .overlay(Capsule().strokeBorder(Color.primary.opacity(0.07), lineWidth: 1))
     }
 

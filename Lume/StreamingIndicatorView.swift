@@ -27,7 +27,7 @@ struct StreamingIndicatorView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial,
+        .glassEffect(.regular,
                     in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onReceive(timer) { _ in
             phase = (phase + 1) % 3
