@@ -1494,62 +1494,6 @@ struct AttachmentChipView: View {
     }
 }
 
-// MARK: - Terminal Sheet
-
-struct TerminalSheetView: View {
-    @Environment(\.dismiss) private var dismiss
-    let workingDirectory: String?
-    @State private var isHoveringClose = false
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                Color(red: 0.18, green: 0.18, blue: 0.18)
-
-                Text("Lume Terminal")
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color(red: 0.0, green: 0.85, blue: 0.85))
-
-                HStack(spacing: 6) {
-                    Button { dismiss() } label: {
-                        Circle()
-                            .fill(isHoveringClose
-                                  ? Color(red: 1.0, green: 0.27, blue: 0.22)
-                                  : Color(red: 0.92, green: 0.25, blue: 0.20))
-                            .frame(width: 12, height: 12)
-                            .overlay(
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 6, weight: .bold))
-                                    .foregroundStyle(.black.opacity(isHoveringClose ? 0.7 : 0))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .onHover { isHoveringClose = $0 }
-
-                    Circle()
-                        .fill(Color(red: 0.95, green: 0.73, blue: 0.10))
-                        .frame(width: 12, height: 12)
-
-                    Circle()
-                        .fill(Color(red: 0.15, green: 0.78, blue: 0.25))
-                        .frame(width: 12, height: 12)
-
-                    Spacer()
-                }
-                .padding(.leading, 12)
-            }
-            .frame(height: 36)
-
-            TerminalView()
-                .frame(minWidth: 700, minHeight: 420)
-                .background(Color.black)
-        }
-        .frame(minWidth: 700, minHeight: 456)
-        .background(Color.black)
-        .background(WindowButtonHider())
-    }
-}
-
 struct WindowButtonHider: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let view = NSView()

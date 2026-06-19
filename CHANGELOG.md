@@ -5,7 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
-## [Não lançado]
+## [1.4.0] — 2026-06-18
 
 ### Alterado (UI)
 

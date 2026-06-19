@@ -1,3 +1,56 @@
+# 🚀 Lume v1.4.0 — Modos de verdade, MCP, RAG melhor e IA on-device
+
+A maior atualização desde o lançamento. Os modos **Chat, Cowork e Code** deixaram de ser
+só "sidebars diferentes" e passaram a ser experiências distintas; o **MCP** ficou funcional
+ponta a ponta; o **RAG** ganhou embeddings contextuais e cache em disco; e a base migrou
+para **Swift 6**.
+
+**Data de lançamento:** 2026-06-18
+**Versão:** v1.4.0 (build 10)
+**Tipo:** Funcionalidades
+
+---
+
+## ✨ Novidades
+
+### Três modos com funções próprias
+- O conjunto de ferramentas agora depende do modo: **Chat** só pesquisa na web (conversa
+  pura), **Cowork** atua sobre arquivos (ler/escrever, sandbox, MCP) e **Code** tem tudo,
+  incluindo Git. O painel direito (inspector) e a faixa de capacidade acima do input
+  refletem o modo ativo.
+- Limpeza: removidas as áreas decorativas do Code (Terminal/Search/Tests isolados) e o
+  terminal interativo do chat — no Code, a saída dos comandos do agente aparece na própria
+  conversa.
+
+### MCP funcional (Model Context Protocol)
+- Cliente JSON-RPC sobre **stdio e HTTP**: handshake, descoberta (`tools/list`) e execução
+  (`tools/call`). As ferramentas dos servidores conectados ficam disponíveis ao agente nos
+  dois providers (Anthropic e OpenAI), com gate de aprovação. Status por conector e conexão
+  automática no launch.
+
+### RAG mais inteligente e persistente
+- Embeddings **contextuais** (NLContextualEmbedding, multilíngue e offline) no lugar da
+  média de vetores por palavra, com fallback automático.
+- O índice agora é **cacheado em disco**: documentos inalterados não são reprocessados a
+  cada abertura do app.
+
+### IA on-device (Apple Foundation Models)
+- **Sumarização de contexto** e **roteamento por complexidade** (opcional) rodando no modelo
+  local — grátis, offline e privado, economizando tokens da API.
+
+### Histórico de versões de artifacts
+- Ao revisar um artifact, as versões anteriores são preservadas; o painel ganhou um
+  navegador para voltar e comparar.
+
+## 🔧 Qualidade
+- Projeto migrado para o **Swift 6 language mode** com strict concurrency `complete`, e uma
+  suíte de **~76 testes** cobrindo roteamento, custo, RAG, MCP, JSON e detecção de artifacts.
+
+---
+
+<details>
+<summary>Histórico — versões anteriores</summary>
+
 # ✨ Lume v1.3.4 — Atualização automática (Sparkle)
 
 Esta versão liga a **atualização automática de verdade** via Sparkle: a partir dela, as
@@ -281,6 +334,9 @@ clicar em **Atualizar** na notificação (ou em **Verificar** na tela Sobre).
 ---
 
 **Changelog completo:** veja [`CHANGELOG.md`](CHANGELOG.md) · [v1.1.0](https://github.com/sbacaro/Lume/releases/tag/v1.1.0)
+
+</details>
+
 
 </details>
 
