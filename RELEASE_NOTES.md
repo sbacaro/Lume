@@ -5,7 +5,7 @@ A design-focused follow-up to 1.4.0. Lume's control layer now speaks Apple's **L
 responds, and every button and toggle across the app finally follows one consistent pill style.
 
 **Release date:** 2026-06-19
-**Version:** 1.4.1.17
+**Version:** 1.4.1.18
 **Type:** Design & polish
 
 ---
@@ -43,6 +43,9 @@ responds, and every button and toggle across the app finally follows one consist
   your Mac, Lume now installs it via Homebrew during the task — bootstrapping Homebrew itself on
   first use with a single native admin authentication (Touch ID / password), then `brew install`.
   No more dead ends when a tool like `radare2` or `ffmpeg` is missing.
+- **Error log + copyable errors**: errors are saved to a log file and the error banner is now
+  selectable, stays until you close it, and offers Copy and Open log buttons — so you can always
+  capture what went wrong.
 
 ### Changed
 - **Long tasks don't stop midway**: the agent's tool loop no longer hits a fixed ceiling that
@@ -50,8 +53,14 @@ responds, and every button and toggle across the app finally follows one consist
   makes progress (a tool runs, or text/thinking is produced), so multi-step work runs through to
   the final answer; a safety stop still catches genuinely stuck loops.
 - Removed the blinking text cursor that trailed the response while streaming.
+- **Faster responses on custom providers**: a context-budget regression made every turn run
+  semantic filtering and an extra summarization call on conversations over ~12k tokens. The budget
+  now uses the model's real window by default, so normal chats skip that work.
 
 ### Fixed
+- **Works with models that reject `temperature`**: some endpoints (e.g. Claude via OpenAI-compatible
+  gateways) return "`temperature` is deprecated for this model." Lume now retries without the
+  parameter automatically instead of failing.
 - **Smoother responses**: the animated glow around the input no longer drops frames while the
   model is replying — the effect is now rasterized into a single GPU layer instead of being
   recomposed every frame (noticeable on ProMotion displays).

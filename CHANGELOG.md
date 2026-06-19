@@ -25,6 +25,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Agent tool loop resets on progress instead of a hard cap**: `AnthropicProvider`/`OpenAIProvider` replaced the fixed `maxIterations = 20` (which ended the stream mid-task and required the user to type "continue") with an idle-rounds counter that resets whenever a round makes progress — a tool runs, or text/thinking is produced. Long multi-step tasks now run to the final answer; a `maxIdleRounds` watchdog plus an absolute `hardCap` still stop genuinely stuck loops.
 - **Removed the streaming text cursor** (`▋`) that trailed the last block while a message streamed (`MarkdownParagraphView`/`MarkdownBulletView`).
 
+### Added
+
+- **Log de erros + erro copiável**: novo `ErrorLog` grava cada erro com timestamp em `Application Support/Lume/errors.log`. O toast de erro agora é selecionável, persiste até ser fechado (antes sumia em 6s, sem tempo de copiar) e tem botões **Copy** e **Open log** (revela o arquivo no Finder).
+
+### Changed
+
+- **Respostas lentas no provider custom (regressão de contexto)**: o alvo de contexto passou a ser a janela REAL do modelo. Antes, `min(configuredMax, janela)` com o default pequeno (12k) quebrava o early-return da compressão e fazia rodar filtragem por similaridade semântica (`NLEmbedding` por mensagem) + sumarização (chamada extra ao modelo, ainda mais lenta quando o Apple Intelligence está indisponível) a cada turno. Agora `maxContextTokens` só vira cap quando definido como cap deliberado (`>= 32k`); o default usa a janela cheia, restaurando a velocidade. A proteção contra estouro continua via o trim no loop de ferramentas e o retry no erro de limite.
+- **`temperature` rejeitada por modelo → re-tenta sem ela**: alguns endpoints (ex.: Claude via gateways OpenAI-compatible) respondem `400 "temperature is deprecated for this model"`. `AnthropicProvider`/`OpenAIProvider` detectam isso e re-tentam a chamada sem o parâmetro (via flag `allowTemperature`), em vez de falhar.
+
 ### Fixed
 
 - **Jank/queda de frames durante a resposta**: a borda animada (glow estilo Apple Intelligence) no `ChatInputView` recompunha dois `AngularGradient` mascarados com `blur` a cada frame enquanto o modelo respondia — pesado em telas ProMotion (120Hz) e mais perceptível agora que as respostas não param no meio. Os anéis do glow foram embrulhados em `.drawingGroup()`, rasterizando o efeito numa única camada Metal.

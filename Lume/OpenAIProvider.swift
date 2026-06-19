@@ -128,6 +128,9 @@ final class OpenAIProvider: AIProvider {
                 let loopBudget = max(8_000, win - respReserve - max(4_000, win / 20))
                 var contextRetries = 0
                 let maxContextRetries = 4
+                // Alguns modelos (ex.: Claude via gateways OpenAI-compatible) rejeitam
+                // `temperature` ("deprecated/unsupported"). Ao detectar, desligamos e re-tentamos.
+                var allowTemperature = true
 
                 while idleRounds < maxIdleRounds && totalRounds < hardCap {
                     totalRounds += 1
@@ -158,7 +161,7 @@ final class OpenAIProvider: AIProvider {
 
                     if let effort, self.isReasoningModel(model) {
                         payload["reasoning_effort"] = effort.rawValue
-                    } else if !self.isReasoningModel(model) {
+                    } else if !self.isReasoningModel(model), allowTemperature {
                         payload["temperature"] = temperature
                     }
 
@@ -184,8 +187,16 @@ final class OpenAIProvider: AIProvider {
                             totalRounds -= 1 // não conta essa iteração
                             continue
                         }
-                        // Limite de contexto estourado → comprime mais forte e re-tenta.
                         let lowerBody = bodyStr.lowercased()
+                        // `temperature` rejeitada por este modelo → desliga e re-tenta sem ela.
+                        if allowTemperature && lowerBody.contains("temperature")
+                            && (lowerBody.contains("deprecat") || lowerBody.contains("unsupported")
+                                || lowerBody.contains("not support") || lowerBody.contains("400")) {
+                            allowTemperature = false
+                            totalRounds -= 1
+                            continue
+                        }
+                        // Limite de contexto estourado → comprime mais forte e re-tenta.
                         let ctxErr = (http.statusCode == 400 || http.statusCode == 413)
                             && (lowerBody.contains("context") || lowerBody.contains("too long")
                                 || lowerBody.contains("maximum") || lowerBody.contains("token"))

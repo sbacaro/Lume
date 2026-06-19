@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import AppKit
 
 struct ChatDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -1135,30 +1136,44 @@ struct ChatDetailView: View {
     // MARK: - Error Toast
 
     private func showErrorToast(_ message: String) {
-        errorToast = message
-        Task {
-            try? await Task.sleep(for: .seconds(6))
-            await MainActor.run { if errorToast == message { errorToast = nil } }
-        }
+        ErrorLog.record(message)           // grava no log persistente (copiável depois)
+        errorToast = message               // permanece até o usuário fechar — antes sumia em 6s
     }
 
     @ViewBuilder
     private var errorBannerView: some View {
         if let msg = errorToast {
-            HStack(spacing: 8) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 13)).foregroundStyle(.orange)
-                Text(msg)
-                    .font(.system(size: 12)).foregroundStyle(.primary)
-                    .lineLimit(3).fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 8)
-                Button { errorToast = nil } label: {
-                    Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.secondary)
-                }.buttonStyle(.plain)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 13)).foregroundStyle(.orange)
+                    Text(msg)
+                        .font(.system(size: 12)).foregroundStyle(.primary)
+                        .textSelection(.enabled)
+                        .lineLimit(10).fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 8)
+                    Button { errorToast = nil } label: {
+                        Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.secondary)
+                    }.buttonStyle(.plain)
+                }
+                HStack(spacing: 14) {
+                    Spacer(minLength: 0)
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(msg, forType: .string)
+                    } label: {
+                        Label("Copy", systemImage: "doc.on.doc").font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
+                    Button { ErrorLog.reveal() } label: {
+                        Label("Open log", systemImage: "doc.text.magnifyingglass").font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
+                }
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
-            .frame(maxWidth: 440)
+            .frame(maxWidth: 460)
             .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.orange.opacity(0.35), lineWidth: 1))

@@ -138,6 +138,9 @@ final class AnthropicProvider: AIProvider {
                     let loopBudget = max(8_000, win - sysTok - respReserve - max(4_000, win / 20))
                     var contextRetries = 0
                     let maxContextRetries = 4
+                    // Alguns endpoints rejeitam `temperature` para certos modelos; ao detectar,
+                    // desligamos e re-tentamos sem ela.
+                    var allowTemperature = true
 
                     while idleRounds < maxIdleRounds && totalRounds < hardCap {
                         totalRounds += 1
@@ -162,8 +165,8 @@ final class AnthropicProvider: AIProvider {
                             ]
                             maxTokens = max(maxTokens, thinkingBudget.rawValue + 1024)
                             payload["max_tokens"] = maxTokens
-                            payload["temperature"] = 1
-                        } else {
+                            if allowTemperature { payload["temperature"] = 1 }
+                        } else if allowTemperature {
                             payload["temperature"] = temperature
                         }
 
@@ -192,6 +195,14 @@ final class AnthropicProvider: AIProvider {
                             let lower = body.lowercased()
                             if toolsEnabled && (lower.contains("tool") || lower.contains("not supported")) {
                                 toolsEnabled = false
+                                totalRounds -= 1
+                                continue
+                            }
+                            // `temperature` rejeitada por este modelo → desliga e re-tenta sem ela.
+                            if allowTemperature && lower.contains("temperature")
+                                && (lower.contains("deprecat") || lower.contains("unsupported")
+                                    || lower.contains("not support") || lower.contains("400")) {
+                                allowTemperature = false
                                 totalRounds -= 1
                                 continue
                             }

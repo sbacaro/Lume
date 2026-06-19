@@ -425,8 +425,12 @@ final class AIProviderManager {
         let responseReserve = provider.maxTokens > 0 ? provider.maxTokens : 8_192
         let safetyMargin = max(4_000, window / 20)
         let windowBudget = max(8_000, window - systemTokens - injectedTokens - responseReserve - safetyMargin)
-        // Respeita também o teto que o usuário configurou, quando for menor.
-        let targetTokens = configuredMax > 0 ? min(configuredMax, windowBudget) : windowBudget
+        // O alvo é a janela REAL do modelo. O teto configurado (maxContextTokens) só limita
+        // quando o usuário o define como cap DELIBERADO (>= 32k); o default pequeno (12k) NÃO
+        // deve forçar compressão semântica + sumarização cara a cada turno — era o que estava
+        // deixando as respostas lentas no provider custom (early-return deixou de acontecer).
+        let userCap = configuredMax >= 32_000 ? configuredMax : Int.max
+        let targetTokens = min(userCap, windowBudget)
 
         let compressionResult = ContextCompressor.shared.compress(
             messages: rawMessages,
