@@ -17,25 +17,37 @@ import SwiftUI
 import Combine
 import Sparkle
 
+/// URL do appcast (fonte de verdade do feed de atualização).
+private let lumeAppcastURL = "https://raw.githubusercontent.com/sbacaro/Lume/main/appcast.xml"
+
 /// Wrapper observável sobre o updater padrão do Sparkle.
+///
+/// Fornece a URL do appcast pelo delegate (`feedURLString(for:)`) — assim o feed é
+/// garantido mesmo que o `SUFeedURL` não chegue ao Info.plist gerado.
 @MainActor
-final class SparkleUpdater: ObservableObject {
+final class SparkleUpdater: NSObject, ObservableObject, SPUUpdaterDelegate {
     /// Inicia e mantém o ciclo de vida do updater (checagens automáticas em background).
-    private let controller: SPUStandardUpdaterController
+    private var controller: SPUStandardUpdaterController!
 
     /// Reflete se uma checagem pode ser iniciada agora (para habilitar o item de menu).
     @Published var canCheckForUpdates = false
 
-    init() {
+    override init() {
+        super.init()
         controller = SPUStandardUpdaterController(
             startingUpdater: true,
-            updaterDelegate: nil,
+            updaterDelegate: self,
             userDriverDelegate: nil
         )
         controller.updater
             .publisher(for: \.canCheckForUpdates)
             .receive(on: RunLoop.main)
             .assign(to: &$canCheckForUpdates)
+    }
+
+    /// Sparkle pergunta a URL do feed aqui — independente do Info.plist.
+    nonisolated func feedURLString(for updater: SPUUpdater) -> String? {
+        lumeAppcastURL
     }
 
     /// Checagem manual — mostra a UI padrão do Sparkle (download, install, relaunch).
