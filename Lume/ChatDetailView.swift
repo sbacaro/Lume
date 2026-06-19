@@ -14,6 +14,8 @@ struct ChatDetailView: View {
     @Bindable var conversation: Conversation
     var providerManager: AIProviderManager
     var onFirstMessage: (() -> Void)? = nil
+    /// Texto pré-preenchido no input ao abrir (ex.: atalhos da tela inicial). Não é enviado.
+    var initialDraft: Binding<String?> = .constant(nil)
     @Query private var providerConfigs: [AIProviderConfig]
 
     @State private var messageText = ""
@@ -121,6 +123,12 @@ struct ChatDetailView: View {
         }
         .overlay(alignment: .top) { errorBannerView }
         .animation(.easeInOut(duration: 0.2), value: errorToast)
+        .onAppear {
+            if let draft = initialDraft.wrappedValue, !draft.isEmpty {
+                messageText = draft
+                initialDraft.wrappedValue = nil
+            }
+        }
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: allowedFileTypes,
@@ -543,46 +551,29 @@ struct ChatDetailView: View {
     }
 
     private var inspectorPanel: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                // Progresso/tarefas: trabalho orientado a tarefas (Cowork e Code).
-                if mode != .chat {
-                    InspectorSection(title: "Progresso", icon: "checkmark.circle") {
-                        progressContent
-                    }
-                }
-                // Arquivos do projeto: só no Cowork.
-                if mode == .cowork, let project = conversation.project {
-                    InspectorSection(title: project.name, icon: project.icon) {
-                        projectFilesContent(project)
-                    }
-                }
-                // Repositório: só no Code.
-                if mode == .code {
-                    InspectorSection(title: "Repository", icon: "arrow.triangle.branch") {
-                        codeRepoContent
-                    }
-                }
-                InspectorSection(title: "Contexto", icon: "doc.text.magnifyingglass") {
-                    contextContent
-                }
+        List {
+            if mode != .chat {
+                Section("Progress") { progressContent }
+            }
+            if mode == .cowork, let project = conversation.project {
+                Section(project.name) { projectFilesContent(project) }
+            }
+            if mode == .code {
+                Section("Repository") { codeRepoContent }
+            }
+            Section("Context") { contextContent }
+            Section("Notes") {
                 if !conversation.userNotes.isEmpty || editingNotes {
-                    InspectorSection(title: "Notas", icon: "note.text") {
-                        notesContent
-                    }
+                    notesContent
                 } else {
                     Button { editingNotes = true } label: {
                         Label("Add note", systemImage: "note.text.badge.plus")
-                            .font(.system(size: 11)).foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 12).padding(.vertical, 6)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(12)
         }
-        .background(Color(.controlBackgroundColor).opacity(0.5))
+        .listStyle(.sidebar)
         .overlay(alignment: .leading) {
             Rectangle().fill(Color.primary.opacity(0.08)).frame(width: 1)
         }

@@ -5,7 +5,7 @@ with its own tools, start screen, and side panel. MCP works end to end, RAG gain
 contextual embeddings with on-disk caching, and the codebase moved to Swift 6.
 
 **Release date:** 2026-06-18
-**Version:** v1.4.0 (build 12)
+**Version:** v1.4.0 (build 13)
 **Type:** Features
 
 ---
@@ -40,6 +40,18 @@ contextual embeddings with on-disk caching, and the codebase moved to Swift 6.
 ### Artifact version history
 - Revised artifacts keep their previous versions; the artifact panel gained a navigator to
   step back and compare.
+
+### Native UI overhaul (sidebars, inspector & start screens)
+- Rebuilt all three sidebars (Chat / Cowork / Code) as native macOS lists — system fonts,
+  sections, and labels — fully in English. Projects use a native disclosure group.
+- The right-hand inspector now follows the same native list style.
+- Each mode gets a redesigned, distinct start screen that reflects what it does: Chat shows
+  suggestions, Cowork leads with "Create a project", and Code with "Open a repository"
+  (adapting to the connected repo and its Git branch).
+- Buttons are now consistent pills (capsules) across the app, and the app version is shown in
+  the bottom-right of every start screen.
+- Fixed: Chat start-screen suggestions now pre-fill the input instead of sending an
+  incomplete message to the model.
 
 ### Fixes & polish
 - Fixed the in-app updater: the appcast feed URL is now provided via the Sparkle delegate,

@@ -41,20 +41,17 @@ struct CodeDashboardView: View {
     }
 
     var body: some View {
-        Group {
-            if workspaceURL == nil {
-                codeWelcomeView
-            } else {
-                codeDashboard
+        codeWelcomeView
+            .onReceive(NotificationCenter.default.publisher(for: .openGitPanel)) { _ in showGitPanel = true }
+            .sheet(isPresented: $showGitPanel) {
+                GitPanelView()
             }
-        }
-        // Git é a única ferramenta de painel do Code. Shell, busca e testes o agente
-        // já executa via tools — a saída aparece na própria conversa, sem painel à parte.
-        .onReceive(NotificationCenter.default.publisher(for: .openGitPanel)) { _ in showGitPanel = true }
-        .sheet(isPresented: $showGitPanel) {
-            GitPanelView()
-        }
-        .overlay(alignment: .bottomTrailing) { VersionBadge() }
+            .overlay(alignment: .bottomTrailing) { VersionBadge() }
+            .task {
+                if let url = workspaceURL {
+                    gitStatus = await GitManager.shared.status(at: url.path)
+                }
+            }
     }
 
     // MARK: - Welcome (sem workspace)
@@ -62,82 +59,66 @@ struct CodeDashboardView: View {
     private var codeWelcomeView: some View {
         VStack(spacing: 0) {
             Spacer()
-            VStack(spacing: 28) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [Color(red: 0.20, green: 0.60, blue: 1.0),
-                                     Color(red: 0.10, green: 0.40, blue: 0.90)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 72, height: 72)
-                        .shadow(color: Color(red: 0.20, green: 0.60, blue: 1.0).opacity(0.3), radius: 16, y: 6)
-                    Image(systemName: "chevron.left.forwardslash.chevron.right")
-                        .font(.system(size: 30, weight: .semibold)).foregroundStyle(.white)
-                }
-
-                VStack(spacing: 8) {
-                    Text("Code Agent")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text(String(localized: "Write, review, debug, and refactor with AI as your co-pilot.\nTo get started, select your project folder."))
-                        .font(.system(size: 14)).foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center).lineSpacing(3)
-                }
-
-                VStack(spacing: 8) {
-                    Text("What the agent can do:")
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(.tertiary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(spacing: 6) {
-                        featureRow(icon: "chevron.left.forwardslash.chevron.right", color: Color(red: 0.20, green: 0.60, blue: 1.0), text: String(localized: "Read and edit your project's files"))
-                        featureRow(icon: "ant.circle.fill",       color: .red,    text: "Encontrar e corrigir bugs automaticamente")
-                        featureRow(icon: "arrow.2.squarepath",    color: .orange, text: String(localized: "Refactor and improve code quality"))
-                        featureRow(icon: "testtube.2",            color: .purple, text: String(localized: "Write and run tests"))
-                        featureRow(icon: "arrow.triangle.branch", color: .orange, text: String(localized: "View Git status and make commits"))
-                        featureRow(icon: "terminal.fill",         color: .green,  text: String(localized: "Run shell commands — output appears in the conversation"))
-                    }
-                    .padding(14)
-                    .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
-                }
-                .frame(maxWidth: 420)
-
-                Button {
-                    Task {
-                        if let url = await AgentToolExecutor.shared.requestDirectoryAccess() {
-                            persistWorkspace(url)
-                            gitStatus = await GitManager.shared.status(at: url.path)
+            VStack(spacing: 22) {
+                ModeWelcomeHeader(
+                    icon: "chevron.left.forwardslash.chevron.right",
+                    accent: ModeAccent.code,
+                    title: "Code",
+                    subtitle: "Build, debug, and refactor inside a repository."
+                )
+                if let url = workspaceURL {
+                    VStack(spacing: 12) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "folder.fill").font(.system(size: 13)).foregroundStyle(ModeAccent.code)
+                            Text(url.lastPathComponent).font(.system(size: 13, weight: .medium))
+                            if let status = gitStatus {
+                                Text(status.branch).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Color(.controlBackgroundColor), in: Capsule())
+                        HStack(spacing: 10) {
+                            ModePrimaryButton(icon: "plus", label: "New session", accent: ModeAccent.code, action: onNewConversation)
+                            ModeSecondaryButton(label: "Switch folder", accent: ModeAccent.code) {
+                                Task {
+                                    if let newURL = await AgentToolExecutor.shared.requestDirectoryAccess() {
+                                        persistWorkspace(newURL)
+                                        gitStatus = await GitManager.shared.status(at: newURL.path)
+                                    }
+                                }
+                            }
                         }
                     }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "folder.badge.plus").font(.system(size: 14, weight: .semibold))
-                        Text("Select project folder").font(.system(size: 14, weight: .semibold))
+                } else {
+                    ModePrimaryButton(icon: "folder", label: "Open a repository", accent: ModeAccent.code) {
+                        Task {
+                            if let url = await AgentToolExecutor.shared.requestDirectoryAccess() {
+                                persistWorkspace(url)
+                                gitStatus = await GitManager.shared.status(at: url.path)
+                            }
+                        }
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 24).padding(.vertical, 12)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(red: 0.20, green: 0.60, blue: 1.0), Color(red: 0.10, green: 0.40, blue: 0.90)],
-                            startPoint: .leading, endPoint: .trailing
-                        ),
-                        in: Capsule()
-                    )
-                    .shadow(color: Color(red: 0.20, green: 0.60, blue: 1.0).opacity(0.3), radius: 8, y: 3)
+                    Text("Lume works only inside the folder you select, and reads Git status automatically.")
+                        .font(.system(size: 12)).foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center).frame(maxWidth: 360)
                 }
-                .buttonStyle(.plain)
-
-                Text(String(localized: "Access is restricted to the selected folder.\nNo other files on your computer are accessed."))
-                    .font(.system(size: 11)).foregroundStyle(.tertiary).multilineTextAlignment(.center)
+                VStack(spacing: 10) {
+                    CapabilityRow(icon: "terminal", text: "Run shell commands", accent: ModeAccent.code)
+                    CapabilityRow(icon: "doc.text", text: "Read & edit files", accent: ModeAccent.code)
+                    CapabilityRow(icon: "arrow.triangle.branch", text: "Git status, diffs & commits", accent: ModeAccent.code)
+                    CapabilityRow(icon: "testtube.2", text: "Write & run tests", accent: ModeAccent.code)
+                }
+                .frame(maxWidth: 320).padding(.top, 4)
             }
-            .frame(maxWidth: 480)
+            .padding(.horizontal, 24)
+            Spacer()
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.windowBackgroundColor))
     }
 
-    // MARK: - Dashboard (com workspace)
+            // MARK: - Dashboard (com workspace)
 
     private var codeDashboard: some View {
         ScrollView {

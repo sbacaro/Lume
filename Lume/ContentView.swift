@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "lume_onboarding_completed")
     @State private var showNewProject = false
     @State private var showCommandPalette = false
+    @State private var pendingChatDraft: String? = nil
     @AppStorage(ThemeKeys.accent) private var accentRaw = AccentChoice.clay.rawValue
     @AppStorage(ThemeKeys.appearance) private var appearanceRaw = AppearanceChoice.system.rawValue
 
@@ -196,194 +197,111 @@ struct ContentView: View {
     private var chatSidebar: some View {
         List {
             Button(action: createNewConversation) {
-                HStack(spacing: 10) {
-                    Image(systemName: "plus").font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary)
-                    Text("New Conversation").font(.system(size: 13)).foregroundStyle(.primary)
-                    Spacer()
-                }
-                .padding(.vertical, 2).contentShape(Rectangle())
+                Label("New conversation", systemImage: "square.and.pencil")
             }
-            .buttonStyle(.plain).listRowBackground(Color.clear).listRowSeparator(.hidden)
+            .buttonStyle(.plain)
+            .listRowSeparator(.hidden)
 
-            Section {
+            Section("Recent") {
                 ForEach(filteredChatConversations.prefix(30)) { conv in
                     Button {
                         selectedConversation = conv; selectedProject = nil
                     } label: {
                         ConversationRowView(conversation: conv, isSelected: selectedConversation?.id == conv.id)
                     }
-                    .buttonStyle(.plain).listRowBackground(Color.clear).listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+                    .buttonStyle(.plain)
+                    .listRowSeparator(.hidden)
                     .contextMenu { chatConversationContextMenu(conv) }
                 }
-            } header: { sectionHeader("Recent", action: nil) }
+            }
         }
-        .listStyle(.sidebar).scrollContentBackground(.hidden)
+        .listStyle(.sidebar)
     }
 
     // MARK: - Cowork Sidebar
 
     private var coworkSidebar: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                sidebarNavItem(icon: "plus.bubble", label: "New Conversation") {
-                    if let existing = allConversations.first(where: {
-                        $0.project == nil && !$0.isArchived && $0.messages.isEmpty
-                    }) {
-                        selectedConversation = existing
-                        selectedProject = nil
-                        sidebarMode = .cowork
-                        return
-                    }
-                    let conv = Conversation(
-                        providerType: activeConfig?.providerType ?? "openai",
-                        modelName: activeConfig?.defaultModel ?? "gpt-4o"
-                    )
-                    modelContext.insert(conv)
-                    do { try modelContext.save() } catch { }
-                    selectedConversation = conv
-                    selectedProject = nil
-                    sidebarMode = .cowork
-                }
-                sidebarNavItem(icon: "folder.badge.plus", label: "New Project") {
-                    showNewProject = true
-                }
-                sidebarNavItem(icon: "rectangle.split.2x1", label: "Live Artifacts") {
-                    if let conv = allConversations.first(where: { $0.messages.contains { $0.artifact != nil } }) {
-                        selectedConversation = conv; selectedProject = nil
-                        sidebarMode = .chat
-                    }
-                }
-                Divider().padding(.vertical, 8).padding(.horizontal, 12)
-                HStack {
-                    Text("Projects").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
-                    Spacer()
-                    Button { showNewProject = true } label: {
-                        Image(systemName: "plus").font(.system(size: 10)).foregroundStyle(.tertiary)
-                    }.buttonStyle(.plain)
-                }
-                .padding(.horizontal, 14).padding(.bottom, 4)
+        List {
+            Button(action: newCoworkConversation) {
+                Label("New conversation", systemImage: "square.and.pencil")
+            }
+            .buttonStyle(.plain).listRowSeparator(.hidden)
+
+            Button { showNewProject = true } label: {
+                Label("New project", systemImage: "folder.badge.plus")
+            }
+            .buttonStyle(.plain).listRowSeparator(.hidden)
+
+            Section("Projects") {
                 if projects.isEmpty {
-                    Text("No projects").font(.system(size: 12)).foregroundStyle(.tertiary)
-                        .padding(.horizontal, 14).padding(.bottom, 8)
+                    Text("No projects yet")
+                        .font(.callout).foregroundStyle(.secondary)
+                        .listRowSeparator(.hidden)
                 } else {
-                    ForEach(projects) { project in projectDisclosureRow(project) }
+                    ForEach(projects) { project in projectDisclosure(project) }
                 }
             }
-            .padding(.top, 4)
         }
+        .listStyle(.sidebar)
     }
 
-    // MARK: - Project Disclosure Row
+    private func newCoworkConversation() {
+        if let existing = allConversations.first(where: {
+            $0.project == nil && !$0.isArchived && $0.messages.isEmpty
+        }) {
+            selectedConversation = existing; selectedProject = nil; sidebarMode = .cowork
+            return
+        }
+        let conv = Conversation(
+            providerType: activeConfig?.providerType ?? "openai",
+            modelName: activeConfig?.defaultModel ?? "gpt-4o"
+        )
+        modelContext.insert(conv)
+        do { try modelContext.save() } catch { }
+        selectedConversation = conv; selectedProject = nil; sidebarMode = .cowork
+    }
 
-    private func projectDisclosureRow(_ project: Project) -> some View {
-        let isExpanded = expandedProjects.contains(project.id)
-        let isProjectSelected = selectedProject?.id == project.id
-        let sortedConvs = project.conversations.filter { !$0.isArchived }.sorted { $0.updatedAt > $1.updatedAt }
+    private func projectExpansion(_ project: Project) -> Binding<Bool> {
+        Binding(
+            get: { expandedProjects.contains(project.id) },
+            set: { if $0 { expandedProjects.insert(project.id) } else { expandedProjects.remove(project.id) } }
+        )
+    }
 
-        return VStack(spacing: 0) {
-            HStack(spacing: 0) {
+    @ViewBuilder
+    private func projectDisclosure(_ project: Project) -> some View {
+        let convs = project.conversations.filter { !$0.isArchived }.sorted { $0.updatedAt > $1.updatedAt }
+        DisclosureGroup(isExpanded: projectExpansion(project)) {
+            ForEach(convs) { conv in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.18)) {
-                        if isExpanded { expandedProjects.remove(project.id) }
-                        else { expandedProjects.insert(project.id) }
-                    }
+                    selectedConversation = conv; selectedProject = conv.project
                 } label: {
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary)
-                        .frame(width: 20, height: 20).contentShape(Rectangle())
-                }.buttonStyle(.plain).padding(.leading, 8)
-
-                Button {
-                    expandedProjects.insert(project.id)
-                    selectedProject = project
-                    if let lastConv = sortedConvs.first {
-                        selectedConversation = lastConv
-                    } else {
-                        openNewProjectConversation(for: project)
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: project.icon).font(.system(size: 13))
-                            .foregroundStyle(isProjectSelected ? Color.accentColor : LumeTheme.clay).frame(width: 18)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(project.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
-                                .foregroundStyle(isProjectSelected ? Color.accentColor : .primary)
-                            Text("\(sortedConvs.count) conversations").font(.system(size: 10)).foregroundStyle(.tertiary)
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal, 8).padding(.vertical, 7).contentShape(Rectangle())
+                    Label(conv.title, systemImage: conv.isPinned ? "pin.fill" : "bubble.left")
+                        .lineLimit(1)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plain).listRowSeparator(.hidden)
+                .contextMenu { coworkConversationContextMenu(conv) }
+            }
+            Button { openNewProjectConversation(for: project) } label: {
+                Label("New conversation", systemImage: "plus").foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain).listRowSeparator(.hidden)
+        } label: {
+            Label(project.name, systemImage: project.icon)
+                .lineLimit(1)
                 .contextMenu {
                     Button { openNewProjectConversation(for: project) } label: {
                         Label("New conversation", systemImage: "plus.bubble")
                     }
                     Button { reconnectProjectFolder(project) } label: {
-                        Label("Reconnect folder...", systemImage: "folder.badge.gear")
+                        Label("Reconnect folder…", systemImage: "folder.badge.gear")
                     }
                     Divider()
                     Button(role: .destructive) { deleteProject(project) } label: {
                         Label("Delete project", systemImage: "trash")
                     }
                 }
-            }
-            .background(isProjectSelected ? Color.accentColor.opacity(0.08) : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .padding(.horizontal, 6)
-
-            if isExpanded {
-                VStack(spacing: 1) {
-                    if sortedConvs.isEmpty {
-                        Text("No conversations").font(.system(size: 11)).foregroundStyle(.tertiary)
-                            .padding(.leading, 40).padding(.vertical, 6).frame(maxWidth: .infinity, alignment: .leading)
-                    } else {
-                        ForEach(sortedConvs) { conv in
-                            Button {
-                                selectedConversation = conv; selectedProject = conv.project
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Rectangle().fill(Color.primary.opacity(0.08)).frame(width: 1).padding(.leading, 22)
-                                    Image(systemName: conv.isPinned ? "pin.fill" : "bubble.left")
-                                        .font(.system(size: conv.isPinned ? 9 : 10))
-                                        .foregroundStyle(conv.isPinned ? Color.accentColor : Color.secondary).frame(width: 14)
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(conv.title)
-                                            .font(.system(size: 12, weight: selectedConversation?.id == conv.id ? .semibold : .regular))
-                                            .lineLimit(1)
-                                            .foregroundStyle(selectedConversation?.id == conv.id ? Color.accentColor : .primary)
-                                        Text(conv.updatedAt.formatted(.relative(presentation: .named)))
-                                            .font(.system(size: 10)).foregroundStyle(.tertiary)
-                                    }
-                                    Spacer()
-                                }
-                                .padding(.vertical, 5).padding(.trailing, 10).padding(.leading, 6)
-                                .background(selectedConversation?.id == conv.id ? Color.accentColor.opacity(0.06) : Color.clear,
-                                            in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain).padding(.horizontal, 6)
-                            .contextMenu { coworkConversationContextMenu(conv) }
-                        }
-                    }
-                    Button {
-                        openNewProjectConversation(for: project)
-                    } label: {
-                        HStack(spacing: 6) {
-                            Spacer().frame(width: 22)
-                            Image(systemName: "plus").font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary)
-                            Text("New conversation").font(.system(size: 11)).foregroundStyle(.tertiary)
-                            Spacer()
-                        }
-                        .padding(.vertical, 5).padding(.leading, 6).contentShape(Rectangle())
-                    }.buttonStyle(.plain).padding(.horizontal, 6)
-                }
-                .padding(.bottom, 4).transition(.opacity.combined(with: .move(edge: .top)))
-            }
-            Divider().opacity(0.2).padding(.horizontal, 14).padding(.top, isExpanded ? 4 : 0)
         }
-        .animation(.easeInOut(duration: 0.18), value: isExpanded)
     }
 
     // MARK: - Open new conversation inside project
@@ -411,7 +329,7 @@ struct ContentView: View {
             panel.canChooseDirectories = true
             panel.allowsMultipleSelection = false
             panel.message = String(localized: "Select the folder for project \"\(project.name)\"")
-            panel.prompt = "Reconectar"
+            panel.prompt = "Reconnect"
             let response: NSApplication.ModalResponse
             if let window = NSApp.keyWindow {
                 response = await panel.beginSheetModal(for: window)
@@ -512,58 +430,37 @@ struct ContentView: View {
     // MARK: - Code Sidebar
 
     private var codeSidebar: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+        List {
+            Button { createNewCodeConversation() } label: {
+                Label("New session", systemImage: "plus")
+            }
+            .buttonStyle(.plain).listRowSeparator(.hidden)
 
-                sidebarNavItem(icon: "house.fill", label: "Code Start") {
-                    selectedConversation = nil
-                    selectedProject = nil
+            Section("Repository") {
+                Button { NotificationCenter.default.post(name: .openGitPanel, object: nil) } label: {
+                    Label("Git", systemImage: "arrow.triangle.branch")
                 }
-                .padding(.top, 4)
+                .buttonStyle(.plain).listRowSeparator(.hidden)
+            }
 
-                sidebarNavItem(icon: "chevron.left.forwardslash.chevron.right", label: String(localized: "New code session")) {
-                    createNewCodeConversation()
-                }
-
-                Divider().padding(.vertical, 8).padding(.horizontal, 12)
-
-                HStack {
-                    Text("Repository").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
-                    Spacer()
-                }.padding(.horizontal, 14).padding(.bottom, 4)
-
-                sidebarNavItem(icon: "arrow.triangle.branch", label: "Git") {
-                    NotificationCenter.default.post(name: .openGitPanel, object: nil)
-                }
-
-                Divider().padding(.vertical, 8).padding(.horizontal, 12)
-
-                HStack {
-                    Text("Recent Sessions").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
-                    Spacer()
-                }.padding(.horizontal, 14).padding(.bottom, 4)
-
+            Section("Recent sessions") {
                 if filteredCodeConversations.isEmpty {
                     Text("No sessions yet")
-                        .font(.system(size: 11)).foregroundStyle(.tertiary)
-                        .padding(.horizontal, 14).padding(.bottom, 8)
+                        .font(.callout).foregroundStyle(.secondary)
+                        .listRowSeparator(.hidden)
                 } else {
-                    ForEach(filteredCodeConversations.prefix(6)) { conv in
+                    ForEach(filteredCodeConversations.prefix(12)) { conv in
                         Button { selectedConversation = conv; selectedProject = nil } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "chevron.left.forwardslash.chevron.right")
-                                    .font(.system(size: 10)).foregroundStyle(.tertiary).frame(width: 16)
-                                Text(conv.title).font(.system(size: 13)).lineLimit(1).foregroundStyle(.primary)
-                                Spacer()
-                                Text(conv.updatedAt.formatted(.relative(presentation: .named)))
-                                    .font(.system(size: 9)).foregroundStyle(.tertiary)
-                            }
-                            .padding(.horizontal, 14).padding(.vertical, 6).contentShape(Rectangle())
-                        }.buttonStyle(.plain).contextMenu { chatConversationContextMenu(conv) }
+                            Label(conv.title, systemImage: "chevron.left.forwardslash.chevron.right")
+                                .lineLimit(1)
+                        }
+                        .buttonStyle(.plain).listRowSeparator(.hidden)
+                        .contextMenu { chatConversationContextMenu(conv) }
                     }
                 }
             }
         }
+        .listStyle(.sidebar)
     }
 
     // MARK: - Bottom bar
@@ -609,9 +506,9 @@ struct ContentView: View {
     @ViewBuilder
     private var chatDetail: some View {
         if let conv = selectedConversation {
-            ChatDetailView(conversation: conv, providerManager: providerManager)
+            ChatDetailView(conversation: conv, providerManager: providerManager, initialDraft: $pendingChatDraft)
         } else {
-            ChatWelcomeView(onStart: { startConversation(text: $0, mode: .chat) })
+            ChatWelcomeView(onStart: { startChatDraft($0) })
         }
     }
 
@@ -661,6 +558,19 @@ struct ContentView: View {
 
     // MARK: - Conversation launcher
 
+    /// Atalho da tela inicial do Chat: abre uma conversa nova com o texto pré-preenchido
+    /// no input (NÃO envia) — o usuário completa e manda.
+    private func startChatDraft(_ text: String) {
+        let conv = Conversation(
+            providerType: activeConfig?.providerType ?? "openai",
+            modelName: activeConfig?.defaultModel ?? "gpt-4o"
+        )
+        modelContext.insert(conv)
+        do { try modelContext.save() } catch { }
+        pendingChatDraft = text
+        selectedConversation = conv; selectedProject = nil; sidebarMode = .chat
+    }
+
     private func startConversation(text: String, mode: SidebarMode) {
         let words = text.components(separatedBy: .whitespaces).filter { !$0.isEmpty }.prefix(6).joined(separator: " ")
         let conv = Conversation(
@@ -681,18 +591,20 @@ struct ContentView: View {
 
     private func sidebarNavItem(icon: String, label: String, badge: String? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon).font(.system(size: 14)).foregroundStyle(.primary).frame(width: 20)
-                Text(label).font(.system(size: 13)).foregroundStyle(.primary)
-                if let badge {
-                    Text(badge).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color.primary.opacity(0.08), in: Capsule())
+            Label {
+                HStack(spacing: 6) {
+                    Text(label)
+                    if let badge {
+                        Text(badge).font(.caption2).foregroundStyle(.secondary)
+                            .padding(.horizontal, 6).padding(.vertical, 1)
+                            .background(.quaternary, in: Capsule())
+                    }
                 }
-                Spacer()
+            } icon: {
+                Image(systemName: icon)
             }
-            .padding(.horizontal, 14).padding(.vertical, 9).contentShape(Rectangle())
-        }.buttonStyle(.plain)
+        }
+        .buttonStyle(.plain)
     }
 
     private func sectionHeader(_ title: String, action: (() -> Void)?) -> some View {
@@ -815,53 +727,44 @@ struct LumeLogo: View {
 struct ChatWelcomeView: View {
     var onStart: (String) -> Void
 
-    private let starters: [(icon: String, title: String, subtitle: String, prompt: String)] = [
-        ("text.bubble",              String(localized: "Ask a question"),   String(localized: "Ask anything"),                String(localized: "I have a question about ")),
-        ("doc.text.magnifyingglass", String(localized: "Summarize a text"), String(localized: "Paste an article or document"), String(localized: "Please summarize the following text:\n\n")),
-        ("globe",                    String(localized: "Search the web"),   String(localized: "Up-to-date information"),        String(localized: "Search the web for ")),
-        ("character.bubble",         String(localized: "Translate"),        String(localized: "Between languages"),            String(localized: "Translate to English:\n\n")),
-        ("lightbulb",                "Brainstorm",                          String(localized: "Explore possibilities"),        String(localized: "Help me come up with ideas for ")),
-        ("pencil.and.outline",       String(localized: "Write something"),  String(localized: "Emails, posts, drafts"),        String(localized: "Write for me: ")),
+    private let starters: [(icon: String, title: String, prompt: String)] = [
+        ("questionmark.circle",      "Ask a question",   "I have a question about "),
+        ("doc.text.magnifyingglass", "Summarize a text", "Please summarize the following text:\n\n"),
+        ("character.bubble",         "Translate",        "Translate to English:\n\n"),
+        ("lightbulb",                "Brainstorm",       "Help me come up with ideas for "),
     ]
-
-    private func greeting() -> String {
-        let h = Calendar.current.component(.hour, from: Date())
-        switch h {
-        case 5..<12:  return String(localized: "Good morning")
-        case 12..<18: return String(localized: "Good afternoon")
-        default:      return String(localized: "Good evening")
-        }
-    }
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
-            VStack(spacing: 14) {
-                LumeLogo(size: 64)
-                VStack(spacing: 6) {
-                    Text(greeting())
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                    Text(String(localized: "Chat — a pure conversation. Ask, write, brainstorm and search the web. No file or shell access in this mode."))
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                        .frame(maxWidth: 460)
-                }
-            }
-            .padding(.bottom, 28)
-
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                ForEach(Array(starters.enumerated()), id: \.offset) { _, item in
-                    LumeWelcomeCard(icon: item.icon, title: item.title, subtitle: item.subtitle,
-                                    color: Color(red: 0.40, green: 0.60, blue: 1.00)) {
-                        onStart(item.prompt)
+            VStack(spacing: 22) {
+                ModeWelcomeHeader(
+                    icon: "bubble.left.and.text.bubble.right",
+                    accent: ModeAccent.chat,
+                    title: "Chat",
+                    subtitle: "Ask, write, translate, and explore — with web search."
+                )
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                    ForEach(Array(starters.enumerated()), id: \.offset) { _, s in
+                        Button { onStart(s.prompt) } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: s.icon).font(.system(size: 16)).foregroundStyle(ModeAccent.chat).frame(width: 20)
+                                Text(s.title).font(.system(size: 13, weight: .medium)).foregroundStyle(.primary)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 13).padding(.vertical, 11)
+                            .background(Color(.controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
+                .frame(maxWidth: 460)
+                Text("or just type a message to begin")
+                    .font(.system(size: 12)).foregroundStyle(.tertiary)
             }
-            .frame(maxWidth: 660).padding(.horizontal, 24)
-
+            .padding(.horizontal, 24)
             Spacer()
             Spacer()
         }

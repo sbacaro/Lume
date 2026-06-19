@@ -19,14 +19,8 @@ struct CoworkDashboardView: View {
     @Query(sort: \ScheduledTask.scheduledAt) private var tasks: [ScheduledTask]
 
     var body: some View {
-        Group {
-            if projects.isEmpty && conversations.isEmpty {
-                coworkWelcomeView
-            } else {
-                coworkDashboard
-            }
-        }
-        .overlay(alignment: .bottomTrailing) { VersionBadge() }
+        coworkWelcomeView
+            .overlay(alignment: .bottomTrailing) { VersionBadge() }
     }
 
     // MARK: - Welcome (sem projetos)
@@ -34,105 +28,31 @@ struct CoworkDashboardView: View {
     private var coworkWelcomeView: some View {
         VStack(spacing: 0) {
             Spacer()
-            VStack(spacing: 28) {
-
-                // Ícone
-                ZStack {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [LumeTheme.clay.opacity(0.8), Color.orange.opacity(0.6)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 72, height: 72)
-                        .shadow(color: LumeTheme.clay.opacity(0.3), radius: 16, y: 6)
-                    Image(systemName: "checklist")
-                        .font(.system(size: 30, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-
-                // Título
-                VStack(spacing: 8) {
-                    Text("Cowork")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text(String(localized: "Work on your files with the agent — read and write documents,\nrun code in a sandbox, connect tools, and track progress."))
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                }
-
-                // O que você pode fazer
-                VStack(spacing: 8) {
-                    Text("What you can do here:")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    VStack(spacing: 6) {
-                        coworkFeatureRow(
-                            icon: "folder.fill",
-                            color: LumeTheme.clay,
-                            text: String(localized: "Create projects with persistent files and instructions")
-                        )
-                        coworkFeatureRow(
-                            icon: "bubble.left.and.text.bubble.right",
-                            color: .accentColor,
-                            text: String(localized: "Organize conversations around a single goal")
-                        )
-                        coworkFeatureRow(
-                            icon: "checkmark.circle",
-                            color: .green,
-                            text: String(localized: "Track tasks and progress in real time")
-                        )
-                        coworkFeatureRow(
-                            icon: "calendar.badge.clock",
-                            color: .orange,
-                            text: String(localized: "Schedule recurring tasks for the agent to run")
-                        )
-                        coworkFeatureRow(
-                            icon: "doc.text.fill",
-                            color: .purple,
-                            text: String(localized: "Keep context across sessions with project documents")
-                        )
-                    }
-                    .padding(14)
-                    .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
-                }
-                .frame(maxWidth: 420)
-
-                // CTAs
+            VStack(spacing: 22) {
+                ModeWelcomeHeader(
+                    icon: "square.grid.2x2.fill",
+                    accent: LumeTheme.clay,
+                    title: "Cowork",
+                    subtitle: "Automate work over the files in a folder."
+                )
                 HStack(spacing: 10) {
-                    Button(action: onNewProject) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "folder.badge.plus")
-                                .font(.system(size: 14, weight: .semibold))
-                            Text("Create project")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 20).padding(.vertical, 11)
-                        .background(LumeTheme.clay, in: Capsule())
-                        .shadow(color: LumeTheme.clay.opacity(0.3), radius: 8, y: 3)
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(action: onNewConversation) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "plus.bubble")
-                                .font(.system(size: 14, weight: .semibold))
-                            Text("New conversation")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundStyle(LumeTheme.clay)
-                        .padding(.horizontal, 20).padding(.vertical, 11)
-                        .background(LumeTheme.clay.opacity(0.10), in: Capsule())
-                        .overlay(Capsule().strokeBorder(LumeTheme.clay.opacity(0.25), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
+                    ModePrimaryButton(icon: "folder.badge.plus", label: "Create a project",
+                                      accent: LumeTheme.clay, action: onNewProject)
+                    ModeSecondaryButton(label: "New conversation", accent: LumeTheme.clay, action: onNewConversation)
                 }
+                Text("A project connects a folder Lume can read, write, and organize.")
+                    .font(.system(size: 12)).foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center).frame(maxWidth: 360)
+                VStack(spacing: 10) {
+                    CapabilityRow(icon: "doc.on.doc", text: "Read & write your files", accent: LumeTheme.clay)
+                    CapabilityRow(icon: "terminal", text: "Run code in a sandbox", accent: LumeTheme.clay)
+                    CapabilityRow(icon: "puzzlepiece.extension", text: "Connect MCP tools", accent: LumeTheme.clay)
+                    CapabilityRow(icon: "checklist", text: "Track tasks & progress", accent: LumeTheme.clay)
+                }
+                .frame(maxWidth: 320).padding(.top, 4)
             }
-            .frame(maxWidth: 480)
+            .padding(.horizontal, 24)
+            Spacer()
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
