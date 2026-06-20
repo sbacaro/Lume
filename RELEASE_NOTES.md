@@ -1,3 +1,46 @@
+# 🩹 Lume v1.4.2 — Rounded glow & Apple-silicon-friendly tooling
+
+A small follow-up to 1.4.1 that fixes two rough edges: the responding glow on the chat
+input now hugs the field's rounded corners instead of showing a square halo, and Lume
+stops accidentally running Intel command-line tools under Rosetta — which was triggering
+macOS's "Support Ending for Intel-based Apps" warning.
+
+**Release date:** 2026-06-20
+**Version:** 1.4.2.2
+**Type:** Bug fixes
+
+---
+
+## 🐞 Fixed
+
+### Responding glow now follows the rounded corners
+- While the model is generating, the iridescent glow around the chat input is drawn
+  directly on the rounded field shape (`strokeBorder` + a blurred halo on the same shape)
+  instead of masking a pre-rendered square gradient image. The square-looking corner is
+  gone — the glow and its halo now trace the field's rounded outline cleanly. It still
+  animates only during a response and stays light on the GPU (a thin animated stroke, no
+  per-frame full-area blur).
+
+### No more "Support Ending for Intel-based Apps" warning from Lume
+- The app bundle was already a universal binary (Intel + Apple silicon), including Sparkle.
+  The warning came from Lume launching an **Intel-only command-line tool under Rosetta** —
+  macOS attributes that to the app. Lume's shell `PATH` listed `/usr/local/bin` (the legacy
+  Intel Homebrew location) **before** `/opt/homebrew/bin` (native arm64), so a leftover Intel
+  tool could shadow its native build. On Apple silicon, `/opt/homebrew` now comes first, so
+  native arm64 tools win and Lume stops spawning translated processes.
+  - If you still see the warning, an Intel-only CLI is installed in `/usr/local/bin`;
+    reinstall it as arm64 (e.g. `arch -arm64 brew reinstall <name>`).
+
+### Build: data-race safety in the streaming pacer (Swift 6)
+- Fixed a Swift 6 concurrency error in the response streamer: the assistant message (a
+  SwiftData model, which isn't `Sendable`) was being written from two concurrent tasks — the
+  paced reveal loop and the network streaming task. The paced loop is now the sole owner of
+  that message (it writes the live text and the final token count), so the model object lives
+  in a single isolation region. Runtime behavior is unchanged; the build is now clean under
+  strict concurrency.
+
+---
+
 # ✨ Lume v1.4.1 — Liquid Glass, Intelligence glow, and a unified control language
 
 A design-focused follow-up to 1.4.0. Lume's control layer now speaks Apple's **Liquid Glass**
@@ -39,6 +82,10 @@ responds, and every button and toggle across the app finally follows one consist
   light and dark appearances.
 
 ### Added
+- **Smooth, paced rendering**: model output is now buffered and revealed on screen at a steady,
+  controlled rate (a gentle typewriter effect) instead of in network-driven bursts — so replies
+  flow smoothly even when tokens arrive in chunks or pause for a tool call. Generation speed
+  (tok/s) still reflects the real arrival rate, and the full text is guaranteed at the end.
 - **Installs missing command-line tools on its own**: when the agent needs a CLI that isn't on
   your Mac, Lume now installs it via Homebrew during the task — bootstrapping Homebrew itself on
   first use with a single native admin authentication (Touch ID / password), then `brew install`.

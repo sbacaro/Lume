@@ -55,6 +55,7 @@ struct MarkdownTextView: View {
     let text: String
     var isStreaming: Bool = false
     var onSuggestionSelected: ((String) -> Void)? = nil
+    @Environment(\.markdownFontScale) private var scale
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -66,12 +67,16 @@ struct MarkdownTextView: View {
             }
 
             if isStreaming {
-                let cleanedContent = removeSuggestionsBlock(from: answer)
-                let blocks = parseBlocks(cleanedContent)
-                ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
-                    let isLast = index == blocks.count - 1
-                    MarkdownBlockView(block: block, isStreaming: isLast).equatable()
-                }
+                // Durante o streaming, renderiza a resposta como UM Text simples (barato) em vez
+                // de re-parsear markdown em blocos a cada frame — isso saturava a CPU em respostas
+                // longas (parseBlocks + ForEach sobre a mensagem inteira, várias vezes por segundo).
+                // A formatação rica (títulos, código, listas) é aplicada assim que o streaming
+                // termina (ramo `else` abaixo, que roda uma única vez).
+                Text(removeSuggestionsBlock(from: answer))
+                    .font(.system(size: 14 * scale))
+                    .lineSpacing(4 * scale)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             } else if let suggestion = ContextManager.extractSuggestions(from: answer) {
                 if !suggestion.textBefore.isEmpty {
                     ForEach(Array(parseBlocks(suggestion.textBefore).enumerated()), id: \.offset) { _, block in

@@ -41,13 +41,13 @@ final class ContextCompressor {
                                      compressedTokens: originalTokens)
         }
 
-        var compressed = filterByRelevance(messages: messages, query: query, budget: budget)
-
-        let afterFilter = compressed.map { estimateTokens($0.content) }.reduce(0, +)
-        if afterFilter > budget {
-            compressed = truncateLongMessages(messages: compressed, budget: budget)
-        }
-
+        // Corte por RECÊNCIA (barato): mantém as mensagens mais recentes que cabem no
+        // orçamento e trunca a do limite. Antes usávamos relevância semântica
+        // (`filterByRelevance` com `NLEmbedding` por mensagem), que em conversas longas
+        // rodava embedding em todo o histórico A CADA TURNO — travando o app antes do
+        // streaming começar (tempo até o 1º token enorme → "0 tok/s"). A relevância de
+        // documentos já é coberta pelo RAG, injetado à parte.
+        var compressed = truncateLongMessages(messages: messages, budget: budget)
         compressed = preserveRecentMessages(original: messages, compressed: compressed, keepLast: 4)
 
         let compressedTokens = compressed.map { estimateTokens($0.content) }.reduce(0, +)
@@ -56,56 +56,6 @@ final class ContextCompressor {
                                  compressedTokens: compressedTokens)
     }
 
-    // MARK: - Relevance Filtering
-
-    private func filterByRelevance(messages: [Message], query: String, budget: Int) -> [Message] {
-        guard messages.count > 6 else { return messages }
-
-        let recentMessages = Array(messages.suffix(4))
-        let olderMessages = Array(messages.dropLast(4))
-
-        // Scoring por similaridade semântica (variável _ removida)
-        let sortedOlder = olderMessages
-            .map { msg in (msg, semanticSimilarity(text1: msg.content, text2: query)) }
-            .sorted { $0.1 > $1.1 }
-
-        var selected: [Message] = []
-        var usedTokens = recentMessages.map { estimateTokens($0.content) }.reduce(0, +)
-        let budgetForOlder = budget - usedTokens
-
-        for (msg, _) in sortedOlder {
-            let tokens = estimateTokens(msg.content)
-            if usedTokens + tokens <= budgetForOlder {
-                selected.append(msg)
-                usedTokens += tokens
-            }
-        }
-
-        let selectedIDs = Set(selected.map { $0.id })
-        let recentIDs = Set(recentMessages.map { $0.id })
-        return messages.filter { selectedIDs.contains($0.id) || recentIDs.contains($0.id) }
-    }
-
-    // MARK: - Semantic Similarity
-
-    private func semanticSimilarity(text1: String, text2: String) -> Double {
-        guard let embedding = NLEmbedding.sentenceEmbedding(for: .portuguese)
-                ?? NLEmbedding.sentenceEmbedding(for: .english) else {
-            return lexicalSimilarity(text1: text1, text2: text2)
-        }
-        let t1 = String(text1.prefix(512))
-        let t2 = String(text2.prefix(512))
-        let dist = embedding.distance(between: t1, and: t2)
-        return 1.0 - min(1.0, dist)
-    }
-
-    private func lexicalSimilarity(text1: String, text2: String) -> Double {
-        let w1 = Set(text1.lowercased().components(separatedBy: .whitespacesAndNewlines))
-        let w2 = Set(text2.lowercased().components(separatedBy: .whitespacesAndNewlines))
-        let intersection = w1.intersection(w2).count
-        let union = w1.union(w2).count
-        return union > 0 ? Double(intersection) / Double(union) : 0
-    }
 
     // MARK: - Truncation
 

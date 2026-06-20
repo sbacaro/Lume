@@ -12,8 +12,13 @@ import Security
 
 enum Shell {
 
-    // PATH completo para garantir que git, swift, npm etc sejam encontrados
-    nonisolated private static let fullPath = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/opt/homebrew/sbin"
+    // PATH completo para garantir que git, swift, npm etc sejam encontrados.
+    // Em Apple Silicon, /opt/homebrew (arm64 nativo) vem ANTES de /usr/local
+    // (local clássico do Homebrew Intel/x86_64). Assim, se houver uma mesma
+    // ferramenta nos dois lugares, a versão nativa vence — evita que o Lume
+    // dispare um binário Intel sob Rosetta (o que faz o macOS exibir o aviso
+    // "Support Ending for Intel-based Apps" atribuído ao Lume).
+    nonisolated private static let fullPath = "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
     /// Timeout de INATIVIDADE (s): o processo só é interrompido se ficar este tempo
     /// SEM produzir nenhuma saída (stdout/stderr). Enquanto está "rolando" — gerando

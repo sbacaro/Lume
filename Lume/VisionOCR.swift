@@ -31,7 +31,7 @@ enum VisionOCR {
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
                     try handler.perform([request])
-                    let text = (request.results as? [VNRecognizedTextObservation])?
+                    let text = request.results?
                         .compactMap { $0.topCandidates(1).first?.string }
                         .joined(separator: "\n") ?? ""
                     continuation.resume(returning: text)
@@ -71,7 +71,7 @@ enum VisionOCR {
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
                     try handler.perform([request])
-                    let labels = (request.results as? [VNClassificationObservation])?
+                    let labels = request.results?
                         .filter { $0.confidence >= minConfidence }
                         .sorted { $0.confidence > $1.confidence }
                         .prefix(maxLabels)

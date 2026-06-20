@@ -441,16 +441,17 @@ struct ChatInputView: View {
         ])
     }
 
-    /// Anel do gradiente girando, mascarado no contorno (usado para borda e halo).
-    private func glowRing(lineWidth: CGFloat) -> some View {
-        AngularGradient(gradient: glowGradient, center: .center)
-            .scaleEffect(1.5)
-            .rotationEffect(.degrees(glowAngle))
-            .mask(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(lineWidth: lineWidth))
+    /// Gradiente iridescente girando, já posicionado pelo ângulo atual. Como ele é aplicado
+    /// como `ShapeStyle` de um traço sobre a PRÓPRIA forma arredondada, o glow acompanha os
+    /// cantos por construção (sem máscara/imagem quadrada, que era o que deixava o efeito
+    /// com aparência de quadrado).
+    private var glowFill: AngularGradient {
+        AngularGradient(gradient: glowGradient, center: .center, angle: .degrees(glowAngle))
     }
 
     /// Borda do campo. Base sempre visível (delimita a área de escrita); ao responder, ganha
-    /// um glow iridescente girando + um halo difuso que funciona como sombra que acompanha a animação.
+    /// um traço iridescente girando + um halo difuso (mesmo traço borrado) que funciona como
+    /// sombra colorida. Tudo desenhado sobre a RoundedRectangle, então segue os cantos.
     @ViewBuilder
     private var fieldBorder: some View {
         let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -460,14 +461,15 @@ struct ChatInputView: View {
                 lineWidth: 1
             )
             if isLoading {
-                // `drawingGroup()` rasteriza o glow animado (gradiente + máscara + blur) numa
-                // ÚNICA camada Metal, em vez de o SwiftUI recompor o blur na árvore de views a
-                // cada frame. Isso corta o jank durante a resposta, sobretudo em telas ProMotion.
-                ZStack {
-                    glowRing(lineWidth: 6).blur(radius: 10).opacity(0.75)  // halo (sombra animada)
-                    glowRing(lineWidth: 2).blur(radius: 2.5)               // borda iridescente
-                }
-                .drawingGroup()
+                // Halo difuso (arredondado) — borra um traço da própria forma; transborda
+                // para fora dando a sensação de brilho/sombra colorida ao redor da caixa.
+                shape
+                    .stroke(glowFill, lineWidth: 5)
+                    .blur(radius: 7)
+                    .opacity(0.7)
+                // Borda iridescente nítida, inset na forma.
+                shape
+                    .strokeBorder(glowFill, lineWidth: 2)
             }
         }
     }

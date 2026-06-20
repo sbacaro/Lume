@@ -26,9 +26,9 @@ if [[ -z "$VER" ]]; then
   exit 0
 fi
 
-# valida formato X.Y ou X.Y.Z
-if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-  echo "✖ Versão inválida: '$VER' (use X.Y ou X.Y.Z)"; exit 1
+# valida formato X.Y, X.Y.Z ou X.Y.Z.W (marketing pode ter 4 partes)
+if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+(\.[0-9]+){0,2}$ ]]; then
+  echo "✖ Versão inválida: '$VER' (use X.Y, X.Y.Z ou X.Y.Z.W)"; exit 1
 fi
 
 BUILD="${2:-$(( ${CUR_BUILD:-0} + 1 ))}"

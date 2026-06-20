@@ -107,9 +107,12 @@ final class UpdateManager {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
     }
 
-    /// Versão unificada para exibição: marketing + build juntos (ex.: "1.4.1.16").
+    /// Versão para exibição. `MARKETING_VERSION` JÁ é a versão completa voltada ao usuário
+    /// (4 partes, ex.: "1.4.2.2"), então exibimos só ela. O build (`CFBundleVersion`) é um
+    /// inteiro monotônico interno usado pelo Sparkle para comparar releases — não aparece aqui.
+    /// A comparação de "é mais nova?" usa `currentVersion`, logo é sensível ao 4º dígito.
     var fullVersion: String {
-        "\(currentVersion).\(currentBuild)"
+        currentVersion
     }
 
     // MARK: - GitHub API

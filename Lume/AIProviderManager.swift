@@ -36,6 +36,11 @@ final class AIProviderManager {
     private let keychainManager = KeychainManager.shared
     private let contextManager = ContextManager()
     private var streamingTask: Task<String, Error>?
+    /// Mensagem do assistente em streaming. Fica em `self` (que é `@MainActor`, logo Sendable)
+    /// para que o laço do pacer a alcance via `self` em vez de capturar o objeto `Message`
+    /// diretamente — `Message` é um modelo do SwiftData, não-isolado e não-Sendable, e capturá-lo
+    /// num closure `@Sendable` que escapa (a Task do pacer) causa "Sending ... risks data races".
+    private var streamingMessage: Message?
     private var streamingStartTime: Date?
     private(set) var activeConfig: AIProviderConfig?
 
@@ -258,6 +263,7 @@ final class AIProviderManager {
         let assistantMsg = Message(role: .assistant, content: "")
         conversation.messages.append(assistantMsg)
         streamingMessageID = assistantMsg.id
+        streamingMessage = assistantMsg   // dono via `self` para o pacer não capturar o Message
 
         // ── SYSTEM PROMPT ────────────────────────────────────────
         var baseSystemPrompt = isCustomProvider
@@ -425,12 +431,12 @@ final class AIProviderManager {
         let responseReserve = provider.maxTokens > 0 ? provider.maxTokens : 8_192
         let safetyMargin = max(4_000, window / 20)
         let windowBudget = max(8_000, window - systemTokens - injectedTokens - responseReserve - safetyMargin)
-        // O alvo é a janela REAL do modelo. O teto configurado (maxContextTokens) só limita
-        // quando o usuário o define como cap DELIBERADO (>= 32k); o default pequeno (12k) NÃO
-        // deve forçar compressão semântica + sumarização cara a cada turno — era o que estava
-        // deixando as respostas lentas no provider custom (early-return deixou de acontecer).
-        let userCap = configuredMax >= 32_000 ? configuredMax : Int.max
-        let targetTokens = min(userCap, windowBudget)
+        // Alvo MODERADO por padrão (~64k): contexto suficiente e tempo-até-1º-token rápido.
+        // Mandar a janela inteira (ex.: 178k) deixava o 1º token lento ("0 tok/s") em conversas
+        // longas. Honra um cap MAIOR configurado pelo usuário (>= 32k), sempre limitado pela
+        // janela real. O corte é por recência (barato), sem embedding semântico por turno.
+        let preferred = max(64_000, configuredMax)
+        let targetTokens = min(preferred, windowBudget)
 
         let compressionResult = ContextCompressor.shared.compress(
             messages: rawMessages,
@@ -479,49 +485,75 @@ final class AIProviderManager {
             guard let self = self else {
                 throw NSError(domain: "AIProviderManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Self deallocated"])
             }
-            
-            var accumulated = ""
-            var tokenCount = 0
-            var lastFlush = Date.distantPast
-            for try await chunk in provider.streamMessage(
-                content: finalContent,
-                conversationHistory: contextMessages.filter { $0.role != .assistant || !$0.content.isEmpty },
-                systemPrompt: optimizedSystemPrompt
-            ) {
-                try Task.checkCancellation()
-                // Sinal de atividade — não faz parte do conteúdo da mensagem.
-                if chunk.hasPrefix("[[STATUS:") && chunk.hasSuffix("]]") {
-                    let label = String(chunk.dropFirst(9).dropLast(2))
-                    self.streamingActivity = label
-                    continue
-                }
-                accumulated += chunk
-                tokenCount += max(1, chunk.count / 4)
 
-                // THROTTLE: atualiza a tela no máximo ~12x/segundo. Sem isso, cada token
-                // re-parseia e re-renderiza a mensagem inteira (O(n²) em respostas longas),
-                // o que satura a CPU e trava o app. 12x/s é fluido e corta ~40% do trabalho.
-                let now = Date()
-                guard now.timeIntervalSince(lastFlush) >= 0.08 else { continue }
-                lastFlush = now
-                let snapshot = accumulated
-                let tc = tokenCount
-                let activity = Self.deriveActivity(from: snapshot)
-                assistantMsg.content = snapshot
-                self.streamingTokenCount = tc
-                if self.streamingActivity != activity { self.streamingActivity = activity }
-                if let start = self.streamingStartTime {
-                    self.streamingElapsed = Date().timeIntervalSince(start)
+            // Buffer + PACER: a rede preenche `buffer.received` assim que os tokens chegam
+            // (rápido), e um laço separado revela o texto na tela numa cadência suave e
+            // controlada (efeito máquina de escrever). Isso desacopla a renderização das
+            // rajadas/pausas da rede — nada de saltos, e durante pausas (ferramenta/
+            // raciocínio) o conteúdo já recebido continua aparecendo fluido.
+            let buffer = StreamReveal()
+            var tokenCount = 0
+
+            let pacer = Task { @MainActor [weak self] in
+                while !Task.isCancelled {
+                    let target = buffer.received.count
+                    if buffer.revealed < target {
+                        // Catch-up suave: revela uma fração do que falta (mín. alguns chars/tick),
+                        // então acompanha modelos rápidos sem saltar e termina o "rastro" macio.
+                        let gap = target - buffer.revealed
+                        buffer.revealed = min(target, buffer.revealed + max(3, gap / 4))
+                        let idx = buffer.received.index(buffer.received.startIndex, offsetBy: buffer.revealed)
+                        let snapshot = String(buffer.received[..<idx])
+                        self?.streamingMessage?.content = snapshot
+                        self?.streamingTokenCount = buffer.tokenCount
+                        if let start = self?.streamingStartTime {
+                            self?.streamingElapsed = Date().timeIntervalSince(start)
+                        }
+                        let activity = Self.deriveActivity(from: snapshot)
+                        if self?.streamingActivity != activity { self?.streamingActivity = activity }
+                    } else if buffer.done {
+                        break
+                    }
+                    try? await Task.sleep(for: .milliseconds(40))   // ~25 fps: suave e barato
                 }
+                // Texto e contagem finais — escritos via `self` (MainActor), nunca capturando
+                // o `Message` diretamente neste closure @Sendable (evita o "Sending ... data races").
+                self?.streamingMessage?.content = buffer.received    // garante o texto completo
+                self?.streamingMessage?.tokenCount = buffer.tokenCount
             }
-            // Flush final (garante o texto completo) + contagem de tokens.
-            let finalText = accumulated
-            let finalTokens = tokenCount
-            assistantMsg.content = finalText
-                assistantMsg.tokenCount = finalTokens
-                conversation.totalTokensUsed += finalTokens
-                conversation.messageCount = conversation.messages.count
-            return accumulated
+
+            do {
+                for try await chunk in provider.streamMessage(
+                    content: finalContent,
+                    conversationHistory: contextMessages.filter { $0.role != .assistant || !$0.content.isEmpty },
+                    systemPrompt: optimizedSystemPrompt
+                ) {
+                    try Task.checkCancellation()
+                    // Sinal de atividade — não faz parte do conteúdo da mensagem.
+                    if chunk.hasPrefix("[[STATUS:") && chunk.hasSuffix("]]") {
+                        self.streamingActivity = String(chunk.dropFirst(9).dropLast(2))
+                        continue
+                    }
+                    tokenCount += max(1, chunk.count / 4)
+                    buffer.received += chunk          // chega rápido; o pacer revela no seu ritmo
+                    buffer.tokenCount = tokenCount
+                }
+            } catch {
+                buffer.done = true
+                pacer.cancel()
+                throw error
+            }
+
+            // Rede terminou: deixa o pacer revelar o que falta e então finaliza.
+            buffer.done = true
+            _ = await pacer.value
+
+            let finalText = buffer.received
+            // A mensagem já foi finalizada pelo pacer (via `self.streamingMessage`); esta tarefa
+            // externa não toca no `Message`, só atualiza o agregado da conversa e devolve o texto.
+            conversation.totalTokensUsed += tokenCount
+            conversation.messageCount = conversation.messages.count
+            return finalText
         }
         streamingTask = task
 
@@ -531,11 +563,13 @@ final class AIProviderManager {
             fullResponse = assistantMsg.content
             if fullResponse.isEmpty { conversation.messages.removeAll { $0.id == assistantMsg.id } }
             streamingMessageID = nil
+            streamingMessage = nil
             streamingTask = nil
             return fullResponse
         } catch {
             if fullResponse.isEmpty { conversation.messages.removeAll { $0.id == assistantMsg.id } }
             streamingMessageID = nil
+            streamingMessage = nil
             streamingTask = nil
             let aiError = error as? AIProviderError ?? AIProviderError.networkError(error)
             self.error = aiError
@@ -543,6 +577,7 @@ final class AIProviderManager {
         }
 
         streamingMessageID = nil
+        streamingMessage = nil
         streamingTask = nil
 
         if !skipCache {
@@ -851,4 +886,17 @@ final class AIProviderManager {
         message.artifact = artifact
         latestArtifactMessageID = message.id
     }
+}
+
+// MARK: - Stream reveal buffer
+
+/// Estado compartilhado entre a rede (que preenche `received`) e o pacer (que revela
+/// `revealed` chars na tela). Tudo no MainActor, então não há corrida — só desacopla
+/// a chegada dos tokens da renderização, permitindo uma cadência de exibição controlada.
+@MainActor
+final class StreamReveal {
+    var received = ""     // tudo o que chegou da rede até agora
+    var revealed = 0      // nº de caracteres já revelados na tela
+    var tokenCount = 0    // tokens estimados recebidos (para o tok/s real, baseado na chegada)
+    var done = false      // a rede terminou de enviar
 }
