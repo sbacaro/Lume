@@ -305,8 +305,9 @@ final class TerminalSession {
     // MARK: - Persistence
 
     private var historyURL: URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first!.appendingPathComponent("Lume")
+        let baseDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let support = baseDir.appendingPathComponent("Lume")
         try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
         return support.appendingPathComponent("terminal_history.txt")
     }

@@ -47,7 +47,7 @@ struct ArtifactPanelView: View {
                 ArtifactWebView(content: displayedContent, type: artifact.type)
                     .id("\(webViewID)-\(versionIndex.map(String.init) ?? "cur")")
             case .source:
-                ArtifactSourceView(content: displayedContent)
+                ArtifactSourceView(content: displayedContent, type: artifact.type)
             }
         }
         .background(Color(.windowBackgroundColor))
@@ -284,16 +284,52 @@ struct ArtifactWebView: NSViewRepresentable {
 
 struct ArtifactSourceView: View {
     let content: String
+    let type: ArtifactType
+
+    private var language: String {
+        switch type {
+        case .html:       return "html"
+        case .svg:        return "xml"
+        case .javascript: return "javascript"
+        case .css:        return "css"
+        case .react:      return "javascript"
+        case .mermaid:    return "markdown"
+        case .markdown:   return "markdown"
+        case .unknown:    return "txt"
+        }
+    }
 
     var body: some View {
+        let lines = content.components(separatedBy: "\n")
+        
         ScrollView([.horizontal, .vertical]) {
-            Text(content)
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.primary)
-                .textSelection(.enabled)
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(lines.enumerated()), id: \.offset) { idx, line in
+                    HStack(alignment: .top, spacing: 0) {
+                        Text(String(format: "%3d", idx + 1))
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(Color.secondary.opacity(0.5))
+                            .frame(width: 36, alignment: .trailing)
+                            .padding(.trailing, 8)
+
+                        Text(highlightLine(line))
+                            .font(.system(size: 12, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                    .padding(.vertical, 1)
+                }
+            }
+            .padding(16)
         }
         .background(Color(.textBackgroundColor))
+    }
+
+    private func highlightLine(_ line: String) -> AttributedString {
+        let nsAttr = SyntaxHighlighter.highlight(
+            line: line,
+            language: language,
+            baseFont: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        )
+        return (try? AttributedString(nsAttr, including: \.appKit)) ?? AttributedString(line)
     }
 }

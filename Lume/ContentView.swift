@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var renamingConversation: Conversation? = nil
     @State private var expandedProjects: Set<String> = []
     @State private var updateManager = UpdateManager.shared
+    @State private var selfUpdater = SelfUpdater.shared
     @EnvironmentObject private var sparkle: SparkleUpdater
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "lume_onboarding_completed")
     @State private var showNewProject = false
@@ -57,7 +58,8 @@ struct ContentView: View {
                 }
             }
             // Detecta atualizações (GitHub) para exibir o popup na sidebar.
-            // O download/instalação em si é feito pelo Sparkle ao tocar no popup.
+            // O download/instalação é feito pelo próprio app (SelfUpdater): baixa o DMG,
+            // verifica a assinatura EdDSA, troca o .app e reabre — sem Sparkle.
             await updateManager.checkForUpdates()
         }
         .sheet(item: $renamingConversation) { conv in
@@ -470,8 +472,8 @@ struct ContentView: View {
             // Popup de atualização — logo acima do nome do modelo
             if let release = updateManager.availableRelease {
                 SidebarUpdateBadge(
-                    version: release.version,
-                    onUpdate: { sparkle.checkForUpdates(); updateManager.dismiss() },
+                    version: selfUpdater.isBusy ? selfUpdater.statusText : release.version,
+                    onUpdate: { Task { await selfUpdater.installUpdate(release) } },
                     onDismiss: { withAnimation(.easeInOut(duration: 0.2)) { updateManager.dismiss() } }
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))

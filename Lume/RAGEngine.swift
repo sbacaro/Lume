@@ -44,8 +44,9 @@ nonisolated struct PersistedDocument: Codable {
 enum RAGIndexStore {
 
     private nonisolated static let directory: URL = {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first!.appendingPathComponent("Lume/RAGIndex", isDirectory: true)
+        let baseDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let support = baseDir.appendingPathComponent("Lume/RAGIndex", isDirectory: true)
         try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
         return support
     }()

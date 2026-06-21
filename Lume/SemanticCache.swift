@@ -20,7 +20,8 @@ actor SemanticCache {
     private let maxEntries = 500
     private let ttl: TimeInterval = 3600 * 24
     private let diskURL: URL = {
-        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         return dir.appendingPathComponent("lume_semantic_cache.json")
     }()
 

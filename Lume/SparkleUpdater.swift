@@ -31,8 +31,12 @@ final class SparkleUpdater: NSObject, ObservableObject, SPUUpdaterDelegate {
 
     override init() {
         super.init()
+        // `startingUpdater: false` — NÃO inicia o ciclo automático do Sparkle. A atualização
+        // agora é feita pelo `SelfUpdater` (baixa o DMG, verifica EdDSA, troca o .app e reabre).
+        // Sem isso o Sparkle ficava sondando instalador/EdDSA e gerava erros ("improperly
+        // signed", "Timed out while probing installer info data") — não usamos Developer ID.
         controller = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: false,
             updaterDelegate: self,
             userDriverDelegate: nil
         )

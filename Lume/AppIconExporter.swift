@@ -28,8 +28,9 @@ struct AppIconExporter: View {
     ]
 
     private var outputURL: URL {
-        FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("LumeIcons")
+        let baseDir = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return baseDir.appendingPathComponent("LumeIcons")
     }
 
     private var copyCommand: String {

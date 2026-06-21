@@ -12,6 +12,7 @@ import AppKit
 
 struct AboutView: View {
     @State private var updater = UpdateManager.shared
+    @State private var selfUpdater = SelfUpdater.shared
 
     // MARK: - Metadados do app
 
@@ -108,29 +109,37 @@ struct AboutView: View {
             }
             Spacer()
             Button {
-                Task { await updater.checkForUpdatesForced() }
+                if let release = updater.availableRelease {
+                    Task { await selfUpdater.installUpdate(release) }
+                } else {
+                    Task { await updater.checkForUpdatesForced() }
+                }
             } label: {
                 HStack(spacing: 5) {
-                    if updater.isChecking {
+                    if updater.isChecking || selfUpdater.isBusy {
                         ProgressView().controlSize(.small)
                     } else {
-                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Image(systemName: updater.availableRelease != nil
+                              ? "arrow.down.circle" : "arrow.triangle.2.circlepath")
                             .font(.system(size: 11, weight: .semibold))
                     }
-                    Text("Check").font(.system(size: 12, weight: .semibold))
+                    Text(updater.availableRelease != nil ? "Update" : "Check")
+                        .font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14).padding(.vertical, 7)
                 .background(Color.accentColor, in: Capsule())
             }
             .buttonStyle(.plain)
-            .disabled(updater.isChecking)
+            .disabled(updater.isChecking || selfUpdater.isBusy)
         }
         .padding(14)
         .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private var updateStatusText: String {
+        if selfUpdater.isBusy { return selfUpdater.statusText }
+        if case .failed = selfUpdater.phase { return selfUpdater.statusText }
         if updater.isChecking { return String(localized: "Checking for new versions…") }
         if let rel = updater.availableRelease {
             return String(localized: "New version available: \(rel.version)")

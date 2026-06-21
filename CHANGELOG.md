@@ -5,6 +5,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.4.3] — 2026-06-21
+
+### Added
+
+- **Syntax highlighting and line numbers in Artifact Code tab**: Reused the app's `SyntaxHighlighter` token parser to display highlighted source code for HTML, CSS, JavaScript, SVG, JSON, SQL, Python, Rust, and Markdown artifacts, with a left gutter showing line numbers.
+
+### Fixed
+
+- **Persistent directory crash prevention**: Replaced several instances of unsafe force unwraps (`first!`) on `FileManager.default.urls` (for Application Support, Cache, and Desktop directories) with safe fallbacks utilizing the temporary directory (`FileManager.default.temporaryDirectory`) to prevent runtime crashes when system directory retrieval fails.
+- **Dead code removed**: Deleted obsolete, unreferenced source files `ModelRouter.swift` and `SSEParser.swift`.
+
+---
+
 ## [1.4.2] — 2026-06-20
 
 ### Fixed

@@ -48,9 +48,9 @@ struct LumeConfig: Codable {
     // MARK: - Persistence
 
     private static let configURL: URL = {
-        let support = FileManager.default.urls(
-            for: .applicationSupportDirectory, in: .userDomainMask
-        ).first!.appendingPathComponent("Lume")
+        let baseDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let support = baseDir.appendingPathComponent("Lume")
         try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
         return support.appendingPathComponent("config.json")
     }()

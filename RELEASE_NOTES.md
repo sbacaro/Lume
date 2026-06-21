@@ -1,3 +1,28 @@
+# 🚀 Lume v1.4.3 — Code highlights in Artifacts & Sandbox safety
+
+This release introduces rich syntax highlighting and line numbers when inspecting Artifact source code directly in Lume, plus crash prevention fallbacks for system directory lookups and cleanup of obsolete files.
+
+**Release date:** 2026-06-21
+**Version:** 1.4.3
+**Type:** Features & Stability
+
+---
+
+## 🎨 Added
+
+### Syntax highlighting and line numbers in Artifact Code tab
+- When opening the **Code** tab in an Artifact view, Lume now uses its high-performance token-caching `SyntaxHighlighter` to display beautifully styled source code for Swift, Python, JavaScript, CSS, HTML, SVG, and more, complete with a clean gutter showing line numbers.
+
+## 🐞 Fixed
+
+### Force-unwrap crash prevention on system directories
+- Replaced all instances of `FileManager.default.urls(...).first!` with safe fallback wrappers. If the system fails to resolve default user directories (such as Application Support or Cache) due to sandbox or permission anomalies, Lume will fall back to using temporary paths instead of crashing immediately.
+
+### Code cleanup
+- Removed obsolete, unreferenced `ModelRouter.swift` and `SSEParser.swift` files from the disk and git.
+
+---
+
 # 🩹 Lume v1.4.2 — Rounded glow & Apple-silicon-friendly tooling
 
 A small follow-up to 1.4.1 that fixes two rough edges: the responding glow on the chat
