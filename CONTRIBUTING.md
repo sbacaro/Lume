@@ -28,6 +28,19 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ---
 
+## Project structure
+
+App source lives under `Lume/`, grouped by responsibility (`App/`, `Models/`, `AI/`,
+`RAG/`, `MCP/`, `Agent/`, `Services/`, `Updates/`, `DesignSystem/`, `Views/`). The Xcode
+project uses **file-system synchronized groups**, so a new `.swift` file placed in the
+right folder is compiled automatically — there's no need to edit the `.xcodeproj`. Please
+add new files to the folder that matches their responsibility.
+
+Build/release tooling lives in `scripts/`, and longer-form docs live in `docs/` (start with
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+
+---
+
 ## Code Style & Standards
 
 Lume is a modern macOS application built entirely on Swift 6. We enforce strict programming guidelines to maintain safety, scalability, and performance:

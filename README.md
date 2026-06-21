@@ -89,22 +89,42 @@ Select the **Lume** scheme and press ⌘R to run, or ⌘U to run the test suite.
      works with Git.
 3. Connect external tools in **Settings → MCP** to extend what the agent can do.
 
-## Architecture
+## Project structure
 
 ```
 Lume/
-├── Lume.xcodeproj/
-└── Lume/
-    ├── AIProviderManager.swift   # Orchestration: streaming, routing, context, tools
-    ├── AnthropicProvider.swift / OpenAIProvider.swift  # Provider adapters
-    ├── AgentTool*.swift          # Tool protocol, registry, and per-mode gating
-    ├── MCPClient.swift           # MCP JSON-RPC client (stdio + HTTP)
-    ├── RAGEngine.swift           # Indexing, retrieval, embeddings, on-disk cache
-    ├── OnDeviceSummarizer.swift / OnDeviceComplexity.swift  # Foundation Models
-    ├── LLMRouter.swift           # Complexity-based model routing
-    ├── ChatDetailView.swift      # Chat surface + per-mode inspector
-    └── ContentView.swift         # Navigation shell and the three modes
+├── Lume.xcodeproj/             # Xcode project (file-system synchronized groups)
+├── Lume/                       # App source, grouped by responsibility
+│   ├── App/                    # Entry point, root navigation, app config
+│   ├── Models/                 # SwiftData @Model types and shared data structures
+│   ├── AI/                     # The chat engine
+│   │   ├── Providers/          #   OpenAI / Anthropic / gateway adapters + manager
+│   │   ├── Routing/            #   Complexity-based model routing, pricing, capabilities
+│   │   ├── Context/            #   Context window management, compression, caches
+│   │   └── OnDevice/           #   Apple Foundation Models (summary, complexity, titles)
+│   ├── RAG/                    # File indexing, retrieval, contextual embeddings
+│   ├── MCP/                    # Model Context Protocol client + connector
+│   ├── Agent/                  # Tool protocol, executor, orchestration
+│   │   └── Tools/              #   Built-in tools (web fetch/search, GitHub)
+│   ├── Services/               # Infra: Keychain, Git, shell, terminal, memory, OCR…
+│   ├── Updates/                # Sparkle + in-app self-updater
+│   ├── DesignSystem/           # Brand, theme, button styles, app-icon rendering
+│   ├── Views/                  # SwiftUI surfaces
+│   │   ├── Chat/  Settings/  Onboarding/  Markdown/  Components/
+│   │   └── …                   #   Dashboards, project sheets, terminal
+│   ├── Assets.xcassets/        # Asset catalog
+│   └── Lume.entitlements       # Sandbox/runtime entitlements
+├── LumeTests/                  # Unit tests (Swift Testing)
+├── LumeUITests/                # UI tests
+├── docs/                       # Architecture & setup guides
+├── scripts/                    # release.sh, set-version.sh, setup-sparkle.sh
+├── Version.xcconfig            # Single source of truth for version + build
+├── appcast.xml                 # Sparkle update feed
+├── Localizable.xcstrings       # Localization (English + pt-BR)
+└── LICENSE  README.md  CHANGELOG.md  RELEASE_NOTES.md  CONTRIBUTING.md …
 ```
+
+A deeper component-level walkthrough lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Testing
 

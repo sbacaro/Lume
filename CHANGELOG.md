@@ -10,6 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **License changed from MIT to GNU GPLv3**: Lume is now distributed under the GNU General Public License v3.0. Lume becomes free software — anyone may use, study, share, and modify it, and any distributed derivative must remain open under the same license. The `LICENSE` file, README badge and License section, the About screen (link and footer), and the localized strings were updated accordingly. No code behavior changes in this release. (Historical changelog entries below referencing the MIT License describe the project as it was at the time of those releases.)
+- **Repository reorganization**: the previously flat `Lume/` source folder is now grouped by responsibility (`App`, `Models`, `AI`, `RAG`, `MCP`, `Agent`, `Services`, `Updates`, `DesignSystem`, `Views`). Build scripts moved to `scripts/`, guides moved to `docs/` (new `docs/ARCHITECTURE.md`), and a `SECURITY.md` policy was added. Obsolete files were removed (the unused `Item.swift` template, stray duplicate `LICENSE`/`README`/`CHANGELOG` inside the source folder, old DMGs, and completed planning notes). No code behavior changes.
 
 ---
 
