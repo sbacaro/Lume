@@ -53,15 +53,15 @@ struct CommandPaletteView: View {
             // Campo de busca
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 15))
+                    .font(.lume(.title3))
                     .foregroundStyle(.secondary)
                 TextField("Search conversations, messages, or actions…", text: $query)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 16))
+                    .font(.lume(.title3))
                     .focused($focused)
                     .onSubmit { if let first = results.first { open(first) } }
                 Text("esc")
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .font(.lume(.caption, weight: .medium, design: .monospaced))
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 5).padding(.vertical, 2)
                     .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 4))
@@ -93,7 +93,7 @@ struct CommandPaletteView: View {
                         }
                     } else if !trimmedQuery.isEmpty {
                         Text("No results for “\(trimmedQuery)”")
-                            .font(.system(size: 13))
+                            .font(.lume(.callout))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 12).padding(.vertical, 16)
@@ -111,7 +111,7 @@ struct CommandPaletteView: View {
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text.uppercased())
-            .font(.system(size: 10, weight: .semibold))
+            .font(.lume(.caption, weight: .semibold))
             .foregroundStyle(.tertiary)
             .tracking(0.8)
             .padding(.horizontal, 10).padding(.top, 8).padding(.bottom, 2)
@@ -121,13 +121,13 @@ struct CommandPaletteView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.lume(.body))
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 22)
-                Text(title).font(.system(size: 14)).foregroundStyle(.primary)
+                Text(title).font(.lume(.body)).foregroundStyle(.primary)
                 Spacer()
                 Text(shortcut)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.lume(.footnote, design: .monospaced))
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 10).padding(.vertical, 9)
@@ -141,29 +141,29 @@ struct CommandPaletteView: View {
             HStack(spacing: 12) {
                 Image(systemName: conv.tags.contains("code") ? "chevron.left.forwardslash.chevron.right"
                                   : conv.project != nil ? "folder" : "bubble.left")
-                    .font(.system(size: 13))
+                    .font(.lume(.callout))
                     .foregroundStyle(.secondary)
                     .frame(width: 22)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(conv.title)
-                        .font(.system(size: 14))
+                        .font(.lume(.body))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     if let snippet = matchSnippet(for: conv) {
                         Text(snippet)
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     } else {
                         Text(conv.modelName)
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
                     }
                 }
                 Spacer()
                 Text(conv.updatedAt.formatted(.relative(presentation: .named)))
-                    .font(.system(size: 10))
+                    .font(.lume(.caption))
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 10).padding(.vertical, 8)

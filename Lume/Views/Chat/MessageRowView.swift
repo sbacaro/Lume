@@ -94,7 +94,7 @@ struct MessageRowView: View {
             .opacity(isHovering ? 1 : 0)
 
             Text(timeLabel)
-                .font(.system(size: 11))
+                .font(.lume(.footnote))
                 .foregroundStyle(.tertiary)
                 .fixedSize()
         }
@@ -106,7 +106,7 @@ struct MessageRowView: View {
     private func actionButton(icon: String, help: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .medium))
+                .font(.lume(.subheadline, weight: .medium))
                 .foregroundStyle(.secondary)
                 .frame(width: 28, height: 28)
                 .background(
@@ -174,7 +174,7 @@ struct MessageRowView: View {
                         StarLoaderView(starSize: 16)
                         if let activity = streamingActivity, !activity.isEmpty {
                             Text(activity)
-                                .font(.system(size: 12))
+                                .font(.lume(.subheadline))
                                 .foregroundStyle(.secondary)
                                 .transition(.opacity)
                                 .id(activity)
@@ -200,7 +200,7 @@ struct MessageRowView: View {
         let isSpeaking = SpeechManager.shared.speakingID == message.id
         return HStack(spacing: 4) {
             Text(timeLabel)
-                .font(.system(size: 11))
+                .font(.lume(.footnote))
                 .foregroundStyle(.tertiary)
                 .fixedSize()
 
@@ -241,19 +241,19 @@ struct MessageRowView: View {
                     .frame(width: 32, height: 32)
                     .overlay(
                         Image(systemName: artifactIcon(for: artifact.type))
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.lume(.callout, weight: .medium))
                             .foregroundStyle(Color.accentColor)
                     )
                 VStack(alignment: .leading, spacing: 2) {
                     Text(artifact.title)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.lume(.subheadline, weight: .semibold))
                         .foregroundStyle(.primary).lineLimit(1)
                     Text(artifactTypeLabel(for: artifact.type))
-                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                        .font(.lume(.caption)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image(systemName: "arrow.up.forward")
-                    .font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
+                    .font(.lume(.caption, weight: .medium)).foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
             .frame(maxWidth: 340)
@@ -275,7 +275,7 @@ struct MessageRowView: View {
     private var ragSourcesView: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Sources")
-                .font(.system(size: 10, weight: .semibold))
+                .font(.lume(.caption, weight: .semibold))
                 .foregroundStyle(.tertiary)
                 .tracking(0.6)
             FlowLayout(spacing: 6) {
@@ -342,9 +342,9 @@ private struct RAGSourceChip: View {
     var body: some View {
         Button { showPopover.toggle() } label: {
             HStack(spacing: 5) {
-                Image(systemName: "doc.text.magnifyingglass").font(.system(size: 9))
+                Image(systemName: "doc.text.magnifyingglass").font(.lume(.caption2))
                 Text("\(source.document) · \(source.chunkIndex + 1)/\(source.totalChunks)")
-                    .font(.system(size: 10, weight: .medium)).lineLimit(1)
+                    .font(.lume(.caption, weight: .medium)).lineLimit(1)
             }
             .foregroundStyle(Color.accentColor)
             .padding(.horizontal, 8).padding(.vertical, 3)
@@ -354,13 +354,13 @@ private struct RAGSourceChip: View {
         .buttonStyle(.plain)
         .popover(isPresented: $showPopover, arrowEdge: .bottom) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(source.document).font(.system(size: 12, weight: .semibold))
+                Text(source.document).font(.lume(.subheadline, weight: .semibold))
                 Text(String(localized: "Excerpt \(source.chunkIndex + 1) of \(source.totalChunks) · relevance \(String(format: "%.0f%%", min(max(source.score, 0), 1) * 100))"))
-                    .font(.system(size: 10)).foregroundStyle(.secondary)
+                    .font(.lume(.caption)).foregroundStyle(.secondary)
                 Divider()
                 ScrollView {
                     Text(source.snippet)
-                        .font(.system(size: 12))
+                        .font(.lume(.subheadline))
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }

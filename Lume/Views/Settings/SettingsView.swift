@@ -59,7 +59,7 @@ struct SettingsView: View {
             VStack(spacing: 2) {
                 HStack {
                     Text("Settings")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.lume(.title3, weight: .bold, design: .rounded))
                     Spacer()
                 }
                 .padding(.horizontal, 16)
@@ -70,11 +70,11 @@ struct SettingsView: View {
                     Button { selectedTab = tab } label: {
                         HStack(spacing: 10) {
                             Image(systemName: tab.icon)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.lume(.callout, weight: .medium))
                                 .frame(width: 20)
                                 .foregroundStyle(selectedTab == tab ? Color.accentColor : Color.secondary)
                             Text(tab.title)
-                                .font(.system(size: 13))
+                                .font(.lume(.callout))
                                 .foregroundStyle(selectedTab == tab ? Color.primary : Color.secondary)
                             Spacer()
                         }
@@ -101,10 +101,10 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 13))
+                            .font(.lume(.callout))
                             .foregroundStyle(.secondary)
                         Text("Close")
-                            .font(.system(size: 13))
+                            .font(.lume(.callout))
                             .foregroundStyle(.secondary)
                         Spacer()
                     }
@@ -165,17 +165,17 @@ struct AgentSettingsView: View {
                                               : Color.primary.opacity(0.05))
                                         .frame(width: 34, height: 34)
                                     Image(systemName: mode.icon)
-                                        .font(.system(size: 15, weight: .medium))
+                                        .font(.lume(.title3, weight: .medium))
                                         .foregroundStyle(config.approvalMode == mode ? Color.accentColor : Color.secondary)
                                 }
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(mode.label).font(.system(size: 13, weight: .medium)).foregroundStyle(.primary)
-                                    Text(mode.description).font(.system(size: 11)).foregroundStyle(.secondary)
+                                    Text(mode.label).font(.lume(.callout, weight: .medium)).foregroundStyle(.primary)
+                                    Text(mode.description).font(.lume(.footnote)).foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 if config.approvalMode == mode {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 16))
+                                        .font(.lume(.title3))
                                         .foregroundStyle(Color.accentColor)
                                         .symbolRenderingMode(.hierarchical)
                                 }
@@ -206,7 +206,7 @@ struct AgentSettingsView: View {
                         Stepper("\(config.maxAgentIterations)", value: $config.maxAgentIterations, in: 1...50)
                             .onChange(of: config.maxAgentIterations) { _, _ in config.save() }
                     }
-                    .font(.system(size: 13))
+                    .font(.lume(.callout))
                     Divider().opacity(0.4)
                     HStack {
                         Text("Max context tokens")
@@ -220,7 +220,7 @@ struct AgentSettingsView: View {
                         .frame(width: 90)
                         .onChange(of: config.maxContextTokens) { _, _ in config.save() }
                     }
-                    .font(.system(size: 13))
+                    .font(.lume(.callout))
                 }
 
                 settingsSection(String(localized: "Optimizations")) {
@@ -229,14 +229,14 @@ struct AgentSettingsView: View {
                     Toggle("Auto-select model by complexity (on-device)", isOn: $config.autoSelectModelByComplexityEnabled)
                         .onChange(of: config.autoSelectModelByComplexityEnabled) { _, _ in config.save() }
                     Text("When on, picks a cheaper or stronger model based on the prompt's complexity (classified on-device). Off by default — your chosen model stays as-is.")
-                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                        .font(.lume(.footnote)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     Divider().opacity(0.4)
                     Toggle("Semantic cache", isOn: $config.enableSemanticCache)
                         .onChange(of: config.enableSemanticCache) { _, _ in config.save() }
                     HStack {
                         Text("Repeated answers come from the cache. Clear it if you see old/wrong answers.")
-                            .font(.system(size: 11)).foregroundStyle(.secondary)
+                            .font(.lume(.footnote)).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer()
                         Button {
@@ -244,7 +244,7 @@ struct AgentSettingsView: View {
                             cacheCleared = true
                         } label: {
                             Label(cacheCleared ? "Cache cleared ✓" : "Clear cache", systemImage: "trash")
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                         }
                         .disabled(cacheCleared)
                     }
@@ -258,7 +258,7 @@ struct AgentSettingsView: View {
                     Toggle("Persistent memory", isOn: $config.enableMemory)
                         .onChange(of: config.enableMemory) { _, _ in config.save() }
                 }
-                .font(.system(size: 13))
+                .font(.lume(.callout))
             }
             .padding(24)
         }
@@ -280,7 +280,7 @@ struct MemorySettingsView: View {
                 settingsSection(String(localized: "Add memory")) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "Facts the AI should remember across all conversations (e.g., \"I work at Rumo Logística\", \"I prefer concise answers in Portuguese\")."))
-                            .font(.system(size: 11)).foregroundStyle(.secondary)
+                            .font(.lume(.footnote)).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         HStack(spacing: 8) {
                             Picker("", selection: $newCategory) {
@@ -302,7 +302,7 @@ struct MemorySettingsView: View {
                 settingsSection(String(localized: "Memories (\(store.items.count))")) {
                     if store.items.isEmpty {
                         Text("No memories yet. You can also save memories directly from a message, using the brain button.")
-                            .font(.system(size: 12)).foregroundStyle(.tertiary)
+                            .font(.lume(.subheadline)).foregroundStyle(.tertiary)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         ForEach(store.items) { item in
@@ -319,7 +319,7 @@ struct MemorySettingsView: View {
     private func memoryRow(_ item: MemoryItem) -> some View {
         HStack(spacing: 10) {
             Image(systemName: item.categoryEnum.icon)
-                .font(.system(size: 12))
+                .font(.lume(.subheadline))
                 .foregroundStyle(item.isEnabled ? Color.accentColor : Color.secondary)
                 .frame(width: 18)
 
@@ -330,7 +330,7 @@ struct MemorySettingsView: View {
                 Button("OK") { commitEdit(item) }.buttonStyle(.lumePrimaryCompact)
             } else {
                 Text(item.content)
-                    .font(.system(size: 12))
+                    .font(.lume(.subheadline))
                     .foregroundStyle(item.isEnabled ? .primary : .secondary)
                     .strikethrough(!item.isEnabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -342,7 +342,7 @@ struct MemorySettingsView: View {
                 .help(item.isEnabled ? "Active" : "Disabled")
 
             Button { store.delete(item) } label: {
-                Image(systemName: "trash").font(.system(size: 11)).foregroundStyle(.secondary)
+                Image(systemName: "trash").font(.lume(.footnote)).foregroundStyle(.secondary)
             }
             .buttonStyle(.plain).help("Delete")
         }
@@ -379,13 +379,13 @@ struct StyleSettingsView: View {
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "paintbrush.fill")
-                        .font(.system(size: 36))
+                        .font(.lume(.largeTitle))
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
                     Text("No style profile")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.lume(.title3, weight: .semibold))
                     Text("A default profile will be created automatically.")
-                        .font(.system(size: 12))
+                        .font(.lume(.subheadline))
                         .foregroundStyle(.secondary)
                     Button("Create default profile") {
                         let p = StyleProfile(
@@ -456,19 +456,19 @@ struct StyleProfileDetailView: View {
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: icon)
-                                        .font(.system(size: 13))
+                                        .font(.lume(.callout))
                                         .foregroundStyle(profile.tone == value ? Color.accentColor : Color.secondary)
                                         .frame(width: 20)
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text(label).font(.system(size: 12, weight: .semibold))
+                                        Text(label).font(.lume(.subheadline, weight: .semibold))
                                             .foregroundStyle(.primary)
-                                        Text(desc).font(.system(size: 10))
+                                        Text(desc).font(.lume(.caption))
                                             .foregroundStyle(.secondary)
                                     }
                                     Spacer()
                                     if profile.tone == value {
                                         Image(systemName: "checkmark")
-                                            .font(.system(size: 10, weight: .bold))
+                                            .font(.lume(.caption, weight: .bold))
                                             .foregroundStyle(Color.accentColor)
                                     }
                                 }
@@ -501,10 +501,10 @@ struct StyleProfileDetailView: View {
                             } label: {
                                 VStack(spacing: 4) {
                                     Text(label)
-                                        .font(.system(size: 12, weight: .semibold))
+                                        .font(.lume(.subheadline, weight: .semibold))
                                         .foregroundStyle(profile.verbosity == value ? Color.accentColor : Color.primary)
                                     Text(desc)
-                                        .font(.system(size: 10))
+                                        .font(.lume(.caption))
                                         .foregroundStyle(.secondary)
                                 }
                                 .frame(maxWidth: .infinity)
@@ -526,10 +526,10 @@ struct StyleProfileDetailView: View {
                 settingsSection(String(localized: "Custom Instructions")) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Appended to the end of the system prompt in all conversations.")
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.secondary)
                         TextEditor(text: $profile.customInstructions)
-                            .font(.system(size: 12))
+                            .font(.lume(.subheadline))
                             .frame(minHeight: 80, maxHeight: 160)
                             .scrollContentBackground(.hidden)
                             .padding(8)
@@ -546,10 +546,10 @@ struct StyleProfileDetailView: View {
                     settingsSection(String(localized: "System Prompt Preview")) {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("This text will be automatically added to the system prompt:")
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(.secondary)
                             Text(profile.systemPromptSuffix)
-                                .font(.system(size: 11, design: .monospaced))
+                                .font(.lume(.footnote, design: .monospaced))
                                 .foregroundStyle(.primary)
                                 .padding(10)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -588,9 +588,9 @@ struct MCPSettingsView: View {
             .overlay {
                 if connectors.isEmpty {
                     VStack(spacing: 12) {
-                        Image(systemName: "puzzlepiece.extension.fill").font(.system(size: 32)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
-                        Text("No MCP connector").font(.system(size: 13, weight: .medium))
-                        Text("Connect the agent to external tools").font(.system(size: 11)).foregroundStyle(.tertiary)
+                        Image(systemName: "puzzlepiece.extension.fill").font(.lume(.largeTitle)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
+                        Text("No MCP connector").font(.lume(.callout, weight: .medium))
+                        Text("Connect the agent to external tools").font(.lume(.footnote)).foregroundStyle(.tertiary)
                     }
                 }
             }
@@ -604,11 +604,11 @@ struct MCPSettingsView: View {
                 .disabled(connectors.allSatisfy { !$0.isEnabled })
                 if !MCPManager.shared.discoveredTools.isEmpty {
                     Text("\(MCPManager.shared.discoveredTools.count) tools")
-                        .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                        .font(.lume(.footnote, weight: .medium)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Link("About MCP →", destination: URL(string: "https://modelcontextprotocol.io")!)
-                    .font(.system(size: 11)).foregroundStyle(Color.accentColor)
+                    .font(.lume(.footnote)).foregroundStyle(Color.accentColor)
             }
             .padding()
         }
@@ -622,9 +622,9 @@ struct MCPConnectorRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(connector.name).font(.system(size: 13, weight: .medium))
+                Text(connector.name).font(.lume(.callout, weight: .medium))
                 Text(connector.transport == "stdio" ? connector.command : connector.url)
-                    .font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
+                    .font(.lume(.footnote, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
             statusBadge(connector.id)
@@ -640,11 +640,11 @@ struct MCPConnectorRow: View {
             ProgressView().controlSize(.small)
         case .connected(let n)?:
             Text("\(n) tools")
-                .font(.system(size: 10, weight: .medium))
+                .font(.lume(.caption, weight: .medium))
                 .foregroundStyle(.green)
         case .failed(let msg)?:
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 11))
+                .font(.lume(.footnote))
                 .foregroundStyle(.orange)
                 .help(msg)
         case nil:
@@ -663,13 +663,13 @@ struct AddMCPConnectorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("New MCP Connector").font(.system(size: 18, weight: .bold, design: .rounded))
+            Text("New MCP Connector").font(.lume(.title2, weight: .bold, design: .rounded))
             TextField("Name", text: $name).textFieldStyle(.roundedBorder)
             Picker("Transport", selection: $transport) {
                 Text("stdio").tag("stdio"); Text("HTTP/SSE").tag("http")
             }.pickerStyle(.segmented)
             if transport == "stdio" {
-                TextField("Command", text: $command).textFieldStyle(.roundedBorder).font(.system(size: 12, design: .monospaced))
+                TextField("Command", text: $command).textFieldStyle(.roundedBorder).font(.lume(.subheadline, design: .monospaced))
             } else {
                 TextField("URL", text: $url).textFieldStyle(.roundedBorder)
             }
@@ -704,14 +704,14 @@ struct WorkflowSettingsView: View {
             .overlay {
                 if workflows.isEmpty {
                     VStack(spacing: 8) {
-                        Image(systemName: "arrow.triangle.branch").font(.system(size: 28)).foregroundStyle(.tertiary)
+                        Image(systemName: "arrow.triangle.branch").font(.lume(.title1)).foregroundStyle(.tertiary)
                         Text("No workflows").foregroundStyle(.secondary)
                     }
                 }
             }
             Divider().opacity(0.4)
             HStack {
-                Text("Workflow editor coming soon").font(.system(size: 11)).foregroundStyle(.tertiary)
+                Text("Workflow editor coming soon").font(.lume(.footnote)).foregroundStyle(.tertiary)
                 Spacer()
             }.padding()
         }
@@ -723,12 +723,12 @@ struct WorkflowRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(workflow.name).font(.system(size: 13, weight: .medium))
-                Text("\(workflow.steps.count) steps · \(workflow.triggerType)").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(workflow.name).font(.lume(.callout, weight: .medium))
+                Text("\(workflow.steps.count) steps · \(workflow.triggerType)").font(.lume(.footnote)).foregroundStyle(.secondary)
             }
             Spacer()
             if let last = workflow.lastRunAt {
-                Text(last.formatted(.relative(presentation: .named))).font(.system(size: 10)).foregroundStyle(.tertiary)
+                Text(last.formatted(.relative(presentation: .named))).font(.lume(.caption)).foregroundStyle(.tertiary)
             }
         }
         .padding(.vertical, 4)
@@ -746,12 +746,12 @@ struct TaskSettingsView: View {
             ForEach(tasks) { task in
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(task.title).font(.system(size: 13, weight: .medium))
-                        Text(task.scheduledAt.formatted(date: .abbreviated, time: .shortened)).font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text(task.title).font(.lume(.callout, weight: .medium))
+                        Text(task.scheduledAt.formatted(date: .abbreviated, time: .shortened)).font(.lume(.footnote)).foregroundStyle(.secondary)
                     }
                     Spacer()
                     if task.isCompleted { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.green).symbolRenderingMode(.hierarchical) }
-                    Text(task.recurrence).font(.system(size: 10)).foregroundStyle(.tertiary)
+                    Text(task.recurrence).font(.lume(.caption)).foregroundStyle(.tertiary)
                 }
             }
             .onDelete { offsets in offsets.forEach { modelContext.delete(tasks[$0]) } }
@@ -760,7 +760,7 @@ struct TaskSettingsView: View {
         .overlay {
             if tasks.isEmpty {
                 VStack(spacing: 8) {
-                    Image(systemName: "calendar.badge.clock").font(.system(size: 28)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
+                    Image(systemName: "calendar.badge.clock").font(.lume(.title1)).foregroundStyle(.tertiary).symbolRenderingMode(.hierarchical)
                     Text("No scheduled tasks").foregroundStyle(.secondary)
                 }
             }
@@ -788,7 +788,7 @@ struct AdvancedSettingsView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text("Text size")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.lume(.callout, weight: .medium))
                             Spacer()
                             PillSegmented(options: [
                                 (label: "Small", value: 0.85),
@@ -799,7 +799,7 @@ struct AdvancedSettingsView: View {
                             .frame(width: 300)
                         }
                         Text("Preview")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.lume(.caption, weight: .semibold))
                             .foregroundStyle(.tertiary)
                         MarkdownTextView(text: String(localized: "The **Lume** renders tables, lists, and code.\n\n| Model | Window |\n|---|---:|\n| Opus 4.8 | 200k |\n| GPT-4o | 128k |\n\n- [x] Tables\n- [ ] More themes"))
                             .environment(\.markdownFontScale, CGFloat(messageFontScale))
@@ -813,7 +813,7 @@ struct AdvancedSettingsView: View {
                 settingsSection(String(localized: "Theme")) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("Appearance").font(.system(size: 12, weight: .medium))
+                            Text("Appearance").font(.lume(.subheadline, weight: .medium))
                             Spacer()
                             PillSegmented(
                                 options: AppearanceChoice.allCases.map { (label: $0.label, value: $0.rawValue) },
@@ -830,9 +830,9 @@ struct AdvancedSettingsView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Google Custom Search (optional)")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.lume(.subheadline, weight: .semibold))
                             Text(String(localized: "No setup, uses DuckDuckGo for free.\nTo use Google, get the keys at developers.google.com/custom-search"))
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -855,22 +855,22 @@ struct AdvancedSettingsView: View {
                         HStack {
                             if !googleAPIKey.isEmpty && !googleCX.isEmpty {
                                 Label("Google configured", systemImage: "checkmark.circle.fill")
-                                    .font(.system(size: 11, weight: .medium))
+                                    .font(.lume(.footnote, weight: .medium))
                                     .foregroundStyle(Color.green)
                             } else {
                                 Label("Using DuckDuckGo", systemImage: "info.circle")
-                                    .font(.system(size: 11))
+                                    .font(.lume(.footnote))
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Link("How to get the keys →",
                                  destination: URL(string: "https://developers.google.com/custom-search/v1/introduction")!)
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(Color.accentColor)
                         }
                     }
                 }
-                .font(.system(size: 13))
+                .font(.lume(.callout))
 
                 settingsSection(String(localized: "Security")) {
                     Toggle("Block dangerous shell commands", isOn: $config.blockDangerousShellCommands)
@@ -879,12 +879,12 @@ struct AdvancedSettingsView: View {
                     Toggle("Require a workspace for file operations", isOn: $config.requireWorkspaceForFileOps)
                         .onChange(of: config.requireWorkspaceForFileOps) { _, _ in config.save() }
                 }
-                .font(.system(size: 13))
+                .font(.lume(.callout))
 
                 settingsSection(String(localized: "Configuration File")) {
                     HStack {
                         Text(LumeConfig.configFilePath)
-                            .font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
+                            .font(.lume(.footnote, design: .monospaced)).foregroundStyle(.secondary)
                             .lineLimit(1).truncationMode(.middle)
                         Spacer()
                         Button("Reveal") {
@@ -900,9 +900,9 @@ struct AdvancedSettingsView: View {
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Setup assistant")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.lume(.callout, weight: .medium))
                             Text("Reconfigure providers, web search, and see app tips.")
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -920,9 +920,9 @@ struct AdvancedSettingsView: View {
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Clear app data")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.lume(.callout, weight: .medium))
                             Text("Deletes conversations, projects, tasks, and workflows. Settings are preserved.")
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -1003,7 +1003,7 @@ func settingsSection<Content: View>(
 ) -> some View {
     VStack(alignment: .leading, spacing: 10) {
         Text(title.uppercased())
-            .font(.system(size: 10, weight: .semibold))
+            .font(.lume(.caption, weight: .semibold))
             .foregroundStyle(.tertiary)
             .tracking(0.8)
         VStack(alignment: .leading, spacing: 8) {
@@ -1023,7 +1023,7 @@ private func settingsRow<Content: View>(
     @ViewBuilder trailing: () -> Content
 ) -> some View {
     HStack {
-        Text(label).font(.system(size: 13))
+        Text(label).font(.lume(.callout))
         Spacer()
         trailing()
     }
@@ -1086,9 +1086,9 @@ struct LanguageSettingsSection: View {
                 HStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Interface Language")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.lume(.callout, weight: .medium))
                         Text("Choose the app language. Lume restarts to apply the change.")
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.secondary)
                     }
                     Spacer()

@@ -49,9 +49,9 @@ struct StreamingStatsView: View {
         if tokenCount > 0 {
             HStack(spacing: 4) {
                 Image(systemName: "waveform")
-                    .font(.system(size: 9))
+                    .font(.lume(.caption2))
                 Text("\(Int(tokensPerSecond)) tok/s · \(tokenCount) tokens")
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(.lume(.caption, design: .monospaced))
             }
             .foregroundStyle(.tertiary)
             .padding(.horizontal, 14)

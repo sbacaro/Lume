@@ -18,6 +18,8 @@ final class WindowOpener {
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Remove os itens "Show Tab Bar"/"Show All Tabs" do menu View (abas de janela).
+        NSWindow.allowsAutomaticWindowTabbing = false
         nukeSplitViewState()
     }
 
@@ -99,6 +101,8 @@ struct LumeApp: App {
     @State private var showNewProject = false
     // Atualização automática (Sparkle)
     @StateObject private var sparkle = SparkleUpdater()
+    // Zoom de texto do app (acessibilidade) — espelha as cenas Settings e About.
+    @AppStorage(LumeZoom.key) private var textZoom: Double = 1.0
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -146,6 +150,7 @@ struct LumeApp: App {
                     SettingsView()
                         .modelContainer(sharedModelContainer)
                         .environment(\.lumeConfig, config)
+                        .lumeTextZoom(CGFloat(textZoom))
                         .frame(width: 900, height: 580)
                         .fixedSize()
                         .interactiveDismissDisabled(false)
@@ -166,7 +171,7 @@ struct LumeApp: App {
 
         // ── Janela String(localized: "About Lume") ─────────────────────────────────
         Window(String(localized: "About Lume"), id: "about") {
-            AboutView().environmentObject(sparkle)
+            AboutView().environmentObject(sparkle).lumeTextZoom(CGFloat(textZoom))
         }
         .windowResizability(.contentSize)
         .restorationBehavior(.disabled)
@@ -202,6 +207,19 @@ private struct LumeMenuCommands: Commands {
                 showSettings = true
             }
             .keyboardShortcut(",", modifiers: .command)
+        }
+
+        // Menu View: remove "Show Toolbar"/"Customize Toolbar" e "Show Sidebar"…
+        CommandGroup(replacing: .toolbar) { }
+        CommandGroup(replacing: .sidebar) { }
+        // …e adiciona Zoom de texto (acessibilidade).
+        CommandGroup(after: .toolbar) {
+            Button(String(localized: "Zoom In")) { LumeZoom.zoomIn() }
+                .keyboardShortcut("+", modifiers: .command)
+            Button(String(localized: "Zoom Out")) { LumeZoom.zoomOut() }
+                .keyboardShortcut("-", modifiers: .command)
+            Button(String(localized: "Actual Size")) { LumeZoom.reset() }
+                .keyboardShortcut("0", modifiers: .command)
         }
     }
 }

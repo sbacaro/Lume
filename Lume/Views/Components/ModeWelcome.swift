@@ -18,7 +18,7 @@ struct ModeGlyph: View {
             .frame(width: 60, height: 60)
             .overlay(
                 Image(systemName: icon)
-                    .font(.system(size: 28, weight: .medium))
+                    .font(.lume(.title1, weight: .medium))
                     .foregroundStyle(accent)
             )
     }
@@ -33,7 +33,7 @@ struct ModeWelcomeHeader: View {
     var body: some View {
         VStack(spacing: 8) {
             ModeGlyph(icon: icon, accent: accent)
-            Text(title).font(.system(size: 24, weight: .semibold))
+            Text(title).font(.lume(.title1, weight: .semibold))
             Text(subtitle)
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -51,7 +51,7 @@ struct CapabilityRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 14))
+                .font(.lume(.body))
                 .foregroundStyle(accent)
                 .frame(width: 20)
             Text(text).font(.callout).foregroundStyle(.secondary)
@@ -77,7 +77,7 @@ struct CapabilityGrid: View {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, item in
                 HStack(spacing: 9) {
                     Image(systemName: item.icon)
-                        .font(.system(size: 14)).foregroundStyle(accent).frame(width: 20)
+                        .font(.lume(.body)).foregroundStyle(accent).frame(width: 20)
                     Text(item.text).font(.callout).foregroundStyle(.secondary)
                 }
             }
@@ -94,8 +94,8 @@ struct ModePrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
-                Image(systemName: icon).font(.system(size: 13, weight: .semibold))
-                Text(label).font(.system(size: 13, weight: .semibold))
+                Image(systemName: icon).font(.lume(.callout, weight: .semibold))
+                Text(label).font(.lume(.callout, weight: .semibold))
             }
             .foregroundStyle(.white)
             .padding(.horizontal, 18).padding(.vertical, 10)
@@ -113,7 +113,7 @@ struct ModeSecondaryButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 13, weight: .medium))
+                .font(.lume(.callout, weight: .medium))
                 .foregroundStyle(accent)
                 .padding(.horizontal, 18).padding(.vertical, 10)
                 .glassEffect(.regular.interactive(), in: Capsule())
@@ -142,7 +142,7 @@ struct PillSegmented<T: Hashable>: View {
                 let isSelected = selection == opt.value
                 Button { selection = opt.value } label: {
                     Text(opt.label)
-                        .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                        .font(.lume(.subheadline, weight: isSelected ? .semibold : .medium))
                         .foregroundStyle(isSelected ? Color.primary : Color.secondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 5)

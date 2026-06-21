@@ -34,7 +34,7 @@ struct LumeButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: fontSize, weight: .semibold))
+            .font(.lume(size: fontSize, weight: .semibold))
             .foregroundStyle(foreground)
             .padding(.horizontal, hPadding)
             .padding(.vertical, vPadding)

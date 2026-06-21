@@ -73,15 +73,15 @@ struct GitHubSettingsView: View {
                 HStack(spacing: 12) {
                     avatar(user.avatarUrl, size: 44)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(user.name ?? user.login).font(.system(size: 14, weight: .semibold))
-                        Text("@\(user.login)").font(.system(size: 12)).foregroundStyle(.secondary)
+                        Text(user.name ?? user.login).font(.lume(.body, weight: .semibold))
+                        Text("@\(user.login)").font(.lume(.subheadline)).foregroundStyle(.secondary)
                         Text(String(localized: "\(user.publicRepos ?? 0) public · \(user.privateReposOwned ?? 0) private"))
-                            .font(.system(size: 11)).foregroundStyle(.tertiary)
+                            .font(.lume(.footnote)).foregroundStyle(.tertiary)
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 6) {
                         Label("Connected", systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.lume(.footnote, weight: .medium))
                             .foregroundStyle(Color.green)
                         Button("Disconnect") {
                             Task {
@@ -95,7 +95,7 @@ struct GitHubSettingsView: View {
             } else {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Paste a Personal Access Token (classic or fine-grained) with `repo` scope.")
-                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                        .font(.lume(.subheadline)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     SecureField("ghp_… or github_pat_…", text: $tokenInput)
                         .textFieldStyle(.roundedBorder)
@@ -114,18 +114,18 @@ struct GitHubSettingsView: View {
                         Spacer()
                         Link("Generate token →",
                              destination: URL(string: "https://github.com/settings/tokens/new?scopes=repo&description=Lume")!)
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(Color.accentColor)
                     }
                     if let err = gh.lastError {
                         Label(err, systemImage: "exclamationmark.triangle.fill")
-                            .font(.system(size: 11)).foregroundStyle(.orange)
+                            .font(.lume(.footnote)).foregroundStyle(.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
         }
-        .font(.system(size: 13))
+        .font(.lume(.callout))
     }
 
     // MARK: - Criar repositório
@@ -146,7 +146,7 @@ struct GitHubSettingsView: View {
                 }
             }
         }
-        .font(.system(size: 13))
+        .font(.lume(.callout))
     }
 
     // MARK: - Lista de repositórios
@@ -155,19 +155,19 @@ struct GitHubSettingsView: View {
         settingsSection(String(localized: "Repositories (\(repos.count))")) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary).font(.system(size: 11))
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary).font(.lume(.footnote))
                     TextField("Search…", text: $repoSearch).textFieldStyle(.plain)
                     Button { Task { await loadRepos() } } label: {
-                        Image(systemName: "arrow.clockwise").font(.system(size: 11))
+                        Image(systemName: "arrow.clockwise").font(.lume(.footnote))
                     }.buttonStyle(.plain).foregroundStyle(.secondary)
                 }
                 .padding(8)
                 .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                 if loadingRepos {
-                    HStack { ProgressView().controlSize(.small); Text("Loading…").font(.system(size: 12)).foregroundStyle(.secondary) }
+                    HStack { ProgressView().controlSize(.small); Text("Loading…").font(.lume(.subheadline)).foregroundStyle(.secondary) }
                 } else if filteredRepos.isEmpty {
-                    Text("No repositories.").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text("No repositories.").font(.lume(.subheadline)).foregroundStyle(.secondary)
                 } else {
                     VStack(spacing: 0) {
                         ForEach(filteredRepos.prefix(40)) { repo in
@@ -178,7 +178,7 @@ struct GitHubSettingsView: View {
                 }
             }
         }
-        .font(.system(size: 13))
+        .font(.lume(.callout))
     }
 
     private func repoRow(_ repo: GHRepo) -> some View {
@@ -188,21 +188,21 @@ struct GitHubSettingsView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: repo.isPrivate ? "lock.fill" : "book.closed")
-                    .font(.system(size: 11)).foregroundStyle(.secondary).frame(width: 16)
+                    .font(.lume(.footnote)).foregroundStyle(.secondary).frame(width: 16)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(repo.name).font(.system(size: 13, weight: .medium))
+                    Text(repo.name).font(.lume(.callout, weight: .medium))
                     if let d = repo.description, !d.isEmpty {
-                        Text(d).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                        Text(d).font(.lume(.footnote)).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
                 Spacer()
                 if let lang = repo.language {
-                    Text(lang).font(.system(size: 10)).foregroundStyle(.tertiary)
+                    Text(lang).font(.lume(.caption)).foregroundStyle(.tertiary)
                 }
                 Label("\(repo.stargazersCount ?? 0)", systemImage: "star")
-                    .font(.system(size: 10)).foregroundStyle(.tertiary).labelStyle(.titleAndIcon)
+                    .font(.lume(.caption)).foregroundStyle(.tertiary).labelStyle(.titleAndIcon)
                 Button { NSWorkspace.shared.open(URL(string: repo.htmlUrl)!) } label: {
-                    Image(systemName: "arrow.up.right.square").font(.system(size: 11))
+                    Image(systemName: "arrow.up.right.square").font(.lume(.footnote))
                 }.buttonStyle(.plain).foregroundStyle(.secondary)
             }
             .padding(.vertical, 6)
@@ -218,12 +218,12 @@ struct GitHubSettingsView: View {
         settingsSection(repo.fullName) {
             VStack(alignment: .leading, spacing: 12) {
                 if loadingDetail {
-                    HStack { ProgressView().controlSize(.small); Text("Loading issues and PRs…").font(.system(size: 12)).foregroundStyle(.secondary) }
+                    HStack { ProgressView().controlSize(.small); Text("Loading issues and PRs…").font(.lume(.subheadline)).foregroundStyle(.secondary) }
                 } else {
                     // Issues
-                    Text("Issues abertas (\(issues.count))").font(.system(size: 12, weight: .semibold))
+                    Text("Issues abertas (\(issues.count))").font(.lume(.subheadline, weight: .semibold))
                     if issues.isEmpty {
-                        Text("No open issues.").font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text("No open issues.").font(.lume(.footnote)).foregroundStyle(.secondary)
                     } else {
                         ForEach(issues.prefix(15)) { issue in
                             itemRow(symbol: "smallcircle.filled.circle", tint: .green,
@@ -236,9 +236,9 @@ struct GitHubSettingsView: View {
                     Divider().opacity(0.3)
 
                     // PRs
-                    Text("Pull requests abertos (\(prs.count))").font(.system(size: 12, weight: .semibold))
+                    Text("Pull requests abertos (\(prs.count))").font(.lume(.subheadline, weight: .semibold))
                     if prs.isEmpty {
-                        Text("No open PRs.").font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text("No open PRs.").font(.lume(.footnote)).foregroundStyle(.secondary)
                     } else {
                         ForEach(prs.prefix(15)) { pr in
                             itemRow(symbol: "arrow.triangle.branch", tint: .purple,
@@ -251,7 +251,7 @@ struct GitHubSettingsView: View {
                     Divider().opacity(0.3)
 
                     // Nova issue
-                    Text("New issue").font(.system(size: 12, weight: .semibold))
+                    Text("New issue").font(.lume(.subheadline, weight: .semibold))
                     TextField("Title", text: $newIssueTitle).textFieldStyle(.roundedBorder)
                     TextField("Description (optional)", text: $newIssueBody, axis: .vertical)
                         .lineLimit(2...5).textFieldStyle(.roundedBorder)
@@ -263,25 +263,25 @@ struct GitHubSettingsView: View {
                         .disabled(newIssueTitle.trimmingCharacters(in: .whitespaces).isEmpty || creatingIssue)
                         Spacer()
                         if let msg = statusMessage {
-                            Text(msg).font(.system(size: 11)).foregroundStyle(.secondary)
+                            Text(msg).font(.lume(.footnote)).foregroundStyle(.secondary)
                         }
                     }
                 }
             }
         }
-        .font(.system(size: 13))
+        .font(.lume(.callout))
     }
 
     private func itemRow(symbol: String, tint: Color, title: String, subtitle: String, url: String) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 11)).foregroundStyle(tint).frame(width: 16)
+            Image(systemName: symbol).font(.lume(.footnote)).foregroundStyle(tint).frame(width: 16)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 12)).lineLimit(1)
-                Text(subtitle).font(.system(size: 10)).foregroundStyle(.secondary)
+                Text(title).font(.lume(.subheadline)).lineLimit(1)
+                Text(subtitle).font(.lume(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
             Button { NSWorkspace.shared.open(URL(string: url)!) } label: {
-                Image(systemName: "arrow.up.right.square").font(.system(size: 11))
+                Image(systemName: "arrow.up.right.square").font(.lume(.footnote))
             }.buttonStyle(.plain).foregroundStyle(.secondary)
         }
         .padding(.vertical, 3)

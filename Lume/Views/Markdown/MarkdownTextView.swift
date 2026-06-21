@@ -519,10 +519,10 @@ struct ThinkingBlockView: View {
                         ProgressView().scaleEffect(0.5)
                     } else {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.lume(.caption, weight: .medium))
                     }
                     Text(isStreaming ? "Thinking…" : "Internal reasoning")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.lume(.footnote, weight: .medium))
                     Spacer()
                 }
                 .foregroundStyle(.secondary)
@@ -534,7 +534,7 @@ struct ThinkingBlockView: View {
 
             if isExpanded {
                 Text(content)
-                    .font(.system(size: 11))
+                    .font(.lume(.footnote))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
@@ -577,7 +577,7 @@ struct ProcessTimelineView: View {
                 withAnimation(.easeInOut(duration: 0.18)) { expanded.toggle() }
             } label: {
                 HStack(spacing: 7) {
-                    Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Image(systemName: "sparkles").font(.lume(.footnote)).foregroundStyle(.secondary)
                     Text(isStreaming ? "Thinking…" : summary)
                         .font(.system(size: 11 * scale, weight: .medium)).foregroundStyle(.secondary)
                     Image(systemName: expanded ? "chevron.down" : "chevron.right")
@@ -617,7 +617,7 @@ private struct ProcessRow: View {
             VStack(spacing: 0) {
                 ZStack {
                     Circle().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1).frame(width: 18, height: 18)
-                    Image(systemName: icon).font(.system(size: 9)).foregroundStyle(iconColor)
+                    Image(systemName: icon).font(.lume(.caption2)).foregroundStyle(iconColor)
                 }
                 if !isLast {
                     Rectangle().fill(Color.primary.opacity(0.10))
@@ -769,11 +769,11 @@ struct ToolGroupView: View {
             } label: {
                 HStack(spacing: 7) {
                     Image(systemName: icon)
-                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                        .font(.lume(.footnote)).foregroundStyle(.secondary)
                     Text(summary)
-                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                        .font(.lume(.subheadline, weight: .medium)).foregroundStyle(.secondary)
                     Image(systemName: expanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+                        .font(.lume(.caption2, weight: .semibold)).foregroundStyle(.tertiary)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 10).padding(.vertical, 7)
@@ -792,7 +792,7 @@ struct ToolGroupView: View {
                                         .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
                                         .frame(width: 18, height: 18)
                                     Image(systemName: Self.timelineIcon(call.name))
-                                        .font(.system(size: 9))
+                                        .font(.lume(.caption2))
                                         .foregroundStyle(call.success ? Color.secondary : Color.red)
                                 }
                                 if idx < calls.count - 1 {
@@ -804,12 +804,12 @@ struct ToolGroupView: View {
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(Self.timelineLabel(call.name))
-                                    .font(.system(size: 12, weight: .medium))
+                                    .font(.lume(.subheadline, weight: .medium))
                                     .foregroundStyle(call.success ? Color.primary : Color.red)
                                 let detail = Self.timelineDetail(call)
                                 if !detail.isEmpty {
                                     Text(detail)
-                                        .font(.system(size: 11))
+                                        .font(.lume(.footnote))
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
                                         .textSelection(.enabled)
@@ -890,19 +890,19 @@ struct ToolCallBlockView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.lume(.caption, weight: .semibold))
                         .foregroundStyle(Color.secondary.opacity(0.6))
                         .frame(width: 14)
                     Image(systemName: toolIcon)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.lume(.footnote, weight: .medium))
                         .foregroundStyle(success ? Color.secondary : errorColor)
                     Text(toolLabel)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.lume(.subheadline, weight: .medium))
                         .foregroundStyle(Color.secondary)
                     Spacer()
                     if !success {
                         Image(systemName: "exclamationmark.circle.fill")
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(errorColor)
                     }
                 }
@@ -920,10 +920,10 @@ struct ToolCallBlockView: View {
                     if !input.isEmpty && input != "{}" {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Input")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.lume(.caption, weight: .semibold))
                                 .foregroundStyle(Color.secondary.opacity(0.6))
                             Text(input)
-                                .font(.system(size: 11, design: .monospaced))
+                                .font(.lume(.footnote, design: .monospaced))
                                 .foregroundStyle(Color.secondary)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -932,10 +932,10 @@ struct ToolCallBlockView: View {
                     if !output.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Output")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.lume(.caption, weight: .semibold))
                                 .foregroundStyle(Color.secondary.opacity(0.6))
                             Text(String(output.prefix(600)))
-                                .font(.system(size: 11, design: .monospaced))
+                                .font(.lume(.footnote, design: .monospaced))
                                 .foregroundStyle(success ? Color.secondary : errorColor)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1390,25 +1390,25 @@ struct CodeBlockView: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.lume(.caption, weight: .medium))
                         .foregroundStyle(.secondary)
                     Image(systemName: languageIcon)
-                        .font(.system(size: 10))
+                        .font(.lume(.caption))
                         .foregroundStyle(languageColor)
                     Text(language ?? String(localized: "code"))
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(.lume(.footnote, weight: .medium, design: .monospaced))
                         .foregroundStyle(languageColor)
                     if !isExpanded {
                         Text("· \(lineCount) lines")
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.tertiary)
                     }
                     Spacer()
                     if isDiff && !isExpanded { diffStats }
                     Button(action: copyCode) {
                         HStack(spacing: 4) {
-                            Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.system(size: 10))
-                            Text(copied ? "Copied" : "Copy").font(.system(size: 11))
+                            Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.lume(.caption))
+                            Text(copied ? "Copied" : "Copy").font(.lume(.footnote))
                         }
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 7).padding(.vertical, 3)
@@ -1454,8 +1454,8 @@ struct CodeBlockView: View {
         let added = diffLines.filter { $0.type == .added }.count
         let removed = diffLines.filter { $0.type == .removed }.count
         return HStack(spacing: 6) {
-            if added > 0 { Text("+\(added)").font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(.green) }
-            if removed > 0 { Text("-\(removed)").font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(.red) }
+            if added > 0 { Text("+\(added)").font(.lume(.caption, weight: .semibold, design: .monospaced)).foregroundStyle(.green) }
+            if removed > 0 { Text("-\(removed)").font(.lume(.caption, weight: .semibold, design: .monospaced)).foregroundStyle(.red) }
         }
     }
 
@@ -1527,13 +1527,13 @@ struct SyntaxHighlightedView: View {
                 ForEach(Array(lines.enumerated()), id: \.offset) { idx, line in
                     HStack(alignment: .top, spacing: 0) {
                         Text(String(format: "%3d", idx + 1))
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.lume(.footnote, design: .monospaced))
                             .foregroundStyle(Color.white.opacity(0.3))
                             .frame(width: 36, alignment: .trailing)
                             .padding(.trailing, 8)
 
                         Text(highlightLine(line))
-                            .font(.system(size: 12.5, design: .monospaced))
+                            .font(.lume(.subheadline, design: .monospaced))
                             .textSelection(.enabled)
                     }
                     .padding(.vertical, 1)
@@ -1910,10 +1910,10 @@ struct DiffLineView: View {
         HStack(spacing: 0) {
             Rectangle().fill(gutterColor).frame(width: 3)
             Text(indicator)
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .font(.lume(.footnote, weight: .semibold, design: .monospaced))
                 .foregroundStyle(textColor).frame(width: 16, alignment: .center).padding(.vertical, 2)
             Text(lineContent)
-                .font(.system(size: 12, design: .monospaced))
+                .font(.lume(.subheadline, design: .monospaced))
                 .foregroundStyle(textColor).textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 2).padding(.trailing, 12)
         }

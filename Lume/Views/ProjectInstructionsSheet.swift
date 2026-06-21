@@ -15,21 +15,21 @@ struct ProjectInstructionsSheet: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
                 Image(systemName: project.icon)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.lume(.title3, weight: .medium))
                     .foregroundStyle(LumeTheme.clay)
                 Text("Project Instructions")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.lume(.title2, weight: .bold, design: .rounded))
                 Spacer()
                 Button { dismiss() } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 16))
+                        .font(.lume(.title3))
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
             }
 
             Text("These instructions are sent to the assistant at the start of every conversation in this project. Use them to define tone, format, or behavior rules.")
-                .font(.system(size: 12))
+                .font(.lume(.subheadline))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -39,7 +39,7 @@ struct ProjectInstructionsSheet: View {
                     .foregroundStyle(.secondary)
 
                 TextEditor(text: $project.systemPrompt)
-                    .font(.system(size: 13))
+                    .font(.lume(.callout))
                     .frame(minHeight: 180)
                     .scrollContentBackground(.hidden)
                     .padding(10)

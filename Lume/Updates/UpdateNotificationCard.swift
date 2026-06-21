@@ -29,16 +29,16 @@ struct UpdateNotificationCard: View {
                         ))
                         .frame(width: 32, height: 32)
                     Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.lume(.title3, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Update available")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.lume(.subheadline, weight: .semibold))
                         .foregroundStyle(.primary)
                     Text("Lume \(release.version)")
-                        .font(.system(size: 11))
+                        .font(.lume(.footnote))
                         .foregroundStyle(.secondary)
                 }
 
@@ -47,7 +47,7 @@ struct UpdateNotificationCard: View {
                 // Fechar
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.lume(.caption, weight: .semibold))
                         .foregroundStyle(.tertiary)
                         .frame(width: 20, height: 20)
                         .background(Color.primary.opacity(0.06),
@@ -66,10 +66,10 @@ struct UpdateNotificationCard: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text(isExpanded ? "Hide what’s new" : "See what’s new")
-                            .font(.system(size: 10))
+                            .font(.lume(.caption))
                             .foregroundStyle(.secondary)
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 8, weight: .medium))
+                            .font(.lume(.caption2, weight: .medium))
                             .foregroundStyle(.tertiary)
                     }
                     .padding(.horizontal, 12)
@@ -80,7 +80,7 @@ struct UpdateNotificationCard: View {
                 if isExpanded {
                     ScrollView {
                         Text(release.releaseNotes)
-                            .font(.system(size: 10))
+                            .font(.lume(.caption))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 12)
@@ -97,7 +97,7 @@ struct UpdateNotificationCard: View {
             HStack(spacing: 6) {
                 Button(action: onDismiss) {
                     Text("Later")
-                        .font(.system(size: 11))
+                        .font(.lume(.footnote))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
@@ -109,9 +109,9 @@ struct UpdateNotificationCard: View {
                 Button(action: onUpdate) {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.down.circle")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.lume(.caption, weight: .semibold))
                         Text("Download")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.lume(.footnote, weight: .semibold))
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -162,16 +162,16 @@ struct SidebarUpdateBadge: View {
                     .frame(width: 26, height: 26)
                     .shadow(color: LumeBrand.glow.opacity(0.40), radius: 4, y: 1)
                 Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.lume(.subheadline, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Update available")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.lume(.footnote, weight: .semibold))
                     .foregroundStyle(.primary)
                 Text("Lume \(version)")
-                    .font(.system(size: 10))
+                    .font(.lume(.caption))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -180,7 +180,7 @@ struct SidebarUpdateBadge: View {
 
             Button(action: onDismiss) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.lume(.caption2, weight: .semibold))
                     .foregroundStyle(.tertiary)
                     .frame(width: 18, height: 18)
                     .contentShape(Rectangle())

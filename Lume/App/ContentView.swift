@@ -34,6 +34,8 @@ struct ContentView: View {
     @State private var pendingChatDraft: String? = nil
     @AppStorage(ThemeKeys.accent) private var accentRaw = AccentChoice.clay.rawValue
     @AppStorage(ThemeKeys.appearance) private var appearanceRaw = AppearanceChoice.system.rawValue
+    // Zoom de texto do app (acessibilidade) — View → Zoom In/Out/Actual Size.
+    @AppStorage(LumeZoom.key) private var textZoom: Double = 1.0
 
     var body: some View {
         NavigationSplitView(columnVisibility: $sidebarVisibility) {
@@ -48,6 +50,7 @@ struct ContentView: View {
                 .toolbarBackground(.hidden, for: .windowToolbar)
         }
         .navigationSplitViewStyle(.balanced)
+        .lumeTextZoom(CGFloat(textZoom))
         .task {
             await loadActiveProvider()
             await GitHubService.shared.bootstrap()
@@ -119,12 +122,12 @@ struct ContentView: View {
         VStack(spacing: 0) {
             HStack(alignment: .center) {
                 Text("Lume")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.lume(.title2, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                 Spacer()
                 Button { withAnimation { showSearch.toggle() } } label: {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.lume(.callout, weight: .medium))
                         .foregroundStyle(.secondary)
                 }.buttonStyle(.plain)
             }
@@ -132,11 +135,11 @@ struct ContentView: View {
 
             if showSearch {
                 HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.tertiary)
-                    TextField("Search", text: $searchText).font(.system(size: 13)).textFieldStyle(.plain)
+                    Image(systemName: "magnifyingglass").font(.lume(.footnote)).foregroundStyle(.tertiary)
+                    TextField("Search", text: $searchText).font(.lume(.callout)).textFieldStyle(.plain)
                     if !searchText.isEmpty {
                         Button { searchText = "" } label: {
-                            Image(systemName: "xmark.circle.fill").font(.system(size: 11)).foregroundStyle(.tertiary)
+                            Image(systemName: "xmark.circle.fill").font(.lume(.footnote)).foregroundStyle(.tertiary)
                         }.buttonStyle(.plain)
                     }
                 }
@@ -176,8 +179,8 @@ struct ContentView: View {
                     switchMode(mode)
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: mode.icon).font(.system(size: 11, weight: .medium))
-                        Text(mode.label).font(.system(size: 12, weight: .medium))
+                        Image(systemName: mode.icon).font(.lume(.footnote, weight: .medium))
+                        Text(mode.label).font(.lume(.subheadline, weight: .medium))
                     }
                     .foregroundStyle(sidebarMode == mode ? .primary : .secondary)
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
@@ -484,7 +487,7 @@ struct ContentView: View {
                 if let config = activeConfig {
                     HStack(spacing: 5) {
                         Circle().fill(Color.green).frame(width: 5, height: 5).shadow(color: .green.opacity(0.6), radius: 2)
-                        Text(config.name).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                        Text(config.name).font(.lume(.caption, weight: .medium)).foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, 7).padding(.vertical, 3).glassEffect(.regular, in: Capsule())
                 }
@@ -611,11 +614,11 @@ struct ContentView: View {
 
     private func sectionHeader(_ title: String, action: (() -> Void)?) -> some View {
         HStack {
-            Text(title.uppercased()).font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary).tracking(0.8)
+            Text(title.uppercased()).font(.lume(.caption, weight: .semibold)).foregroundStyle(.tertiary).tracking(0.8)
             Spacer()
             if let action {
                 Button(action: action) {
-                    Image(systemName: "plus").font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary)
+                    Image(systemName: "plus").font(.lume(.caption, weight: .semibold)).foregroundStyle(.tertiary)
                 }.buttonStyle(.plain)
             }
         }
@@ -697,7 +700,7 @@ struct VersionBadge: View {
     }
     var body: some View {
         Text(text)
-            .font(.system(size: 10, weight: .medium))
+            .font(.lume(.caption, weight: .medium))
             .foregroundStyle(.tertiary)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -750,8 +753,8 @@ struct ChatWelcomeView: View {
                     ForEach(Array(starters.enumerated()), id: \.offset) { _, s in
                         Button { onStart(s.prompt) } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: s.icon).font(.system(size: 16)).foregroundStyle(ModeAccent.chat).frame(width: 20)
-                                Text(s.title).font(.system(size: 13, weight: .medium)).foregroundStyle(.primary)
+                                Image(systemName: s.icon).font(.lume(.title3)).foregroundStyle(ModeAccent.chat).frame(width: 20)
+                                Text(s.title).font(.lume(.callout, weight: .medium)).foregroundStyle(.primary)
                                 Spacer(minLength: 0)
                             }
                             .padding(.horizontal, 13).padding(.vertical, 11)
@@ -764,7 +767,7 @@ struct ChatWelcomeView: View {
                 }
                 .frame(maxWidth: 460)
                 Text("or just type a message to begin")
-                    .font(.system(size: 12)).foregroundStyle(.tertiary)
+                    .font(.lume(.subheadline)).foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 24)
             Spacer()
@@ -785,14 +788,14 @@ struct LumeWelcomeCard: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(color.opacity(isHovering ? 0.20 : 0.10)).frame(width: 40, height: 40)
-                    Image(systemName: icon).font(.system(size: 16, weight: .medium)).foregroundStyle(color)
+                    Image(systemName: icon).font(.lume(.title3, weight: .medium)).foregroundStyle(color)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(.primary).lineLimit(1)
-                    Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(title).font(.lume(.callout, weight: .semibold)).foregroundStyle(.primary).lineLimit(1)
+                    Text(subtitle).font(.lume(.footnote)).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer()
-                Image(systemName: "arrow.right").font(.system(size: 10, weight: .semibold))
+                Image(systemName: "arrow.right").font(.lume(.caption, weight: .semibold))
                     .foregroundStyle(color.opacity(isHovering ? 0.8 : 0.25))
             }
             .padding(.horizontal, 14).padding(.vertical, 13)
@@ -825,7 +828,7 @@ struct RenameConversationSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Rename").font(.system(size: 18, weight: .bold, design: .rounded))
+            Text("Rename").font(.lume(.title2, weight: .bold, design: .rounded))
             TextField("Conversation name", text: $name).textFieldStyle(.roundedBorder).onSubmit { save() }
             HStack {
                 Button("Cancel", role: .cancel) { onDone() }.buttonStyle(.plain).foregroundStyle(.secondary)
@@ -873,12 +876,12 @@ struct ProjectRowView: View {
     let isSelected: Bool
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: project.icon).font(.system(size: 12, weight: .medium))
+            Image(systemName: project.icon).font(.lume(.subheadline, weight: .medium))
                 .foregroundStyle(isSelected ? Color.accentColor : LumeTheme.clay).frame(width: 18)
-            Text(project.name).font(.system(size: 13)).lineLimit(1)
+            Text(project.name).font(.lume(.callout)).lineLimit(1)
                 .foregroundStyle(isSelected ? Color.accentColor : .primary)
             Spacer()
-            Text("\(project.conversations.count)").font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
+            Text("\(project.conversations.count)").font(.lume(.caption, weight: .medium)).foregroundStyle(.tertiary)
                 .padding(.horizontal, 5).padding(.vertical, 2).glassEffect(.regular, in: Capsule())
         }
         .padding(.vertical, 5).padding(.horizontal, 4)
@@ -892,10 +895,10 @@ struct ConversationRowView: View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 4) {
                 if conversation.isPinned {
-                    Image(systemName: "pin.fill").font(.system(size: 9)).foregroundStyle(Color.accentColor)
+                    Image(systemName: "pin.fill").font(.lume(.caption2)).foregroundStyle(Color.accentColor)
                 }
                 Text(conversation.title)
-                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                    .font(.lume(.callout, weight: isSelected ? .semibold : .regular))
                     .lineLimit(1).foregroundStyle(isSelected ? Color.accentColor : .primary)
             }
             HStack(spacing: 5) {
@@ -903,18 +906,18 @@ struct ConversationRowView: View {
                    let wsPath = UserDefaults.standard.string(forKey: "code_workspace_path") {
                     let wsName = URL(fileURLWithPath: wsPath).lastPathComponent
                     HStack(spacing: 3) {
-                        Image(systemName: "folder.fill").font(.system(size: 8))
-                        Text(wsName).font(.system(size: 10, weight: .medium))
+                        Image(systemName: "folder.fill").font(.lume(.caption2))
+                        Text(wsName).font(.lume(.caption, weight: .medium))
                     }
                     .foregroundStyle(LumeTheme.moss)
                     .padding(.horizontal, 5).padding(.vertical, 1)
                     .background(LumeTheme.moss.opacity(0.10), in: Capsule())
                     Text("·").foregroundStyle(.tertiary)
                 }
-                Image(systemName: providerIcon).font(.system(size: 9))
-                Text(conversation.modelName).font(.system(size: 11)).lineLimit(1)
+                Image(systemName: providerIcon).font(.lume(.caption2))
+                Text(conversation.modelName).font(.lume(.footnote)).lineLimit(1)
                 Spacer()
-                Text(conversation.updatedAt.formatted(.relative(presentation: .named))).font(.system(size: 10))
+                Text(conversation.updatedAt.formatted(.relative(presentation: .named))).font(.lume(.caption))
             }.foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -936,16 +939,16 @@ struct GitStatusRow: View {
         Group {
             if let status {
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.branch").font(.system(size: 10)).foregroundStyle(.secondary)
+                    Image(systemName: "arrow.triangle.branch").font(.lume(.caption)).foregroundStyle(.secondary)
                     Text(status.branch)
-                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                        .font(.lume(.footnote, weight: .regular, design: .monospaced))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    if !status.staged.isEmpty { Text("S:\(status.staged.count)").font(.system(size: 9)).foregroundStyle(.green) }
-                    if !status.modified.isEmpty { Text("M:\(status.modified.count)").font(.system(size: 9)).foregroundStyle(.orange) }
+                    if !status.staged.isEmpty { Text("S:\(status.staged.count)").font(.lume(.caption2)).foregroundStyle(.green) }
+                    if !status.modified.isEmpty { Text("M:\(status.modified.count)").font(.lume(.caption2)).foregroundStyle(.orange) }
                 }.padding(.horizontal, 14).padding(.vertical, 4)
             } else {
-                Text("Loading git…").font(.system(size: 10)).foregroundStyle(.tertiary).padding(.horizontal, 14)
+                Text("Loading git…").font(.lume(.caption)).foregroundStyle(.tertiary).padding(.horizontal, 14)
             }
         }
         .task { status = await GitManager.shared.status(at: workspacePath) }

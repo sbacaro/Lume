@@ -17,17 +17,17 @@ struct SuggestionCardsView: View {
                 // Cabeçalho com a pergunta
                 HStack(spacing: 8) {
                     Image(systemName: "questionmark.circle.fill")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.lume(.callout, weight: .medium))
                         .foregroundStyle(Color.accentColor)
                     Text(block.question)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.lume(.callout, weight: .semibold))
                         .foregroundStyle(.primary)
                     Spacer()
                     Button {
                         withAnimation(.easeInOut(duration: 0.18)) { dismissed = true }
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.lume(.caption, weight: .semibold))
                             .foregroundStyle(.tertiary)
                             .frame(width: 20, height: 20)
                             .background(Color.primary.opacity(0.06), in: Circle())
@@ -48,20 +48,20 @@ struct SuggestionCardsView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 Text("\(idx + 1)")
-                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .font(.lume(.footnote, weight: .bold, design: .rounded))
                                     .foregroundStyle(Color.accentColor)
                                     .frame(width: 22, height: 22)
                                     .background(Color.accentColor.opacity(0.10), in: Circle())
 
                                 Text(option)
-                                    .font(.system(size: 13))
+                                    .font(.lume(.callout))
                                     .foregroundStyle(.primary)
                                     .multilineTextAlignment(.leading)
 
                                 Spacer()
 
                                 Image(systemName: "arrow.right")
-                                    .font(.system(size: 10, weight: .semibold))
+                                    .font(.lume(.caption, weight: .semibold))
                                     .foregroundStyle(.tertiary)
                             }
                             .padding(.horizontal, 14)

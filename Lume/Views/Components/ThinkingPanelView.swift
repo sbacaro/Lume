@@ -19,18 +19,18 @@ struct ThinkingPanelView: View {
                         PulseDot()
                     } else {
                         Image(systemName: "brain")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.lume(.footnote, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
 
                     Text(isStreaming && tracker.isActive
                          ? (tracker.currentLabel.isEmpty ? "Thinking…" : tracker.currentLabel)
                          : String(localized: "Thinking process"))
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.lume(.subheadline, weight: .medium))
                         .foregroundStyle(.secondary)
 
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.lume(.caption, weight: .medium))
                         .foregroundStyle(.tertiary)
 
                     Spacer()
@@ -85,7 +85,7 @@ private struct ThinkingStepRow: View {
                         PulseDot(size: 7, color: .accentColor)
                     } else {
                         Image(systemName: step.icon)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.lume(.footnote, weight: .medium))
                             .foregroundStyle(step.isDone ? Color.green : Color.secondary)
                             .symbolRenderingMode(.hierarchical)
                     }
@@ -93,7 +93,7 @@ private struct ThinkingStepRow: View {
                 .frame(width: 16)
 
                 Text(step.label)
-                    .font(.system(size: 12))
+                    .font(.lume(.subheadline))
                     .foregroundStyle(step.isDone ? .primary : .secondary)
                     .lineLimit(1)
 
@@ -107,7 +107,7 @@ private struct ThinkingStepRow: View {
                         }
                     } label: {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(.lume(.caption2, weight: .semibold))
                             .foregroundStyle(.tertiary)
                             .rotationEffect(.degrees(isDetailExpanded ? 90 : 0))
                     }
@@ -118,7 +118,7 @@ private struct ThinkingStepRow: View {
 
             if isDetailExpanded && !step.detail.isEmpty {
                 Text(step.detail)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.lume(.footnote, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 24)
                     .padding(.bottom, 4)

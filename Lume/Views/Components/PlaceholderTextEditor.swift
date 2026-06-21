@@ -12,7 +12,7 @@ import SwiftUI
 struct PlaceholderTextEditor: View {
     @Binding var text: String
     let placeholder: String
-    var font: Font = .system(size: 14)
+    var font: Font = .lume(.body)
     var minHeight: CGFloat = 36
     var maxHeight: CGFloat = 160
     var placeholderColor: Color = Color(.placeholderTextColor)

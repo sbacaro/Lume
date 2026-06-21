@@ -69,10 +69,10 @@ struct CodeDashboardView: View {
                 if let url = workspaceURL {
                     VStack(spacing: 12) {
                         HStack(spacing: 8) {
-                            Image(systemName: "folder.fill").font(.system(size: 13)).foregroundStyle(ModeAccent.code)
-                            Text(url.lastPathComponent).font(.system(size: 13, weight: .medium))
+                            Image(systemName: "folder.fill").font(.lume(.callout)).foregroundStyle(ModeAccent.code)
+                            Text(url.lastPathComponent).font(.lume(.callout, weight: .medium))
                             if let status = gitStatus {
-                                Text(status.branch).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
+                                Text(status.branch).font(.lume(.footnote, design: .monospaced)).foregroundStyle(.secondary)
                             }
                         }
                         .padding(.horizontal, 12).padding(.vertical, 8)
@@ -99,7 +99,7 @@ struct CodeDashboardView: View {
                         }
                     }
                     Text("Lume works only inside the folder you select, and reads Git status automatically.")
-                        .font(.system(size: 12)).foregroundStyle(.tertiary)
+                        .font(.lume(.subheadline)).foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center).frame(maxWidth: 360)
                 }
                 CapabilityGrid(items: [
@@ -155,17 +155,17 @@ struct CodeDashboardView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(LumeTheme.moss.opacity(0.12)).frame(width: 36, height: 36)
-                Image(systemName: "folder.fill").font(.system(size: 15)).foregroundStyle(LumeTheme.moss)
+                Image(systemName: "folder.fill").font(.lume(.title3)).foregroundStyle(LumeTheme.moss)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(url.lastPathComponent).font(.system(size: 14, weight: .semibold))
-                Text(url.path).font(.system(size: 10, design: .monospaced))
+                Text(url.lastPathComponent).font(.lume(.body, weight: .semibold))
+                Text(url.path).font(.lume(.caption, design: .monospaced))
                     .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             }
             Spacer()
             HStack(spacing: 6) {
                 Circle().fill(Color.green).frame(width: 6, height: 6).shadow(color: .green.opacity(0.5), radius: 2)
-                Text("Active").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("Active").font(.lume(.footnote)).foregroundStyle(.secondary)
             }
             Button("Switch") {
                 Task {
@@ -181,7 +181,7 @@ struct CodeDashboardView: View {
                 gitStatus = nil
                 UserDefaults.standard.removeObject(forKey: "code_workspace_path")
             } label: {
-                Image(systemName: "xmark.circle").font(.system(size: 13)).foregroundStyle(.secondary)
+                Image(systemName: "xmark.circle").font(.lume(.callout)).foregroundStyle(.secondary)
             }
             .buttonStyle(.plain).help("Remove workspace")
         }
@@ -193,13 +193,13 @@ struct CodeDashboardView: View {
     private func gitCompactRow(status: GitManager.GitStatus) -> some View {
         Button { showGitPanel = true } label: {
             HStack(spacing: 10) {
-                Image(systemName: "arrow.triangle.branch").font(.system(size: 11)).foregroundStyle(.orange)
-                Text(status.branch).font(.system(size: 12, design: .monospaced)).foregroundStyle(.secondary)
+                Image(systemName: "arrow.triangle.branch").font(.lume(.footnote)).foregroundStyle(.orange)
+                Text(status.branch).font(.lume(.subheadline, design: .monospaced)).foregroundStyle(.secondary)
                 Spacer()
-                if !status.staged.isEmpty { Text("↑\(status.staged.count) staged").font(.system(size: 10)).foregroundStyle(.green) }
-                if !status.modified.isEmpty { Text("~\(status.modified.count) modified").font(.system(size: 10)).foregroundStyle(.orange) }
-                if status.staged.isEmpty && status.modified.isEmpty { Text("clean").font(.system(size: 10)).foregroundStyle(.green) }
-                Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.tertiary)
+                if !status.staged.isEmpty { Text("↑\(status.staged.count) staged").font(.lume(.caption)).foregroundStyle(.green) }
+                if !status.modified.isEmpty { Text("~\(status.modified.count) modified").font(.lume(.caption)).foregroundStyle(.orange) }
+                if status.staged.isEmpty && status.modified.isEmpty { Text("clean").font(.lume(.caption)).foregroundStyle(.green) }
+                Image(systemName: "chevron.right").font(.lume(.caption)).foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 12).padding(.vertical, 9)
             .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -211,7 +211,7 @@ struct CodeDashboardView: View {
     private var sessionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Start a session")
-                .font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+                .font(.lume(.callout, weight: .semibold)).foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                 sessionCard(icon: "chevron.left.forwardslash.chevron.right", title: String(localized: "Write code"),     subtitle: String(localized: "New feature, function, or component"), color: Color(red: 0.20, green: 0.60, blue: 1.0))
                 sessionCard(icon: "ant.circle.fill",          title: String(localized: "Debug an error"),      subtitle: "Encontrar e corrigir bugs",          color: .red)
@@ -225,7 +225,7 @@ struct CodeDashboardView: View {
 
     private var toolsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Tools").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+            Text("Tools").font(.lume(.callout, weight: .semibold)).foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 toolButton(icon: "arrow.triangle.branch", label: "Git", color: .orange) { showGitPanel = true }
             }
@@ -239,18 +239,18 @@ struct CodeDashboardView: View {
         }
         if !codeSessions.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Recent Sessions").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+                Text("Recent Sessions").font(.lume(.callout, weight: .semibold)).foregroundStyle(.secondary)
                 VStack(spacing: 4) {
                     ForEach(codeSessions.prefix(5)) { conv in
                         Button { onSelectConversation(conv) } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "chevron.left.forwardslash.chevron.right")
-                                    .font(.system(size: 10)).foregroundStyle(Color.accentColor).frame(width: 14)
-                                Text(conv.title).font(.system(size: 13)).lineLimit(1).foregroundStyle(.primary)
+                                    .font(.lume(.caption)).foregroundStyle(Color.accentColor).frame(width: 14)
+                                Text(conv.title).font(.lume(.callout)).lineLimit(1).foregroundStyle(.primary)
                                 Spacer()
                                 Text(conv.updatedAt.formatted(.relative(presentation: .named)))
-                                    .font(.system(size: 10)).foregroundStyle(.tertiary)
-                                Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.tertiary)
+                                    .font(.lume(.caption)).foregroundStyle(.tertiary)
+                                Image(systemName: "chevron.right").font(.lume(.caption)).foregroundStyle(.tertiary)
                             }
                             .padding(.horizontal, 12).padding(.vertical, 9)
                             .background(Color(.controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -268,9 +268,9 @@ struct CodeDashboardView: View {
         HStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 6, style: .continuous).fill(color.opacity(0.12)).frame(width: 26, height: 26)
-                Image(systemName: icon).font(.system(size: 11, weight: .medium)).foregroundStyle(color)
+                Image(systemName: icon).font(.lume(.footnote, weight: .medium)).foregroundStyle(color)
             }
-            Text(text).font(.system(size: 12)).foregroundStyle(.primary)
+            Text(text).font(.lume(.subheadline)).foregroundStyle(.primary)
             Spacer()
         }
     }
@@ -280,14 +280,14 @@ struct CodeDashboardView: View {
             HStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8, style: .continuous).fill(color.opacity(0.12)).frame(width: 34, height: 34)
-                    Image(systemName: icon).font(.system(size: 14, weight: .medium)).foregroundStyle(color)
+                    Image(systemName: icon).font(.lume(.body, weight: .medium)).foregroundStyle(color)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(.primary)
-                    Text(subtitle).font(.system(size: 10)).foregroundStyle(.secondary)
+                    Text(title).font(.lume(.callout, weight: .semibold)).foregroundStyle(.primary)
+                    Text(subtitle).font(.lume(.caption)).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: "arrow.right").font(.system(size: 10)).foregroundStyle(.tertiary)
+                Image(systemName: "arrow.right").font(.lume(.caption)).foregroundStyle(.tertiary)
             }
             .padding(11)
             .background(Color(.controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -301,9 +301,9 @@ struct CodeDashboardView: View {
             VStack(spacing: 6) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8, style: .continuous).fill(color.opacity(0.10)).frame(width: 34, height: 34)
-                    Image(systemName: icon).font(.system(size: 14, weight: .medium)).foregroundStyle(color)
+                    Image(systemName: icon).font(.lume(.body, weight: .medium)).foregroundStyle(color)
                 }
-                Text(label).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                Text(label).font(.lume(.caption, weight: .medium)).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity).padding(.vertical, 10)
             .background(Color(.controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -332,14 +332,14 @@ struct GitPanelView: View {
         VStack(spacing: 0) {
             HStack {
                 Label("Git", systemImage: "arrow.triangle.branch")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.lume(.title3, weight: .bold, design: .rounded))
                 if let branch = status?.branch {
-                    Text(branch).font(.system(size: 12, design: .monospaced)).foregroundStyle(.secondary)
+                    Text(branch).font(.lume(.subheadline, design: .monospaced)).foregroundStyle(.secondary)
                         .padding(.horizontal, 8).padding(.vertical, 3).background(Color.orange.opacity(0.12), in: Capsule())
                 }
                 Spacer()
                 Button { dismiss() } label: {
-                    Image(systemName: "xmark.circle.fill").font(.system(size: 16)).foregroundStyle(.secondary)
+                    Image(systemName: "xmark.circle.fill").font(.lume(.title3)).foregroundStyle(.secondary)
                 }.buttonStyle(.plain)
             }
             .padding(20)
@@ -378,7 +378,7 @@ struct GitPanelView: View {
                     if !status.untracked.isEmpty { fileSection(title: "Untracked", files: status.untracked, color: .secondary, icon: "questionmark.circle.fill") }
                     if status.staged.isEmpty && status.modified.isEmpty && status.untracked.isEmpty {
                         VStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill").font(.system(size: 32)).foregroundStyle(.green)
+                            Image(systemName: "checkmark.circle.fill").font(.lume(.largeTitle)).foregroundStyle(.green)
                             Text("Working tree clean").font(.headline)
                             Text("No pending changes.").foregroundStyle(.secondary)
                         }
@@ -395,8 +395,8 @@ struct GitPanelView: View {
     private var gitCommitTab: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Commit message").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
-                TextEditor(text: $commitMessage).font(.system(size: 13)).frame(height: 80)
+                Text("Commit message").font(.lume(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
+                TextEditor(text: $commitMessage).font(.lume(.callout)).frame(height: 80)
                     .scrollContentBackground(.hidden).padding(8)
                     .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
             }
@@ -411,7 +411,7 @@ struct GitPanelView: View {
             }
             if !output.isEmpty {
                 ScrollView {
-                    Text(output).font(.system(size: 11, design: .monospaced))
+                    Text(output).font(.lume(.footnote, design: .monospaced))
                         .foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(maxHeight: 120).padding(10).background(Color.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 8))
@@ -428,14 +428,14 @@ struct GitPanelView: View {
     private func fileSection(title: String, files: [String], color: Color, icon: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: icon).font(.system(size: 12)).foregroundStyle(color)
-                Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(color)
-                Text("(\(files.count))").font(.system(size: 11)).foregroundStyle(.tertiary)
+                Image(systemName: icon).font(.lume(.subheadline)).foregroundStyle(color)
+                Text(title).font(.lume(.subheadline, weight: .semibold)).foregroundStyle(color)
+                Text("(\(files.count))").font(.lume(.footnote)).foregroundStyle(.tertiary)
             }
             ForEach(files, id: \.self) { file in
                 HStack(spacing: 8) {
-                    Image(systemName: fileIconForPath(file)).font(.system(size: 10)).foregroundStyle(.tertiary).frame(width: 14)
-                    Text(file).font(.system(size: 12, design: .monospaced)).lineLimit(1).truncationMode(.head)
+                    Image(systemName: fileIconForPath(file)).font(.lume(.caption)).foregroundStyle(.tertiary).frame(width: 14)
+                    Text(file).font(.lume(.subheadline, design: .monospaced)).lineLimit(1).truncationMode(.head)
                 }
                 .padding(.leading, 18)
             }
@@ -475,7 +475,7 @@ struct GitLogView: View {
                 ProgressView("Loading log…").frame(maxWidth: .infinity).padding(40)
             } else {
                 ScrollView {
-                    Text(log).font(.system(size: 11, design: .monospaced))
+                    Text(log).font(.lume(.footnote, design: .monospaced))
                         .foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading).padding(16)
                         .textSelection(.enabled)
                 }

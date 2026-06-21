@@ -86,7 +86,7 @@ struct ChatInputView: View {
                             attachedImages.remove(at: idx)
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 14))
+                                .font(.lume(.body))
                                 .foregroundStyle(.white)
                                 .background(Color.black.opacity(0.5), in: Circle())
                         }
@@ -110,7 +110,7 @@ struct ChatInputView: View {
             ZStack(alignment: .topLeading) {
                 // TextEditor — sempre primeiro para definir o tamanho do ZStack
                 TextEditor(text: $text)
-                    .font(.system(size: 14))
+                    .font(.lume(.body))
                     .frame(minHeight: 36, maxHeight: 160)
                     .fixedSize(horizontal: false, vertical: true)
                     .scrollContentBackground(.hidden)
@@ -138,7 +138,7 @@ struct ChatInputView: View {
                 // top=5 e leading=5 correspondem ao textContainerInset padrão do SwiftUI wrapper
                 if text.isEmpty && !isDictating {
                     Text(isLoading ? String(localized: "Generating response…") : placeholder)
-                        .font(.system(size: 14))
+                        .font(.lume(.body))
                         .foregroundStyle(
                             composerVibrant ? Color.white.opacity(0.85) : Color(.placeholderTextColor)
                         )
@@ -175,8 +175,8 @@ struct ChatInputView: View {
 
                 if !attachedImages.isEmpty {
                     HStack(spacing: 3) {
-                        Image(systemName: "photo").font(.system(size: 10))
-                        Text("\(attachedImages.count)").font(.system(size: 11, weight: .medium))
+                        Image(systemName: "photo").font(.lume(.caption))
+                        Text("\(attachedImages.count)").font(.lume(.footnote, weight: .medium))
                     }
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 6).padding(.vertical, 3)
@@ -228,10 +228,10 @@ struct ChatInputView: View {
         } label: {
             HStack(spacing: 3) {
                 Text(shortModelName(modelName))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.lume(.subheadline, weight: .medium))
                     .lineLimit(1)
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
+                    .font(.lume(.caption2, weight: .semibold))
             }
             .foregroundStyle(composerVibrant ? Color.white : Color.secondary)
             .padding(.horizontal, 6)
@@ -269,11 +269,11 @@ struct ChatInputView: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: approvalMode == .autonomous ? "forward.fill" : "hand.raised")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.lume(.footnote, weight: .medium))
                 Text(approvalMode == .autonomous ? "Act" : "Ask")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.lume(.subheadline, weight: .medium))
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
+                    .font(.lume(.caption2, weight: .semibold))
             }
             .foregroundStyle(composerVibrant ? Color.white : Color.secondary)
             .padding(.horizontal, 8)
@@ -309,7 +309,7 @@ struct ChatInputView: View {
                 // Parar a geração atual
                 Button(action: onStop) {
                     Image(systemName: "stop.fill")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.lume(.footnote, weight: .bold))
                         .foregroundStyle(.primary)
                         .frame(width: 30, height: 30)
                         .background(
@@ -330,9 +330,9 @@ struct ChatInputView: View {
                     Button(action: onQueue) {
                         HStack(spacing: 5) {
                             Image(systemName: "return")
-                                .font(.system(size: 11, weight: .bold))
+                                .font(.lume(.footnote, weight: .bold))
                             Text("Queue")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.lume(.subheadline, weight: .semibold))
                         }
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
@@ -347,7 +347,7 @@ struct ChatInputView: View {
         } else if canSend {
             Button(action: onSend) {
                 Image(systemName: "arrow.up")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.lume(.callout, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: 30, height: 30)
                     .background(Color.accentColor, in: Circle())
@@ -359,7 +359,7 @@ struct ChatInputView: View {
             // Campo vazio: microfone (ditado)
             Button(action: onVoice) {
                 Image(systemName: isDictating ? "waveform" : "mic")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.lume(.title3, weight: .medium))
                     .foregroundStyle(isDictating ? .red : Color(.secondaryLabelColor))
                     .frame(width: 30, height: 30)
             }
@@ -570,7 +570,7 @@ struct ChatInputView: View {
     ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .medium))
+                .font(.lume(.callout, weight: .medium))
                 .foregroundStyle(tint ?? Color(.secondaryLabelColor))
                 .frame(width: 26, height: 26)
                 .background(

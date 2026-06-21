@@ -1,3 +1,28 @@
+# 🔠 Lume v1.5.1 — Consistent typography & text zoom
+
+This release unifies the app's typography and adds an accessibility text zoom, plus a tidier View menu.
+
+**Release date:** 2026-06-21
+**Version:** 1.5.1
+**Type:** UI & accessibility
+
+---
+
+## 🆕 Added
+
+### Text zoom (accessibility)
+- New **View → Zoom In / Zoom Out / Actual Size** commands (**⌘+**, **⌘-**, **⌘0**) scale every text in the app from a single global factor (80%–160%), persisted across launches. Handy for readability and presentations.
+
+## 🔄 Changed
+
+### Unified typography system
+- All text now flows through `LumeType`, a single source of truth for type. Roughly **570** hand-written `.font(.system(size:))` calls across the UI were migrated to a small set of semantic roles (`largeTitle`, `title1/2/3`, `body`, `callout`, `subheadline`, `footnote`, `caption`, `caption2`). Titles, body text, and captions are now consistent across panels — including the inspector, About, and Settings — and the right-hand inspector shares the same scale as the rest of the app.
+
+### Tidier View menu
+- Removed **Show Tab Bar** (window tabbing is disabled), **Show / Customize Toolbar**, and **Show Sidebar**, replacing them with the new Zoom commands.
+
+---
+
 # 🪪 Lume v1.5.0 — Now free software under the GNU GPLv3
 
 Lume is relicensed from the MIT License to the **GNU General Public License v3.0**. This is a licensing change only — there are no changes to how the app behaves, looks, or performs.

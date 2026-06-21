@@ -60,12 +60,12 @@ struct ArtifactPanelView: View {
                 .frame(width: 22, height: 22)
                 .overlay(
                     Image(systemName: artifactIcon)
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.lume(.caption, weight: .medium))
                         .foregroundStyle(Color.accentColor)
                 )
 
             Text(artifact.title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.lume(.subheadline, weight: .semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
 
@@ -74,17 +74,17 @@ struct ArtifactPanelView: View {
             if !artifact.versions.isEmpty {
                 HStack(spacing: 4) {
                     Button { showOlder() } label: {
-                        Image(systemName: "chevron.left").font(.system(size: 10))
+                        Image(systemName: "chevron.left").font(.lume(.caption))
                     }
                     .buttonStyle(.plain).disabled(displayedPosition <= 1)
                     .help("Versão anterior")
 
                     Text("v\(displayedPosition)/\(versionCount)")
-                        .font(.system(size: 10, weight: .medium).monospacedDigit())
+                        .font(.lume(.caption, weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
 
                     Button { showNewer() } label: {
-                        Image(systemName: "chevron.right").font(.system(size: 10))
+                        Image(systemName: "chevron.right").font(.lume(.caption))
                     }
                     .buttonStyle(.plain).disabled(versionIndex == nil)
                     .help("Versão mais recente")
@@ -96,7 +96,7 @@ struct ArtifactPanelView: View {
                 webViewID = UUID()
             } label: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 11))
+                    .font(.lume(.footnote))
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -111,7 +111,7 @@ struct ArtifactPanelView: View {
 
             Button(action: copySource) {
                 Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 11))
+                    .font(.lume(.footnote))
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -307,13 +307,13 @@ struct ArtifactSourceView: View {
                 ForEach(Array(lines.enumerated()), id: \.offset) { idx, line in
                     HStack(alignment: .top, spacing: 0) {
                         Text(String(format: "%3d", idx + 1))
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.lume(.footnote, design: .monospaced))
                             .foregroundStyle(Color.secondary.opacity(0.5))
                             .frame(width: 36, alignment: .trailing)
                             .padding(.trailing, 8)
 
                         Text(highlightLine(line))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(.lume(.subheadline, design: .monospaced))
                             .textSelection(.enabled)
                     }
                     .padding(.vertical, 1)

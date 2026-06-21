@@ -34,9 +34,9 @@ struct ProjectDetailView: View {
                             } label: {
                                 HStack(spacing: 4) {
                                     Image(systemName: "chevron.left")
-                                        .font(.system(size: 12, weight: .semibold))
+                                        .font(.lume(.subheadline, weight: .semibold))
                                     Text(project.name)
-                                        .font(.system(size: 13))
+                                        .font(.lume(.callout))
                                 }
                                 .foregroundStyle(.secondary)
                             }
@@ -104,17 +104,17 @@ struct ProjectDetailView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 10) {
                     Image(systemName: project.icon)
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.lume(.title2, weight: .medium))
                         .foregroundStyle(LumeTheme.clay)
 
                     TextField("Project name", text: $project.name)
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.lume(.title1, weight: .bold, design: .rounded))
                         .textFieldStyle(.plain)
                         .foregroundStyle(.primary)
                 }
 
                 Text("\(project.conversations.count) conversations · created \(project.updatedAt.formatted(.relative(presentation: .named)))")
-                    .font(.system(size: 12))
+                    .font(.lume(.subheadline))
                     .foregroundStyle(.tertiary)
             }
 
@@ -123,7 +123,7 @@ struct ProjectDetailView: View {
             HStack(spacing: 8) {
                 Button { showInstructionsSheet = true } label: {
                     Image(systemName: "doc.text")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.lume(.callout, weight: .medium))
                         .frame(width: 30, height: 30)
                         .background(Color.primary.opacity(0.07),
                                     in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -139,7 +139,7 @@ struct ProjectDetailView: View {
                     Button("Delete Project", role: .destructive) { showDeleteConfirm = true }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.lume(.callout, weight: .medium))
                         .frame(width: 30, height: 30)
                         .background(Color.primary.opacity(0.07),
                                     in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -163,14 +163,14 @@ struct ProjectDetailView: View {
                    let lastMsg = latestConv.messages.last(where: { $0.role == .assistant }) {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Outputs")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.lume(.callout, weight: .semibold))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 28)
 
                         Button { selectedConversation = latestConv } label: {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(lastMsg.content)
-                                    .font(.system(size: 13, design: .monospaced))
+                                    .font(.lume(.callout, design: .monospaced))
                                     .foregroundStyle(.primary)
                                     .lineLimit(6)
                                     .multilineTextAlignment(.leading)
@@ -191,7 +191,7 @@ struct ProjectDetailView: View {
                 if !sortedConversations.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Recent")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.lume(.callout, weight: .semibold))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 28)
 
@@ -199,24 +199,24 @@ struct ProjectDetailView: View {
                             Button { selectedConversation = conv } label: {
                                 HStack(spacing: 14) {
                                     Image(systemName: "bubble.left.and.bubble.right")
-                                        .font(.system(size: 14))
+                                        .font(.lume(.body))
                                         .foregroundStyle(.secondary)
                                         .frame(width: 20)
 
                                     VStack(alignment: .leading, spacing: 3) {
                                         HStack {
                                             Text(conv.title)
-                                                .font(.system(size: 13, weight: .medium))
+                                                .font(.lume(.callout, weight: .medium))
                                                 .foregroundStyle(.primary)
                                                 .lineLimit(1)
                                             Spacer()
                                             Text(conv.updatedAt.formatted(.relative(presentation: .named)))
-                                                .font(.system(size: 11))
+                                                .font(.lume(.footnote))
                                                 .foregroundStyle(.tertiary)
                                         }
                                         if let lastMsg = conv.messages.last(where: { $0.role == .user }) {
                                             Text(lastMsg.content)
-                                                .font(.system(size: 12))
+                                                .font(.lume(.subheadline))
                                                 .foregroundStyle(.secondary)
                                                 .lineLimit(1)
                                         }
@@ -226,8 +226,8 @@ struct ProjectDetailView: View {
                                                 ForEach(artifactMessages.prefix(3), id: \.id) { msg in
                                                     if let artifact = msg.artifact {
                                                         HStack(spacing: 4) {
-                                                            Image(systemName: "doc.text").font(.system(size: 9))
-                                                            Text(artifact.title).font(.system(size: 10))
+                                                            Image(systemName: "doc.text").font(.lume(.caption2))
+                                                            Text(artifact.title).font(.lume(.caption))
                                                         }
                                                         .padding(.horizontal, 6).padding(.vertical, 2)
                                                         .glassEffect(.regular,
@@ -262,13 +262,13 @@ struct ProjectDetailView: View {
                 } else {
                     VStack(spacing: 12) {
                         Image(systemName: project.icon)
-                            .font(.system(size: 32, weight: .light))
+                            .font(.lume(.largeTitle, weight: .light))
                             .foregroundStyle(.tertiary)
                         Text("No conversations yet")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.lume(.body, weight: .medium))
                             .foregroundStyle(.secondary)
                         Text("Type below to start working on this project.")
-                            .font(.system(size: 12))
+                            .font(.lume(.subheadline))
                             .foregroundStyle(.tertiary)
                             .multilineTextAlignment(.center)
                     }
@@ -323,12 +323,12 @@ struct ProjectDetailView: View {
                 ) {
                     if project.systemPrompt.isEmpty {
                         Text("Add tone, formatting, or rules to guide how the assistant works.")
-                            .font(.system(size: 12))
+                            .font(.lume(.subheadline))
                             .foregroundStyle(.tertiary)
                             .italic()
                     } else {
                         Text(project.systemPrompt)
-                            .font(.system(size: 12))
+                            .font(.lume(.subheadline))
                             .foregroundStyle(.secondary)
                             .lineLimit(4)
                     }
@@ -336,7 +336,7 @@ struct ProjectDetailView: View {
 
                 RightPanelSection(title: "Programado", icon: "clock", actionIcon: "plus", onAction: nil) {
                     Text("Set up recurring tasks for this project.")
-                        .font(.system(size: 12))
+                        .font(.lume(.subheadline))
                         .foregroundStyle(.tertiary)
                         .italic()
                 }
@@ -349,15 +349,15 @@ struct ProjectDetailView: View {
                 ) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("On your computer")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.lume(.footnote, weight: .semibold))
                             .foregroundStyle(.tertiary)
 
                         if let url = project.localURL {
                             Button { NSWorkspace.shared.open(url) } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.tertiary)
-                                    Image(systemName: "folder.fill").font(.system(size: 13)).foregroundStyle(LumeTheme.clay)
-                                    Text(url.lastPathComponent).font(.system(size: 12)).foregroundStyle(.primary).lineLimit(1)
+                                    Image(systemName: "chevron.right").font(.lume(.caption)).foregroundStyle(.tertiary)
+                                    Image(systemName: "folder.fill").font(.lume(.callout)).foregroundStyle(LumeTheme.clay)
+                                    Text(url.lastPathComponent).font(.lume(.subheadline)).foregroundStyle(.primary).lineLimit(1)
                                 }
                                 .padding(.horizontal, 10).padding(.vertical, 8)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -369,15 +369,15 @@ struct ProjectDetailView: View {
 
                         if !indexedFiles.isEmpty {
                             Text("Memory")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.lume(.footnote, weight: .semibold))
                                 .foregroundStyle(.tertiary)
                                 .padding(.top, 4)
 
                             ForEach(indexedFiles.prefix(3), id: \.self) { name in
                                 HStack(spacing: 8) {
-                                    Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.tertiary)
-                                    Image(systemName: "doc.text").font(.system(size: 12)).foregroundStyle(.secondary)
-                                    Text(name).font(.system(size: 12)).foregroundStyle(.primary).lineLimit(1)
+                                    Image(systemName: "chevron.right").font(.lume(.caption)).foregroundStyle(.tertiary)
+                                    Image(systemName: "doc.text").font(.lume(.subheadline)).foregroundStyle(.secondary)
+                                    Text(name).font(.lume(.subheadline)).foregroundStyle(.primary).lineLimit(1)
                                 }
                                 .padding(.horizontal, 10).padding(.vertical, 6)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -392,7 +392,7 @@ struct ProjectDetailView: View {
 
                 Button(role: .destructive) { showDeleteConfirm = true } label: {
                     Label("Delete Project", systemImage: "trash")
-                        .font(.system(size: 12))
+                        .font(.lume(.subheadline))
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -505,13 +505,13 @@ struct RightPanelSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.lume(.callout, weight: .semibold))
                     .foregroundStyle(.primary)
                 Spacer()
                 if let onAction {
                     Button(action: onAction) {
                         Image(systemName: actionIcon)
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -520,7 +520,7 @@ struct RightPanelSection<Content: View>: View {
                     withAnimation(.easeInOut(duration: 0.18)) { isExpanded.toggle() }
                 } label: {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.lume(.caption, weight: .medium))
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)

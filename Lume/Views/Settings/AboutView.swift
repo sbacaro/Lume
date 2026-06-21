@@ -55,14 +55,14 @@ struct AboutView: View {
 
             VStack(spacing: 3) {
                 Text("Lume")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .font(.lume(.title1, weight: .bold, design: .rounded))
                 Text(String(localized: "Native AI Client for macOS"))
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.lume(.callout, weight: .medium))
                     .foregroundStyle(.secondary)
             }
 
             Text(String(localized: "Version \(updater.fullVersion)"))
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(.lume(.footnote, weight: .medium, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 10).padding(.vertical, 4)
                 .background(Color.primary.opacity(0.06), in: Capsule())
@@ -90,7 +90,7 @@ struct AboutView: View {
 
     private var descriptionBlock: some View {
         Text(String(localized: "Chat, projects, code, and agents in one place. Lume connects multiple AI providers with tools, memory, and automations — all native to macOS, with your data and keys stored locally."))
-            .font(.system(size: 13))
+            .font(.lume(.callout))
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
             .lineSpacing(2)
@@ -102,9 +102,9 @@ struct AboutView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(String(localized: "Updates"))
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.lume(.subheadline, weight: .semibold))
                 Text(updateStatusText)
-                    .font(.system(size: 11))
+                    .font(.lume(.footnote))
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -121,10 +121,10 @@ struct AboutView: View {
                     } else {
                         Image(systemName: updater.availableRelease != nil
                               ? "arrow.down.circle" : "arrow.triangle.2.circlepath")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.lume(.footnote, weight: .semibold))
                     }
                     Text(updater.availableRelease != nil ? "Update" : "Check")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.lume(.subheadline, weight: .semibold))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14).padding(.vertical, 7)
@@ -170,15 +170,15 @@ struct AboutView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.lume(.subheadline, weight: .medium))
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 20)
                 Text(title)
-                    .font(.system(size: 13))
+                    .font(.lume(.callout))
                     .foregroundStyle(.primary)
                 Spacer()
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.lume(.caption, weight: .semibold))
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 14).padding(.vertical, 11)
@@ -204,10 +204,10 @@ struct AboutView: View {
     private func techItem(_ title: String, _ value: String) -> some View {
         VStack(spacing: 2) {
             Text(title)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.lume(.caption, weight: .semibold))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(size: 12, weight: .medium))
+                .font(.lume(.subheadline, weight: .medium))
         }
         .frame(maxWidth: .infinity)
     }
@@ -217,10 +217,10 @@ struct AboutView: View {
     private var footer: some View {
         VStack(spacing: 3) {
             Text(String(localized: "© \(copyrightYear) Samuel Bacaro · Distributed under the GNU GPLv3 license"))
-                .font(.system(size: 10))
+                .font(.lume(.caption))
                 .foregroundStyle(.secondary)
             Text(String(localized: "Made with ♥ and SwiftUI"))
-                .font(.system(size: 10))
+                .font(.lume(.caption))
                 .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity)

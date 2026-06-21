@@ -188,11 +188,11 @@ struct OnboardingView: View {
                             .frame(width: 28, height: 28)
                         if step.rawValue < currentStep.rawValue {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .bold))
+                                .font(.lume(.footnote, weight: .bold))
                                 .foregroundStyle(.white)
                         } else {
                             Text("\(step.rawValue + 1)")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.lume(.footnote, weight: .semibold))
                                 .foregroundStyle(step == currentStep ? .white : .secondary)
                         }
                     }
@@ -230,7 +230,7 @@ struct OnboardingView: View {
                         .opacity(animateIn ? 1 : 0)
 
                     Image(systemName: "sparkles")
-                        .font(.system(size: 44, weight: .medium))
+                        .font(.lume(size: 44, weight: .medium))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [Color.accentColor, Color.purple],
@@ -244,11 +244,11 @@ struct OnboardingView: View {
 
                 VStack(spacing: 10) {
                     Text("Welcome to Lume")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.lume(.largeTitle, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
 
                     Text(String(localized: "Your native AI client for macOS.\nSmart chat, projects, code, and agents — all in one place."))
-                        .font(.system(size: 15))
+                        .font(.lume(.title3))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
@@ -276,10 +276,10 @@ struct OnboardingView: View {
     private func featurePill(icon: String, label: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .medium))
+                .font(.lume(.subheadline, weight: .medium))
                 .foregroundStyle(Color.accentColor)
             Text(label)
-                .font(.system(size: 12, weight: .medium))
+                .font(.lume(.subheadline, weight: .medium))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
@@ -294,9 +294,9 @@ struct OnboardingView: View {
             VStack(spacing: 24) {
                 VStack(spacing: 6) {
                     Text("Connect an AI Provider")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(.lume(.title2, weight: .bold, design: .rounded))
                     Text("Choose where Lume gets its intelligence.")
-                        .font(.system(size: 13))
+                        .font(.lume(.callout))
                         .foregroundStyle(.secondary)
                 }
                 .padding(.top, 24)
@@ -312,18 +312,18 @@ struct OnboardingView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Label("API Key", systemImage: "key.fill")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.lume(.callout, weight: .semibold))
                         Spacer()
                         if !selectedProvider.keyURL.isEmpty {
                             Link("Get key →", destination: URL(string: selectedProvider.keyURL)!)
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(Color.accentColor)
                         }
                     }
 
                     SecureField(selectedProvider.keyPlaceholder, text: $apiKey)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 13, design: .monospaced))
+                        .font(.lume(.callout, design: .monospaced))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
                         .background(Color.primary.opacity(0.05),
@@ -335,10 +335,10 @@ struct OnboardingView: View {
                     if selectedProvider == .custom {
                         VStack(alignment: .leading, spacing: 6) {
                             Label("Base URL", systemImage: "network")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.lume(.callout, weight: .semibold))
                             TextField("http://localhost:11434/v1", text: $customBaseURL)
                                 .textFieldStyle(.plain)
-                                .font(.system(size: 13, design: .monospaced))
+                                .font(.lume(.callout, design: .monospaced))
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 10)
                                 .background(Color.primary.opacity(0.05),
@@ -347,11 +347,11 @@ struct OnboardingView: View {
                                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1))
 
                             Label("Default model", systemImage: "cpu")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.lume(.callout, weight: .semibold))
                                 .padding(.top, 4)
                             TextField("llama3, mistral, phi3…", text: $customModelName)
                                 .textFieldStyle(.plain)
-                                .font(.system(size: 13, design: .monospaced))
+                                .font(.lume(.callout, design: .monospaced))
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 10)
                                 .background(Color.primary.opacity(0.05),
@@ -363,14 +363,14 @@ struct OnboardingView: View {
 
                     if let error = validationError {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.system(size: 12))
+                            .font(.lume(.subheadline))
                             .foregroundStyle(.red)
                             .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
                     if providerSaved {
                         Label("Provider saved successfully!", systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.lume(.subheadline, weight: .medium))
                             .foregroundStyle(.green)
                             .transition(.opacity.combined(with: .scale(scale: 0.9)))
                     }
@@ -404,16 +404,16 @@ struct OnboardingView: View {
                         .fill(option.color.opacity(selectedProvider == option ? 0.18 : 0.08))
                         .frame(width: 42, height: 42)
                     Image(systemName: option.icon)
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.lume(.title2, weight: .medium))
                         .foregroundStyle(option.color)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(option.name)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.lume(.body, weight: .semibold))
                         .foregroundStyle(.primary)
                     Text(option.subtitle)
-                        .font(.system(size: 11))
+                        .font(.lume(.footnote))
                         .foregroundStyle(.secondary)
                 }
 
@@ -468,13 +468,13 @@ struct OnboardingView: View {
                             .fill(Color.blue.opacity(0.1))
                             .frame(width: 72, height: 72)
                         Image(systemName: "globe")
-                            .font(.system(size: 32, weight: .medium))
+                            .font(.lume(.largeTitle, weight: .medium))
                             .foregroundStyle(Color.blue)
                     }
 
                     Text("Web Search")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .font(.system(size: 13))
+                        .font(.lume(.title2, weight: .bold, design: .rounded))
+                        .font(.lume(.callout))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
@@ -483,12 +483,12 @@ struct OnboardingView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                        .font(.system(size: 16))
+                        .font(.lume(.title3))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("DuckDuckGo on by default")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.lume(.callout, weight: .semibold))
                         Text("No setup, no key — configured by default.")
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -502,11 +502,11 @@ struct OnboardingView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Label("Google Custom Search (optional)", systemImage: "magnifyingglass.circle.fill")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.lume(.callout, weight: .semibold))
                         Spacer()
                         Link("How to set up →",
                              destination: URL(string: "https://developers.google.com/custom-search/v1/introduction")!)
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(Color.accentColor)
                     }
 
@@ -514,7 +514,7 @@ struct OnboardingView: View {
                         Text("API Key").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                         SecureField("AIzaSy...", text: $googleAPIKey)
                             .textFieldStyle(.plain)
-                            .font(.system(size: 13, design: .monospaced))
+                            .font(.lume(.callout, design: .monospaced))
                             .padding(.horizontal, 12).padding(.vertical, 9)
                             .background(Color.primary.opacity(0.05),
                                         in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -529,7 +529,7 @@ struct OnboardingView: View {
                         Text("Search Engine ID (cx)").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                         TextField("xxxxxxxxxxxxxxx", text: $googleCX)
                             .textFieldStyle(.plain)
-                            .font(.system(size: 13, design: .monospaced))
+                            .font(.lume(.callout, design: .monospaced))
                             .padding(.horizontal, 12).padding(.vertical, 9)
                             .background(Color.primary.opacity(0.05),
                                         in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -542,7 +542,7 @@ struct OnboardingView: View {
 
                     if !googleAPIKey.isEmpty && !googleCX.isEmpty {
                         Label("Google configured!", systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.lume(.subheadline, weight: .medium))
                             .foregroundStyle(.green)
                             .transition(.opacity.combined(with: .scale(scale: 0.9)))
                     }
@@ -576,7 +576,7 @@ struct OnboardingView: View {
                         .frame(width: 100, height: 100)
 
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 48, weight: .medium))
+                        .font(.lume(size: 48, weight: .medium))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [Color.green, Color.accentColor],
@@ -588,9 +588,9 @@ struct OnboardingView: View {
 
                 VStack(spacing: 10) {
                     Text("All set! 🎉")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.lume(.title1, weight: .bold, design: .rounded))
                     Text(String(localized: "Lume is set up and ready to use.\nHere's what you can do now:"))
-                        .font(.system(size: 14))
+                        .font(.lume(.body))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
@@ -631,19 +631,19 @@ struct OnboardingView: View {
                     .fill(color.opacity(0.12))
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.lume(.title3, weight: .medium))
                     .foregroundStyle(color)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.lume(.callout, weight: .semibold))
                 Text(subtitle)
-                    .font(.system(size: 11))
+                    .font(.lume(.footnote))
                     .foregroundStyle(.secondary)
             }
             Spacer()
             Image(systemName: "arrow.right")
-                .font(.system(size: 10, weight: .semibold))
+                .font(.lume(.caption, weight: .semibold))
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 14)
@@ -663,7 +663,7 @@ struct OnboardingView: View {
                     completeOnboarding()
                 }
                 .buttonStyle(.plain)
-                .font(.system(size: 13))
+                .font(.lume(.callout))
                 .foregroundStyle(.tertiary)
             } else if currentStep != .ready {
                 Button {
@@ -672,10 +672,10 @@ struct OnboardingView: View {
                     }
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "chevron.left").font(.system(size: 11, weight: .semibold))
+                        Image(systemName: "chevron.left").font(.lume(.footnote, weight: .semibold))
                         Text("Back")
                     }
-                    .font(.system(size: 13))
+                    .font(.lume(.callout))
                     .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -691,9 +691,9 @@ struct OnboardingView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Text("Start using Lume")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.lume(.body, weight: .semibold))
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.lume(.subheadline, weight: .bold))
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 24)
@@ -713,10 +713,10 @@ struct OnboardingView: View {
                                     ProgressView().scaleEffect(0.7)
                                 } else {
                                     Image(systemName: providerSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
-                                        .font(.system(size: 12, weight: .semibold))
+                                        .font(.lume(.subheadline, weight: .semibold))
                                 }
                                 Text(providerSaved ? "Saved!" : "Save")
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.lume(.callout, weight: .semibold))
                             }
                             .foregroundStyle(providerSaved ? Color.green : Color.accentColor)
                             .padding(.horizontal, 16)
@@ -737,9 +737,9 @@ struct OnboardingView: View {
                     } label: {
                         HStack(spacing: 5) {
                             Text(apiKey.isEmpty && selectedProvider != .custom ? "Skip" : "Next")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.lume(.body, weight: .semibold))
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 11, weight: .bold))
+                                .font(.lume(.footnote, weight: .bold))
                         }
                         .foregroundStyle(.white)
                         .padding(.horizontal, 20)
@@ -756,9 +756,9 @@ struct OnboardingView: View {
                 } label: {
                     HStack(spacing: 5) {
                         Text("Next")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.lume(.body, weight: .semibold))
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.lume(.footnote, weight: .bold))
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)

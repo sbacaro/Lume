@@ -5,6 +5,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.5.1] — 2026-06-21
+
+### Added
+
+- **Text zoom (accessibility)**: new **View → Zoom In / Zoom Out / Actual Size** commands (⌘+, ⌘-, ⌘0) scale all app text from a single global factor (`LumeZoom`, 80%–160%), persisted across launches.
+
+### Changed
+
+- **Unified typography system**: introduced `LumeType`, a single source of truth for app type. Every `.font(.system(size:))` across the UI (~570 call sites) was migrated to a small set of semantic roles (`largeTitle`, `title1/2/3`, `body`, `callout`, `subheadline`, `footnote`, `caption`, `caption2`), so titles, body text, and captions are consistent across panels — including the inspector, About, and Settings.
+- **Trimmed the View menu**: removed *Show Tab Bar* (window tabbing disabled), *Show/Customize Toolbar*, and *Show Sidebar*; added the Zoom commands in their place.
+
+---
+
 ## [1.5.0] — 2026-06-21
 
 ### Changed

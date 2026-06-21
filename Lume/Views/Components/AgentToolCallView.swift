@@ -25,11 +25,11 @@ struct AgentToolCallView: View {
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(toolDisplayName)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.lume(.subheadline, weight: .semibold))
                             .foregroundStyle(.primary)
 
                         Text(toolSummary)
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -37,7 +37,7 @@ struct AgentToolCallView: View {
                     Spacer()
 
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.lume(.caption, weight: .medium))
                         .foregroundStyle(.tertiary)
                 }
                 .padding(.horizontal, 12)
@@ -55,7 +55,7 @@ struct AgentToolCallView: View {
                     if !toolCall.input.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("INPUT")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.lume(.caption2, weight: .bold))
                                 .foregroundStyle(.tertiary)
                                 .tracking(1)
 
@@ -65,12 +65,12 @@ struct AgentToolCallView: View {
                             ) { key, value in
                                 HStack(alignment: .top, spacing: 6) {
                                     Text(key)
-                                        .font(.system(size: 11, design: .monospaced))
+                                        .font(.lume(.footnote, design: .monospaced))
                                         .foregroundStyle(.secondary)
                                         .frame(minWidth: 60, alignment: .trailing)
 
                                     Text(value)
-                                        .font(.system(size: 11, design: .monospaced))
+                                        .font(.lume(.footnote, design: .monospaced))
                                         .foregroundStyle(.primary)
                                         .textSelection(.enabled)
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -85,13 +85,13 @@ struct AgentToolCallView: View {
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("OUTPUT")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.lume(.caption2, weight: .bold))
                                 .foregroundStyle(.tertiary)
                                 .tracking(1)
 
                             ScrollView(.vertical) {
                                 Text(result.output)
-                                    .font(.system(size: 11, design: .monospaced))
+                                    .font(.lume(.footnote, design: .monospaced))
                                     // FIX: use Color.red, not .red (which resolves to HierarchicalShapeStyle)
                                     .foregroundStyle(result.success ? Color.primary : Color.red)
                                     .textSelection(.enabled)
@@ -120,7 +120,7 @@ struct AgentToolCallView: View {
         switch toolCall.state {
         case .pending:
             Image(systemName: "clock")
-                .font(.system(size: 11))
+                .font(.lume(.footnote))
                 .foregroundStyle(.secondary)
 
         case .running:
@@ -130,12 +130,12 @@ struct AgentToolCallView: View {
 
         case .completed:
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 13))
+                .font(.lume(.callout))
                 .foregroundStyle(Color.green)
 
         case .failed:
             Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 13))
+                .font(.lume(.callout))
                 .foregroundStyle(Color.red)
         }
     }

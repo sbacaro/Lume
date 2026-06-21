@@ -38,14 +38,14 @@ struct TerminalView: View {
     private var passwordSheet: some View {
         VStack(spacing: 20) {
             Image(systemName: "lock.shield")
-                .font(.system(size: 32))
+                .font(.lume(.largeTitle))
                 .foregroundStyle(.orange)
 
             Text("Administrator Authentication")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.lume(.title3, weight: .semibold))
 
             Text("Enter your password to run commands with elevated privileges.")
-                .font(.system(size: 12))
+                .font(.lume(.subheadline))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -106,11 +106,11 @@ struct TerminalView: View {
     private var inputArea: some View {
         HStack(spacing: 8) {
             Text(promptString)
-                .font(.system(size: 13, design: .monospaced))
+                .font(.lume(.callout, design: .monospaced))
                 .foregroundStyle(promptColor)
 
             TextField("", text: $inputText)
-                .font(.system(size: 13, design: .monospaced))
+                .font(.lume(.callout, design: .monospaced))
                 .foregroundStyle(.white)
                 .textFieldStyle(.plain)
                 .focused($inputFocused)
@@ -159,7 +159,7 @@ struct TerminalLineView: View {
 
     var body: some View {
         Text(line.text)
-            .font(.system(size: 12, design: .monospaced))
+            .font(.lume(.subheadline, design: .monospaced))
             .foregroundStyle(lineColor)
             .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)

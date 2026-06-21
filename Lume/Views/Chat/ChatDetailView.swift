@@ -98,7 +98,7 @@ struct ChatDetailView: View {
                         .background(Color.accentColor.opacity(0.04))
                         .overlay(
                             Label("Drop to attach", systemImage: "photo.badge.plus")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.lume(.callout, weight: .medium))
                                 .foregroundStyle(Color.accentColor)
                                 .padding(.horizontal, 14).padding(.vertical, 8)
                                 .glassEffect(.regular, in: Capsule())
@@ -203,32 +203,32 @@ struct ChatDetailView: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 TextField("Untitled", text: $conversation.title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.lume(.callout, weight: .semibold))
                     .textFieldStyle(.plain)
 
                 HStack(spacing: 6) {
                     if let project = conversation.project {
                         HStack(spacing: 4) {
                             Image(systemName: project.icon)
-                                .font(.system(size: 9))
+                                .font(.lume(.caption2))
                                 .foregroundStyle(LumeTheme.clay)
                             Text(project.name)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.lume(.footnote, weight: .medium))
                                 .foregroundStyle(LumeTheme.clay)
                         }
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(LumeTheme.clay.opacity(0.10), in: Capsule())
 
                         Text("·")
-                            .font(.system(size: 10))
+                            .font(.lume(.caption))
                             .foregroundStyle(.tertiary)
                     }
 
                     Image(systemName: providerIcon)
-                        .font(.system(size: 10))
+                        .font(.lume(.caption))
                         .foregroundStyle(.tertiary)
                     Text(conversation.modelName)
-                        .font(.system(size: 11))
+                        .font(.lume(.footnote))
                         .foregroundStyle(.tertiary)
 
                     // Modelo escolhido pelo roteamento automático (quando difere do preferido)
@@ -236,25 +236,25 @@ struct ChatDetailView: View {
                        let routed = providerManager.lastRoutingDecision?.model,
                        routed != conversation.modelName {
                         Text("→ \(shortModelName(routed))")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.lume(.caption, weight: .medium))
                             .foregroundStyle(Color.accentColor)
                             .help(String(localized: "Automatic routing chose \(routed) for this message"))
                     }
 
                     if providerManager.lastCacheHit {
                         Image(systemName: "bolt.fill")
-                            .font(.system(size: 9))
+                            .font(.lume(.caption2))
                             .foregroundStyle(.yellow)
                             .help("Response served from semantic cache")
                     }
 
                     // Uso da conversa: tokens + custo estimado
                     if conversation.totalTokensUsed > 0 {
-                        Text("·").font(.system(size: 10)).foregroundStyle(.tertiary)
+                        Text("·").font(.lume(.caption)).foregroundStyle(.tertiary)
                         Image(systemName: "gauge.with.dots.needle.33percent")
-                            .font(.system(size: 9)).foregroundStyle(.tertiary)
+                            .font(.lume(.caption2)).foregroundStyle(.tertiary)
                         Text(usageLabel)
-                            .font(.system(size: 11))
+                            .font(.lume(.footnote))
                             .foregroundStyle(.tertiary)
                             .help("Tokens used in this conversation and estimated cost (approximate)")
                     }
@@ -267,7 +267,7 @@ struct ChatDetailView: View {
                 HStack(spacing: 5) {
                     Circle().fill(Color.red).frame(width: 6, height: 6)
                         .shadow(color: .red.opacity(0.6), radius: 3)
-                    Text("Recording…").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                    Text("Recording…").font(.lume(.footnote, weight: .medium)).foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .glassEffect(.regular, in: Capsule())
@@ -278,9 +278,9 @@ struct ChatDetailView: View {
             if providerManager.isLoading && providerManager.streamingTokenCount > 0 {
                 HStack(spacing: 5) {
                     Image(systemName: "bolt.fill")
-                        .font(.system(size: 9)).foregroundStyle(.secondary)
+                        .font(.lume(.caption2)).foregroundStyle(.secondary)
                     Text(streamingRateLabel)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(.lume(.footnote, weight: .medium, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 8).padding(.vertical, 3)
@@ -333,7 +333,7 @@ struct ChatDetailView: View {
 
     private func headerButtonLabel(icon: String, isActive: Bool) -> some View {
         Image(systemName: icon)
-            .font(.system(size: 12, weight: .medium))
+            .font(.lume(.subheadline, weight: .medium))
             .frame(width: 26, height: 26)
             .background(
                 isActive ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.08),
@@ -404,7 +404,7 @@ struct ChatDetailView: View {
             HStack {
                 ProgressView().scaleEffect(0.7)
                 Text("Load \(min(20, conversation.messages.count - displayedMessagesCount)) earlier messages")
-                    .font(.system(size: 12))
+                    .font(.lume(.subheadline))
                 Spacer()
             }
             .padding(12)
@@ -521,8 +521,8 @@ struct ChatDetailView: View {
     /// Faixa fina acima do input indicando o modo e suas capacidades.
     private var modeCapabilityChip: some View {
         HStack(spacing: 6) {
-            Image(systemName: modeIcon).font(.system(size: 10))
-            Text(modeCapabilityLabel).font(.system(size: 11))
+            Image(systemName: modeIcon).font(.lume(.caption))
+            Text(modeCapabilityLabel).font(.lume(.footnote))
             Spacer()
         }
         .foregroundStyle(.secondary)
@@ -536,14 +536,14 @@ struct ChatDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             if conversation.referencedFiles.isEmpty {
                 Text("Nenhum arquivo referenciado ainda.")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                    .font(.lume(.footnote)).foregroundStyle(.secondary)
             } else {
                 ForEach(conversation.referencedFiles.prefix(8), id: \.self) { path in
                     HStack(spacing: 6) {
                         Image(systemName: fileIcon(for: path))
-                            .font(.system(size: 10)).foregroundStyle(.secondary)
+                            .font(.lume(.caption)).foregroundStyle(.secondary)
                         Text(URL(fileURLWithPath: path).lastPathComponent)
-                            .font(.system(size: 11)).lineLimit(1)
+                            .font(.lume(.footnote)).lineLimit(1)
                     }
                 }
             }
@@ -594,7 +594,7 @@ struct ChatDetailView: View {
                                     .frame(width: 22, height: 22)
                                 if i < progressStep {
                                     Image(systemName: "checkmark")
-                                        .font(.system(size: 9, weight: .semibold))
+                                        .font(.lume(.caption2, weight: .semibold))
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -608,7 +608,7 @@ struct ChatDetailView: View {
                     Text(providerManager.isLoading
                          ? "Processing…"
                          : String(localized: "Task progress will appear here\nautomatically as the AI makes progress."))
-                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                        .font(.lume(.footnote)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
@@ -617,10 +617,10 @@ struct ChatDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(String(localized: "\(done) of \(total) completed"))
-                            .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                            .font(.lume(.caption, weight: .medium)).foregroundStyle(.secondary)
                         Spacer()
                         Text((Double(done) / Double(max(1, total))).formatted(.percent.precision(.fractionLength(0))))
-                            .font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary)
+                            .font(.lume(.caption, design: .monospaced)).foregroundStyle(.secondary)
                     }
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
@@ -637,11 +637,11 @@ struct ChatDetailView: View {
                 ForEach(conversation.tasks) { task in
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: task.isDone ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 15))
+                            .font(.lume(.title3))
                             .foregroundStyle(task.isDone ? Color.green : Color.primary.opacity(0.25))
                             .animation(.easeInOut(duration: 0.2), value: task.isDone)
                         Text(renderMarkdown(task.text))
-                            .font(.system(size: 12))
+                            .font(.lume(.subheadline))
                             .foregroundStyle(task.isDone ? Color.secondary : Color.primary)
                             .strikethrough(task.isDone, color: .secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -687,7 +687,7 @@ struct ChatDetailView: View {
                 .frame(maxHeight: 180)
                 Button { NSWorkspace.shared.open(localURL) } label: {
                     Label("Open project folder", systemImage: "folder")
-                        .font(.system(size: 11)).foregroundStyle(Color.accentColor)
+                        .font(.lume(.footnote)).foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 6)
@@ -697,11 +697,11 @@ struct ChatDetailView: View {
 
     private func projectFileRow(icon: String, name: String, color: Color, action: (() -> Void)?) -> some View {
         let row = HStack(spacing: 8) {
-            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(color).frame(width: 16)
-            Text(name).font(.system(size: 12)).lineLimit(1).foregroundStyle(.primary)
+            Image(systemName: icon).font(.lume(.footnote)).foregroundStyle(color).frame(width: 16)
+            Text(name).font(.lume(.subheadline)).lineLimit(1).foregroundStyle(.primary)
             Spacer()
             if action != nil {
-                Image(systemName: "arrow.up.right").font(.system(size: 9)).foregroundStyle(.tertiary)
+                Image(systemName: "arrow.up.right").font(.lume(.caption2)).foregroundStyle(.tertiary)
             }
         }
         .padding(.vertical, 5).contentShape(Rectangle())
@@ -723,25 +723,25 @@ struct ChatDetailView: View {
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .strokeBorder(Color.primary.opacity(0.12), style: StrokeStyle(lineWidth: 1.5, dash: [4]))
                                 .frame(width: 40, height: 40)
-                                .overlay(Image(systemName: "doc").font(.system(size: 12)).foregroundStyle(.tertiary))
+                                .overlay(Image(systemName: "doc").font(.lume(.subheadline)).foregroundStyle(.tertiary))
                         }
                         Button { showFileImporter = true } label: {
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .strokeBorder(Color.accentColor.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [4]))
                                 .frame(width: 40, height: 40)
-                                .overlay(Image(systemName: "plus").font(.system(size: 14)).foregroundStyle(Color.accentColor))
+                                .overlay(Image(systemName: "plus").font(.lume(.body)).foregroundStyle(Color.accentColor))
                         }
                         .buttonStyle(.plain)
                     }
                     Text("Add files to give the conversation context.")
-                        .font(.system(size: 10)).foregroundStyle(.tertiary)
+                        .font(.lume(.caption)).foregroundStyle(.tertiary)
                 }
             } else {
                 if !conversation.contextTags.isEmpty {
                     FlowLayout(spacing: 4) {
                         ForEach(conversation.contextTags, id: \.self) { tag in
                             Text(tag)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(.lume(.caption, weight: .medium))
                                 .padding(.horizontal, 6).padding(.vertical, 2)
                                 .background(Color.accentColor.opacity(0.10), in: Capsule())
                                 .foregroundStyle(Color.accentColor)
@@ -750,31 +750,31 @@ struct ChatDetailView: View {
                 }
                 ForEach(attachedFiles, id: \.name) { file in
                     HStack(spacing: 8) {
-                        Image(systemName: "doc.text").font(.system(size: 10)).foregroundStyle(LumeTheme.clay)
-                        Text(file.name).font(.system(size: 11)).lineLimit(1).foregroundStyle(.secondary)
+                        Image(systemName: "doc.text").font(.lume(.caption)).foregroundStyle(LumeTheme.clay)
+                        Text(file.name).font(.lume(.footnote)).lineLimit(1).foregroundStyle(.secondary)
                         Spacer()
-                        Text("~\(file.tokenEstimate)t").font(.system(size: 9)).foregroundStyle(.tertiary)
+                        Text("~\(file.tokenEstimate)t").font(.lume(.caption2)).foregroundStyle(.tertiary)
                     }
                 }
                 ForEach(conversation.referencedFiles, id: \.self) { filePath in
                     HStack(spacing: 8) {
                         Image(systemName: fileIcon(for: filePath))
-                            .font(.system(size: 10)).foregroundStyle(LumeTheme.clay)
+                            .font(.lume(.caption)).foregroundStyle(LumeTheme.clay)
                         Text(URL(fileURLWithPath: filePath).lastPathComponent)
-                            .font(.system(size: 11)).lineLimit(1).foregroundStyle(.primary)
+                            .font(.lume(.footnote)).lineLimit(1).foregroundStyle(.primary)
                         Spacer()
                         Button {
                             conversation.referencedFiles.removeAll { $0 == filePath }
                             try? modelContext.save()
                         } label: {
-                            Image(systemName: "xmark").font(.system(size: 9)).foregroundStyle(.tertiary)
+                            Image(systemName: "xmark").font(.lume(.caption2)).foregroundStyle(.tertiary)
                         }
                         .buttonStyle(.plain)
                     }
                 }
                 Button { showFileImporter = true } label: {
                     Label("Add", systemImage: "plus")
-                        .font(.system(size: 11)).foregroundStyle(Color.accentColor)
+                        .font(.lume(.footnote)).foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
             }
@@ -787,22 +787,22 @@ struct ChatDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             if editingNotes {
                 TextEditor(text: $conversation.userNotes)
-                    .font(.system(size: 11)).frame(minHeight: 60, maxHeight: 120)
+                    .font(.lume(.footnote)).frame(minHeight: 60, maxHeight: 120)
                     .scrollContentBackground(.hidden).padding(6)
                     .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 HStack {
                     Spacer()
                     Button("Save") { editingNotes = false; try? modelContext.save() }
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.lume(.footnote, weight: .semibold))
                         .buttonStyle(.borderedProminent).controlSize(.small)
                 }
             } else {
                 Text(conversation.userNotes)
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                    .font(.lume(.footnote)).foregroundStyle(.secondary)
                     .onTapGesture { editingNotes = true }
                 Button { editingNotes = true } label: {
                     Label("Edit", systemImage: "pencil")
-                        .font(.system(size: 10)).foregroundStyle(Color.accentColor)
+                        .font(.lume(.caption)).foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
             }
@@ -1146,14 +1146,14 @@ struct ChatDetailView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 13)).foregroundStyle(.orange)
+                        .font(.lume(.callout)).foregroundStyle(.orange)
                     Text(msg)
-                        .font(.system(size: 12)).foregroundStyle(.primary)
+                        .font(.lume(.subheadline)).foregroundStyle(.primary)
                         .textSelection(.enabled)
                         .lineLimit(10).fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 8)
                     Button { errorToast = nil } label: {
-                        Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                        Image(systemName: "xmark").font(.lume(.caption, weight: .bold))
                             .foregroundStyle(.secondary)
                     }.buttonStyle(.plain)
                 }
@@ -1163,11 +1163,11 @@ struct ChatDetailView: View {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(msg, forType: .string)
                     } label: {
-                        Label("Copy", systemImage: "doc.on.doc").font(.system(size: 11))
+                        Label("Copy", systemImage: "doc.on.doc").font(.lume(.footnote))
                     }
                     .buttonStyle(.plain).foregroundStyle(.secondary)
                     Button { ErrorLog.reveal() } label: {
-                        Label("Open log", systemImage: "doc.text.magnifyingglass").font(.system(size: 11))
+                        Label("Open log", systemImage: "doc.text.magnifyingglass").font(.lume(.footnote))
                     }
                     .buttonStyle(.plain).foregroundStyle(.secondary)
                 }
@@ -1197,18 +1197,18 @@ struct ChatDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: pending.isDestructive ? "exclamationmark.triangle.fill" : "hand.raised.fill")
-                    .font(.system(size: 13))
+                    .font(.lume(.callout))
                     .foregroundStyle(pending.isDestructive ? .orange : Color.accentColor)
                 Text(pending.summary)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.lume(.callout, weight: .semibold))
                 Spacer()
                 Text(pending.toolName)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(.lume(.caption, design: .monospaced))
                     .foregroundStyle(.tertiary)
             }
             ScrollView {
                 Text(pending.detail)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.lume(.footnote, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1218,7 +1218,7 @@ struct ChatDetailView: View {
             .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             HStack(spacing: 8) {
                 Text("The agent wants to run this action.")
-                    .font(.system(size: 11)).foregroundStyle(.tertiary)
+                    .font(.lume(.footnote)).foregroundStyle(.tertiary)
                 Spacer()
                 Button("Decline") { approval.resolve(false) }
                     .buttonStyle(.bordered)
@@ -1248,12 +1248,12 @@ struct ChatDetailView: View {
     private func queuedChip(_ text: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 11)).foregroundStyle(Color.accentColor)
+                .font(.lume(.footnote)).foregroundStyle(Color.accentColor)
             Text("In queue: \(text)")
-                .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                .font(.lume(.footnote)).foregroundStyle(.secondary).lineLimit(1)
             Spacer()
             Button { queuedMessage = nil } label: {
-                Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                Image(systemName: "xmark").font(.lume(.caption, weight: .bold))
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -1303,15 +1303,15 @@ struct EditMessageSheet: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Edit message").font(.system(size: 16, weight: .bold, design: .rounded))
+            Text("Edit message").font(.lume(.title3, weight: .bold, design: .rounded))
             TextEditor(text: $text)
-                .font(.system(size: 14)).frame(minHeight: 120, maxHeight: 300)
+                .font(.lume(.body)).frame(minHeight: 120, maxHeight: 300)
                 .scrollContentBackground(.hidden).padding(10)
                 .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1))
             Text("The conversation will restart from this message. The previous version is saved in “Previous versions”.")
-                .font(.system(size: 11)).foregroundStyle(.secondary)
+                .font(.lume(.footnote)).foregroundStyle(.secondary)
             HStack {
                 Button("Cancel", role: .cancel) { onCancel() }.buttonStyle(.plain).foregroundStyle(.secondary)
                 Spacer()
@@ -1337,17 +1337,17 @@ struct VersionHistorySheet: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("Previous versions")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.lume(.title3, weight: .bold, design: .rounded))
                 Spacer()
                 Button { onClose() } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 15)).foregroundStyle(.secondary)
+                        .font(.lume(.title3)).foregroundStyle(.secondary)
                 }.buttonStyle(.plain)
             }
             .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 10)
 
             Text("Excerpts are archived when you edit or restart the conversation. Restoring replaces the current excerpt — reversibly, since the current state is also archived.")
-                .font(.system(size: 11)).foregroundStyle(.secondary)
+                .font(.lume(.footnote)).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 20).padding(.bottom, 12)
 
@@ -1356,9 +1356,9 @@ struct VersionHistorySheet: View {
             if branches.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 28)).foregroundStyle(.tertiary)
+                        .font(.lume(.title1)).foregroundStyle(.tertiary)
                     Text("No archived versions")
-                        .font(.system(size: 13)).foregroundStyle(.secondary)
+                        .font(.lume(.callout)).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -1377,23 +1377,23 @@ struct VersionHistorySheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Label(branch.label, systemImage: "clock.arrow.circlepath")
-                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(.primary)
+                    .font(.lume(.subheadline, weight: .semibold)).foregroundStyle(.primary)
                 Spacer()
                 Text(branch.createdAt.formatted(.relative(presentation: .named)))
-                    .font(.system(size: 10)).foregroundStyle(.tertiary)
+                    .font(.lume(.caption)).foregroundStyle(.tertiary)
             }
             Text(branch.preview)
-                .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2)
+                .font(.lume(.subheadline)).foregroundStyle(.secondary).lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 8) {
                 Text("\(branch.messages.count) messages")
-                    .font(.system(size: 10)).foregroundStyle(.tertiary)
+                    .font(.lume(.caption)).foregroundStyle(.tertiary)
                 Spacer()
                 Button(role: .destructive) { onDelete(branch) } label: {
-                    Image(systemName: "trash").font(.system(size: 11))
+                    Image(systemName: "trash").font(.lume(.footnote))
                 }.buttonStyle(.plain).foregroundStyle(.secondary)
                 Button { onRestore(branch) } label: {
-                    Text("Restore").font(.system(size: 11, weight: .semibold))
+                    Text("Restore").font(.lume(.footnote, weight: .semibold))
                 }.buttonStyle(.borderedProminent).controlSize(.small)
             }
         }
@@ -1418,11 +1418,11 @@ struct InspectorSection<Content: View>: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: icon)
-                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Color.accentColor)
-                    Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(.primary)
+                        .font(.lume(.footnote, weight: .medium)).foregroundStyle(Color.accentColor)
+                    Text(title).font(.lume(.subheadline, weight: .semibold)).foregroundStyle(.primary)
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 9, weight: .medium)).foregroundStyle(.tertiary)
+                        .font(.lume(.caption2, weight: .medium)).foregroundStyle(.tertiary)
                 }
                 .padding(.horizontal, 12).padding(.vertical, 9)
                 .contentShape(Rectangle())
@@ -1442,10 +1442,10 @@ struct EmptyStateView: View {
     let modelName: String
     var body: some View {
         VStack(spacing: 20) {
-            Text(LumeTheme.greetingEmoji()).font(.system(size: 40))
+            Text(LumeTheme.greetingEmoji()).font(.lume(size: 40))
             VStack(spacing: 6) {
-                Text("\(LumeTheme.greeting())!").font(.system(size: 22, weight: .semibold))
-                Text("How can I help today?").font(.system(size: 14)).foregroundStyle(.secondary)
+                Text("\(LumeTheme.greeting())!").font(.lume(.title2, weight: .semibold))
+                Text("How can I help today?").font(.lume(.body)).foregroundStyle(.secondary)
             }
             HStack(spacing: 8) {
                 SuggestionChip(icon: "globe", text: String(localized: "Create a website"))
@@ -1464,8 +1464,8 @@ struct SuggestionChip: View {
     let icon: String; let text: String
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(LumeTheme.clay)
-            Text(text).font(.system(size: 12))
+            Image(systemName: icon).font(.lume(.footnote)).foregroundStyle(LumeTheme.clay)
+            Text(text).font(.lume(.subheadline))
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
         .background(Color(.controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -1479,13 +1479,13 @@ struct AttachmentChipView: View {
     let onRemove: () -> Void
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: fileIcon).font(.system(size: 11, weight: .medium)).foregroundStyle(LumeTheme.clay)
+            Image(systemName: fileIcon).font(.lume(.footnote, weight: .medium)).foregroundStyle(LumeTheme.clay)
             VStack(alignment: .leading, spacing: 0) {
-                Text(file.name).font(.system(size: 11, weight: .medium)).lineLimit(1)
-                Text("~\(file.tokenEstimate) tokens").font(.system(size: 9)).foregroundStyle(.tertiary)
+                Text(file.name).font(.lume(.footnote, weight: .medium)).lineLimit(1)
+                Text("~\(file.tokenEstimate) tokens").font(.lume(.caption2)).foregroundStyle(.tertiary)
             }
             Button(action: onRemove) {
-                Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundStyle(.secondary)
+                Image(systemName: "xmark").font(.lume(.caption2, weight: .bold)).foregroundStyle(.secondary)
             }.buttonStyle(.plain)
         }
         .padding(.horizontal, 10).padding(.vertical, 6)

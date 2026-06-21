@@ -54,7 +54,7 @@ struct ProviderSettingsView: View {
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "bolt.circle")
-                        .font(.system(size: 36))
+                        .font(.lume(.largeTitle))
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
                     Text("Add a provider to get started")
@@ -93,11 +93,11 @@ struct ProviderChip: View {
                         .fill(isSelected ? Color.accentColor : Color.primary.opacity(0.08))
                         .frame(width: 22, height: 22)
                     Image(systemName: providerIcon)
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.lume(.caption, weight: .semibold))
                         .foregroundStyle(isSelected ? .white : Color.secondary)
                 }
                 Text(provider.name)
-                    .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                    .font(.lume(.subheadline, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(isSelected ? Color.primary : Color.secondary)
                 if provider.isActive {
                     Circle()
@@ -171,7 +171,7 @@ struct ProviderDetailView: View {
                     }
                     settingsSection("Tipo") {
                         Text(provider.providerType.capitalized.replacingOccurrences(of: "_", with: " "))
-                            .font(.system(size: 13))
+                            .font(.lume(.callout))
                             .padding(7)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
@@ -202,7 +202,7 @@ struct ProviderDetailView: View {
                             showPassword.toggle()
                         } label: {
                             Image(systemName: showPassword ? "eye.slash" : "eye")
-                                .font(.system(size: 13))
+                                .font(.lume(.callout))
                                 .foregroundStyle(.secondary)
                                 .frame(width: 28, height: 28)
                                 .background(Color.primary.opacity(0.06),
@@ -218,7 +218,7 @@ struct ProviderDetailView: View {
                                     ProgressView().scaleEffect(0.6).frame(width: 12)
                                 } else {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 12))
+                                        .font(.lume(.subheadline))
                                 }
                                 Text(isValidating ? "Validating…" : "Validate and Save")
                             }
@@ -230,10 +230,10 @@ struct ProviderDetailView: View {
                     if !validationMessage.isEmpty {
                         HStack(spacing: 4) {
                             Image(systemName: validationMessage.contains("✓") ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(validationMessage.contains("✓") ? Color.green : Color.orange)
                             Text(validationMessage)
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -244,7 +244,7 @@ struct ProviderDetailView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text(String(localized: "\(displayedModels.count) models available"))
-                                .font(.system(size: 11))
+                                .font(.lume(.footnote))
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Button {
@@ -255,7 +255,7 @@ struct ProviderDetailView: View {
                                         ProgressView().scaleEffect(0.6)
                                     } else {
                                         Image(systemName: "arrow.clockwise")
-                                            .font(.system(size: 10))
+                                            .font(.lume(.caption))
                                     }
                                     Text(isFetchingModels ? "Searching…" : "Refresh list")
                                 }
@@ -296,9 +296,9 @@ struct ProviderDetailView: View {
                         VStack(spacing: 4) {
                             Slider(value: $provider.temperature, in: 0...2, step: 0.1)
                             HStack {
-                                Text("Precise").font(.system(size: 10)).foregroundStyle(.tertiary)
+                                Text("Precise").font(.lume(.caption)).foregroundStyle(.tertiary)
                                 Spacer()
-                                Text("Creative").font(.system(size: 10)).foregroundStyle(.tertiary)
+                                Text("Creative").font(.lume(.caption)).foregroundStyle(.tertiary)
                             }
                         }
                     }
@@ -318,7 +318,7 @@ struct ProviderDetailView: View {
                                     saveProvider()
                                 }
                                 .buttonStyle(.plain)
-                                .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                                .font(.lume(.footnote, weight: isSelected ? .semibold : .medium))
                                 .foregroundStyle(isSelected ? Color.primary : Color.secondary)
                                 .padding(.horizontal, 12).padding(.vertical, 5)
                                 .background(
@@ -336,7 +336,7 @@ struct ProviderDetailView: View {
                     Toggle(isOn: $provider.isActive) {
                         HStack(spacing: 6) {
                             Text("Active Provider")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.lume(.callout, weight: .semibold))
                             if provider.isActive {
                                 Circle().fill(Color.green).frame(width: 6, height: 6)
                                     .shadow(color: .green.opacity(0.6), radius: 2)
@@ -468,7 +468,7 @@ struct AddProviderView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Add New Provider")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.lume(.title2, weight: .bold, design: .rounded))
 
             Picker("Provider Type", selection: $selectedType) {
                 Text("OpenAI").tag("openai")

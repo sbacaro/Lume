@@ -37,9 +37,9 @@ struct NewProjectSheet: View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Create a new project")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.lume(.title2, weight: .bold, design: .rounded))
                 Text("A dedicated place for ongoing work, where context accumulates over time. Files and instructions live in a folder on your computer.")
-                    .font(.system(size: 13)).foregroundStyle(.secondary)
+                    .font(.lume(.callout)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             VStack(spacing: 10) {
@@ -59,14 +59,14 @@ struct NewProjectSheet: View {
             HStack(spacing: 16) {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(Color.primary.opacity(0.10)).frame(width: 44, height: 44)
-                    .overlay(Image(systemName: icon).font(.system(size: 18, weight: .medium)).foregroundStyle(.primary))
+                    .overlay(Image(systemName: icon).font(.lume(.title2, weight: .medium)).foregroundStyle(.primary))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(.primary)
-                    Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(title).font(.lume(.body, weight: .semibold)).foregroundStyle(.primary)
+                    Text(subtitle).font(.lume(.subheadline)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .medium)).foregroundStyle(.tertiary)
+                Image(systemName: "chevron.right").font(.lume(.subheadline, weight: .medium)).foregroundStyle(.tertiary)
             }
             .padding(16)
             .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -123,20 +123,20 @@ struct FromScratchView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 10) {
                 Button { onBack() } label: {
-                    Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+                    Image(systemName: "chevron.left").font(.lume(.callout, weight: .semibold)).foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                Text("Start from scratch").font(.system(size: 18, weight: .bold, design: .rounded))
+                Text("Start from scratch").font(.lume(.title2, weight: .bold, design: .rounded))
             }
 
             Text(String(localized: "A folder **~/Lume/\(sanitizedName.isEmpty ? "project-name" : sanitizedName)** will be created on your computer."))
-                .font(.system(size: 12)).foregroundStyle(.secondary)
+                .font(.lume(.subheadline)).foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Project Name").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 TextField("My Project", text: $name).textFieldStyle(.roundedBorder)
                 if !name.isEmpty {
-                    Text("~/Lume/\(sanitizedName)").font(.system(size: 10, design: .monospaced)).foregroundStyle(.tertiary)
+                    Text("~/Lume/\(sanitizedName)").font(.lume(.caption, design: .monospaced)).foregroundStyle(.tertiary)
                 }
             }
 
@@ -145,7 +145,7 @@ struct FromScratchView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 36, maximum: 40), spacing: 6)], spacing: 6) {
                     ForEach(icons, id: \.self) { i in
                         Button { icon = i } label: {
-                            Image(systemName: i).font(.system(size: 14))
+                            Image(systemName: i).font(.lume(.body))
                                 .frame(width: 34, height: 34)
                                 .background(icon == i ? Color.accentColor.opacity(0.18) : Color.primary.opacity(0.05),
                                             in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -160,7 +160,7 @@ struct FromScratchView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Instructions for the assistant").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 TextEditor(text: $systemPrompt)
-                    .font(.system(size: 12)).frame(height: 72)
+                    .font(.lume(.subheadline)).frame(height: 72)
                     .scrollContentBackground(.hidden).padding(8)
                     .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
@@ -245,14 +245,14 @@ struct ImportConversationView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 10) {
                 Button { onBack() } label: {
-                    Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+                    Image(systemName: "chevron.left").font(.lume(.callout, weight: .semibold)).foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                Text("Import a project").font(.system(size: 18, weight: .bold, design: .rounded))
+                Text("Import a project").font(.lume(.title2, weight: .bold, design: .rounded))
             }
 
             Text(String(localized: "Select a conversation to import as a project. The history will be saved in **~/Lume/\(projectName.isEmpty ? "..." : projectName)**."))
-                .font(.system(size: 12)).foregroundStyle(.secondary)
+                .font(.lume(.subheadline)).foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Project Name").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
@@ -262,7 +262,7 @@ struct ImportConversationView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Select Conversation").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 if conversations.isEmpty {
-                    Text("No conversations available").font(.system(size: 12)).foregroundStyle(.tertiary)
+                    Text("No conversations available").font(.lume(.subheadline)).foregroundStyle(.tertiary)
                         .frame(maxWidth: .infinity).padding(16)
                         .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
                 } else {
@@ -339,12 +339,12 @@ private struct ConversationRowButton: View {
         Button(action: onTap) {
             HStack(spacing: 10) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 14))
+                    .font(.lume(.body))
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(conv.title).font(.system(size: 13)).lineLimit(1).foregroundStyle(.primary)
+                    Text(conv.title).font(.lume(.callout)).lineLimit(1).foregroundStyle(.primary)
                     Text("\(conv.messages.count) messages · \(conv.updatedAt.formatted(.relative(presentation: .named)))")
-                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                        .font(.lume(.caption)).foregroundStyle(.secondary)
                 }
                 Spacer()
             }

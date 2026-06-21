@@ -41,7 +41,7 @@ struct CoworkDashboardView: View {
                     ModeSecondaryButton(label: "New conversation", accent: LumeTheme.clay, action: onNewConversation)
                 }
                 Text("A project connects a folder Lume can read, write, and organize.")
-                    .font(.system(size: 12)).foregroundStyle(.tertiary)
+                    .font(.lume(.subheadline)).foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center).frame(maxWidth: 360)
                 CapabilityGrid(items: [
                     (icon: "doc.on.doc", text: "Read & write your files"),
@@ -66,11 +66,11 @@ struct CoworkDashboardView: View {
                     .fill(color.opacity(0.12))
                     .frame(width: 26, height: 26)
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.lume(.footnote, weight: .medium))
                     .foregroundStyle(color)
             }
             Text(text)
-                .font(.system(size: 12))
+                .font(.lume(.subheadline))
                 .foregroundStyle(.primary)
             Spacer()
         }
@@ -85,14 +85,14 @@ struct CoworkDashboardView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Cowork")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.lume(.title1, weight: .bold, design: .rounded))
                         Text("Projects, tasks, and progress")
-                            .font(.system(size: 13)).foregroundStyle(.secondary)
+                            .font(.lume(.callout)).foregroundStyle(.secondary)
                     }
                     Spacer()
                     Button(action: onNewConversation) {
                         Label("New task", systemImage: "plus")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.lume(.subheadline, weight: .medium))
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -110,7 +110,7 @@ struct CoworkDashboardView: View {
                     dashSection("Projects", icon: "folder") {
                         Button(action: onNewProject) {
                             Label("New Project", systemImage: "plus")
-                                .font(.system(size: 11)).foregroundStyle(.secondary)
+                                .font(.lume(.footnote)).foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -121,8 +121,8 @@ struct CoworkDashboardView: View {
                         }
                         Button(action: onNewProject) {
                             VStack(spacing: 8) {
-                                Image(systemName: "plus").font(.system(size: 20)).foregroundStyle(.tertiary)
-                                Text("New Project").font(.system(size: 12)).foregroundStyle(.tertiary)
+                                Image(systemName: "plus").font(.lume(.title2)).foregroundStyle(.tertiary)
+                                Text("New Project").font(.lume(.subheadline)).foregroundStyle(.tertiary)
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 90)
@@ -135,11 +135,11 @@ struct CoworkDashboardView: View {
                     }
                 } else {
                     VStack(spacing: 12) {
-                        Image(systemName: "folder.badge.plus").font(.system(size: 36)).foregroundStyle(.tertiary)
+                        Image(systemName: "folder.badge.plus").font(.lume(.largeTitle)).foregroundStyle(.tertiary)
                             .symbolRenderingMode(.hierarchical)
-                        Text("No projects yet").font(.system(size: 14, weight: .medium))
+                        Text("No projects yet").font(.lume(.body, weight: .medium))
                         Text("Create a project to organize conversations and keep persistent context.")
-                            .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            .font(.lume(.subheadline)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                         Button("Create first project", action: onNewProject).buttonStyle(.borderedProminent)
                     }
                     .frame(maxWidth: .infinity)
@@ -155,14 +155,14 @@ struct CoworkDashboardView: View {
                         ForEach(tasks.filter { !$0.isCompleted }.prefix(5)) { task in
                             HStack(spacing: 12) {
                                 Image(systemName: "clock")
-                                    .font(.system(size: 12)).foregroundStyle(.orange)
+                                    .font(.lume(.subheadline)).foregroundStyle(.orange)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(task.title).font(.system(size: 13)).lineLimit(1)
+                                    Text(task.title).font(.lume(.callout)).lineLimit(1)
                                     Text(task.scheduledAt.formatted(date: .abbreviated, time: .shortened))
-                                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                                        .font(.lume(.footnote)).foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                Text(task.recurrence).font(.system(size: 10)).foregroundStyle(.tertiary)
+                                Text(task.recurrence).font(.lume(.caption)).foregroundStyle(.tertiary)
                                     .padding(.horizontal, 6).padding(.vertical, 2)
                                     .background(Color.primary.opacity(0.06), in: Capsule())
                             }
@@ -183,11 +183,11 @@ struct CoworkDashboardView: View {
                                     Circle()
                                         .fill(conv.messages.isEmpty ? Color.primary.opacity(0.1) : Color.accentColor.opacity(0.3))
                                         .frame(width: 8, height: 8)
-                                    Text(conv.title).font(.system(size: 13)).lineLimit(1).foregroundStyle(.primary)
+                                    Text(conv.title).font(.lume(.callout)).lineLimit(1).foregroundStyle(.primary)
                                     Spacer()
                                     Text(conv.updatedAt.formatted(.relative(presentation: .named)))
-                                        .font(.system(size: 10)).foregroundStyle(.tertiary)
-                                    Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.tertiary)
+                                        .font(.lume(.caption)).foregroundStyle(.tertiary)
+                                    Image(systemName: "chevron.right").font(.lume(.caption)).foregroundStyle(.tertiary)
                                 }
                                 .padding(.horizontal, 12).padding(.vertical, 8)
                                 .background(Color(.controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -207,13 +207,13 @@ struct CoworkDashboardView: View {
     private func statCard(value: String, label: String, icon: String, color: Color) -> some View {
         VStack(spacing: 6) {
             HStack {
-                Image(systemName: icon).font(.system(size: 12)).foregroundStyle(color)
+                Image(systemName: icon).font(.lume(.subheadline)).foregroundStyle(color)
                 Spacer()
             }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(value).font(.system(size: 22, weight: .bold, design: .rounded))
-                    Text(label).font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text(value).font(.lume(.title2, weight: .bold, design: .rounded))
+                    Text(label).font(.lume(.footnote)).foregroundStyle(.secondary)
                 }
                 Spacer()
             }
@@ -228,7 +228,7 @@ struct CoworkDashboardView: View {
     private func dashSection<Action: View>(_ title: String, icon: String, @ViewBuilder action: () -> Action) -> some View {
         HStack {
             Label(title, systemImage: icon)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.lume(.body, weight: .semibold))
             Spacer()
             action()
         }
@@ -246,18 +246,18 @@ struct ProjectCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Image(systemName: project.icon)
-                        .font(.system(size: 18))
+                        .font(.lume(.title2))
                         .foregroundStyle(LumeTheme.clay)
                     Spacer()
                     Text("\(project.conversations.count)")
-                        .font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
+                        .font(.lume(.caption, weight: .medium)).foregroundStyle(.tertiary)
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(Color.primary.opacity(0.06), in: Capsule())
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(project.name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Text(project.name).font(.lume(.callout, weight: .semibold)).lineLimit(1)
                     Text(project.updatedAt.formatted(.relative(presentation: .named)))
-                        .font(.system(size: 10)).foregroundStyle(.tertiary)
+                        .font(.lume(.caption)).foregroundStyle(.tertiary)
                 }
             }
             .padding(14)

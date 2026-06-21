@@ -18,9 +18,9 @@
 
 ---
 
-## What's new in v1.5.0
+## What's new in v1.5.1
 
-Lume is now free software, relicensed from MIT to the **GNU General Public License v3.0**. You're free to use, study, share, and modify Lume — and any distributed derivative must remain open under the same license. No code behavior changes in this release. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for details.
+Lume now has a unified typography system — titles, body text, and captions are consistent across every panel — plus an accessibility **text zoom** (View → Zoom In/Out, ⌘+ / ⌘- / ⌘0) and a tidier View menu. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for details.
 
 ## Three modes, each purpose-built
 
