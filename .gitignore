@@ -28,3 +28,8 @@ release/
 # Secrets
 *.env
 secrets.plist
+
+# Binaries & Installers
+*.dmg
+*.pkg
+

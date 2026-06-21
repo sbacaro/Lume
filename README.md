@@ -12,15 +12,15 @@
   <img src="https://img.shields.io/badge/macOS-26%2B-blue" alt="macOS 26+">
   <img src="https://img.shields.io/badge/Swift-6.0-orange" alt="Swift 6.0">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs Welcome"></a>
+  <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/code%20of-conduct-ff69b4.svg" alt="Code of Conduct"></a>
 </p>
 
 ---
 
-## What's new in v1.4.0
+## What's new in v1.4.3
 
-The three modes are now genuinely distinct experiences, MCP is fully functional, RAG uses
-contextual embeddings with on-disk caching, and the project moved to the Swift 6 language
-mode. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for the full list.
+Lume now features full syntax highlighting and line numbers when inspecting Artifact source code under the **Code** tab, along with crash prevention fallbacks for system directory resolution and code cleanup. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for details.
 
 ## Three modes, each purpose-built
 
