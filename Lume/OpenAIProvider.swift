@@ -423,20 +423,61 @@ final class OpenAIProvider: AIProvider {
     }
     nonisolated static func estTokens(_ any: Any) -> Int { charCount(any) / 4 }
 
-    /// Mantém o pacote dentro do orçamento durante o loop de ferramentas truncando o
-    /// CONTEÚDO das mensagens `tool` mais antigas (que dominam o tamanho), preservando a
-    /// ordem assistant→tool e as últimas `keepRecent` mensagens intactas.
+    /// Mantém o pacote dentro do orçamento e GARANTE que ele caiba na janela do modelo.
+    /// Estratégia em camadas (da mais barata/menos destrutiva à mais agressiva):
+    ///   1) Trunca o conteúdo das mensagens `tool` ANTIGAS (que dominam o tamanho).
+    ///   2) Se ainda estourar (o volume está em mensagens user/assistant ou nas recentes),
+    ///      trunca o CONTEÚDO de texto das mensagens da mais ANTIGA p/ a mais nova, preservando
+    ///      a CONTAGEM e os PAPÉIS — não remove mensagens, então não quebra o pareamento
+    ///      assistant↔tool exigido pela API (remover um `tool` órfão geraria outro 400).
+    ///   3) Último caso: trunca também a última mensagem e o system, para nunca enviar um
+    ///      pacote acima do limite (melhor um corte do que falhar com "context length exceeded").
     nonisolated static func trimMessagesToBudget(_ messages: inout [[String: Any]], budgetTokens: Int, keepRecent: Int = 6) {
         func total() -> Int { messages.reduce(0) { $0 + estTokens($1["content"] ?? "") } }
         guard total() > budgetTokens else { return }
+
+        // 1) Saídas de ferramenta antigas → 240 chars (preserva as últimas keepRecent).
         let cutoff = max(0, messages.count - keepRecent)
         for i in 0..<cutoff {
-            if total() <= budgetTokens { break }
+            if total() <= budgetTokens { return }
             if (messages[i]["role"] as? String) == "tool",
                let c = messages[i]["content"] as? String, c.count > 240 {
                 messages[i]["content"] = String(c.prefix(240))
                     + "\n…[saída de ferramenta antiga truncada para caber no contexto]"
             }
+        }
+        if total() <= budgetTokens { return }
+
+        // Helper: trunca o conteúdo de TEXTO da mensagem `i` o suficiente p/ caber, com um piso.
+        func truncate(at i: Int, floorChars: Int) {
+            guard let c = messages[i]["content"] as? String, c.count > floorChars else { return }
+            let over = total() - budgetTokens
+            guard over > 0 else { return }
+            let removeChars = min(c.count - floorChars, over * 4 + 8)   // ~4 chars/token + folga
+            let keep = max(floorChars, c.count - removeChars)
+            messages[i]["content"] = String(c.prefix(keep)) + "…[truncado p/ caber no contexto]"
+        }
+
+        let hasSystem = (messages.first?["role"] as? String) == "system"
+        let firstIdx = hasSystem ? 1 : 0
+        let lastIdx = messages.count - 1
+
+        // 2) Corpo da conversa (exceto system e a última mensagem), do mais antigo ao mais novo.
+        if lastIdx >= firstIdx {
+            for i in firstIdx..<lastIdx {
+                if total() <= budgetTokens { return }
+                truncate(at: i, floorChars: 80)
+            }
+        }
+        if total() <= budgetTokens { return }
+        // 3a) Última mensagem (geralmente o turno atual) — piso maior p/ preservar a pergunta.
+        if lastIdx >= 0 { truncate(at: lastIdx, floorChars: 200) }
+        if total() <= budgetTokens { return }
+        // 3b) System (raro) e, por fim, corte duro sem piso — nunca enviar acima do limite.
+        if hasSystem { truncate(at: 0, floorChars: 200) }
+        for i in messages.indices {
+            if total() <= budgetTokens { return }
+            truncate(at: i, floorChars: 0)
         }
     }
 

@@ -396,15 +396,20 @@ final class AnthropicProvider: AIProvider {
     }
     nonisolated static func estTokens(_ any: Any) -> Int { charCount(any) / 4 }
 
-    /// Mantém o pacote dentro do orçamento durante o loop de ferramentas truncando o
-    /// CONTEÚDO dos `tool_result` mais antigos (que dominam o tamanho), preservando o
-    /// pareamento tool_use/tool_result e as últimas `keepRecent` mensagens intactas.
+    /// Mantém o pacote dentro do orçamento e GARANTE que ele caiba na janela do modelo.
+    /// (O system NÃO está em `messages` na API da Anthropic — vai num campo separado.)
+    /// Camadas: 1) trunca `tool_result` antigos; 2) se ainda estourar, trunca blocos de
+    /// `text` (e strings) das mensagens da mais ANTIGA p/ a mais nova, preservando contagem
+    /// e pareamento tool_use↔tool_result (não remove mensagens); 3) último caso, trunca a
+    /// última mensagem — nunca enviar acima do limite (melhor cortar do que falhar com 400).
     nonisolated static func trimMessagesToBudget(_ messages: inout [[String: Any]], budgetTokens: Int, keepRecent: Int = 6) {
         func total() -> Int { messages.reduce(0) { $0 + estTokens($1["content"] ?? "") } }
         guard total() > budgetTokens else { return }
+
+        // 1) tool_result antigos → 240 chars (preserva as últimas keepRecent).
         let cutoff = max(0, messages.count - keepRecent)
         for i in 0..<cutoff {
-            if total() <= budgetTokens { break }
+            if total() <= budgetTokens { return }
             guard let content = messages[i]["content"] as? [[String: Any]] else { continue }
             var newContent = content
             var changed = false
@@ -417,6 +422,49 @@ final class AnthropicProvider: AIProvider {
                 }
             }
             if changed { messages[i]["content"] = newContent }
+        }
+        if total() <= budgetTokens { return }
+
+        // Helper: trunca o conteúdo de TEXTO da mensagem `i` (String simples ou blocos), com piso.
+        func truncateMessage(at i: Int, floorChars: Int) {
+            var budgetRemoval = (total() - budgetTokens) * 4 + 8   // ~4 chars/token + folga
+            guard budgetRemoval > 0 else { return }
+            if let s = messages[i]["content"] as? String, s.count > floorChars {
+                let remove = min(s.count - floorChars, budgetRemoval)
+                messages[i]["content"] = String(s.prefix(max(floorChars, s.count - remove))) + "…[truncado p/ caber no contexto]"
+                return
+            }
+            guard var blocks = messages[i]["content"] as? [[String: Any]] else { return }
+            for j in blocks.indices {
+                if budgetRemoval <= 0 { break }
+                let type = blocks[j]["type"] as? String
+                if type == "text", let t = blocks[j]["text"] as? String, t.count > floorChars {
+                    let remove = min(t.count - floorChars, budgetRemoval)
+                    blocks[j]["text"] = String(t.prefix(max(floorChars, t.count - remove))) + "…[truncado]"
+                    budgetRemoval -= remove
+                } else if type == "tool_result", let c = blocks[j]["content"] as? String, c.count > floorChars {
+                    let remove = min(c.count - floorChars, budgetRemoval)
+                    blocks[j]["content"] = String(c.prefix(max(floorChars, c.count - remove))) + "…[truncado]"
+                    budgetRemoval -= remove
+                }
+            }
+            messages[i]["content"] = blocks
+        }
+
+        let lastIdx = messages.count - 1
+        // 2) Corpo (exceto a última mensagem), do mais antigo ao mais novo.
+        if lastIdx > 0 {
+            for i in 0..<lastIdx {
+                if total() <= budgetTokens { return }
+                truncateMessage(at: i, floorChars: 60)
+            }
+        }
+        if total() <= budgetTokens { return }
+        // 3) Última mensagem (turno atual) com piso maior e, por fim, corte duro sem piso.
+        if lastIdx >= 0 { truncateMessage(at: lastIdx, floorChars: 200) }
+        for i in messages.indices {
+            if total() <= budgetTokens { return }
+            truncateMessage(at: i, floorChars: 0)
         }
     }
 
