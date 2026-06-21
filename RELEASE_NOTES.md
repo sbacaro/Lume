@@ -1,3 +1,24 @@
+# 🪪 Lume v1.5.0 — Now free software under the GNU GPLv3
+
+Lume is relicensed from the MIT License to the **GNU General Public License v3.0**. This is a licensing change only — there are no changes to how the app behaves, looks, or performs.
+
+**Release date:** 2026-06-21
+**Version:** 1.5.0
+**Type:** License change
+
+---
+
+## 🔄 Changed
+
+### Relicensed from MIT to GNU GPLv3
+- Lume is now **free software** under the [GNU General Public License v3.0](LICENSE). You are free to use, study, share, and modify it. Anyone who distributes Lume or a derivative work must do so under the same license and make the corresponding source available — keeping Lume and everything built on it open.
+- Updated across the project: the `LICENSE` file (full GPLv3 text), the README badge and License section, the **About Lume** screen (license link and footer), and the localized UI strings (English + pt-BR).
+- **No code behavior changes.** Existing features, performance, and on-disk data are unaffected by this release.
+
+> Note: historical entries below that mention the MIT License describe the project as it was at the time of those earlier releases and are left unchanged as a record.
+
+---
+
 # 🚀 Lume v1.4.3 — Code highlights in Artifacts & Sandbox safety
 
 This release introduces rich syntax highlighting and line numbers when inspecting Artifact source code directly in Lume, plus crash prevention fallbacks for system directory lookups and cleanup of obsolete files.

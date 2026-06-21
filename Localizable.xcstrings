@@ -183,12 +183,12 @@
     "%lldk" : {
 
     },
-    "© %@ Samuel Bacaro · Distributed under the MIT license" : {
+    "© %@ Samuel Bacaro · Distributed under the GNU GPLv3 license" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "© %@ Samuel Bacaro · Distribuído sob licença MIT"
+            "value" : "© %@ Samuel Bacaro · Distribuído sob a licença GNU GPLv3"
           }
         }
       }
@@ -2955,12 +2955,12 @@
         }
       }
     },
-    "MIT License" : {
+    "GPLv3 License" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Licença MIT"
+            "value" : "Licença GPLv3"
           }
         }
       }

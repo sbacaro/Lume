@@ -11,16 +11,16 @@
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-26%2B-blue" alt="macOS 26+">
   <img src="https://img.shields.io/badge/Swift-6.0-orange" alt="Swift 6.0">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
+  <img src="https://img.shields.io/badge/license-GPLv3-green" alt="GPLv3">
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs Welcome"></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/code%20of-conduct-ff69b4.svg" alt="Code of Conduct"></a>
 </p>
 
 ---
 
-## What's new in v1.4.3
+## What's new in v1.5.0
 
-Lume now features full syntax highlighting and line numbers when inspecting Artifact source code under the **Code** tab, along with crash prevention fallbacks for system directory resolution and code cleanup. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for details.
+Lume is now free software, relicensed from MIT to the **GNU General Public License v3.0**. You're free to use, study, share, and modify Lume — and any distributed derivative must remain open under the same license. No code behavior changes in this release. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for details.
 
 ## Three modes, each purpose-built
 
@@ -131,7 +131,12 @@ you'd like to change.
 
 ## License
 
-[MIT](LICENSE)
+[GNU General Public License v3.0](LICENSE)
+
+Lume is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. Lume is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; see the [LICENSE](LICENSE) file for details.
 
 ---
 

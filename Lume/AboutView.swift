@@ -159,7 +159,7 @@ struct AboutView: View {
             Divider().opacity(0.35)
             linkRow(String(localized: "Report an issue"), systemImage: "ladybug", url: issuesURL)
             Divider().opacity(0.35)
-            linkRow(String(localized: "MIT License"), systemImage: "checkmark.seal", url: licenseURL)
+            linkRow(String(localized: "GPLv3 License"), systemImage: "checkmark.seal", url: licenseURL)
         }
         .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
@@ -216,7 +216,7 @@ struct AboutView: View {
 
     private var footer: some View {
         VStack(spacing: 3) {
-            Text(String(localized: "© \(copyrightYear) Samuel Bacaro · Distributed under the MIT license"))
+            Text(String(localized: "© \(copyrightYear) Samuel Bacaro · Distributed under the GNU GPLv3 license"))
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
             Text(String(localized: "Made with ♥ and SwiftUI"))
